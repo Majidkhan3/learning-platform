@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "heroku-postbuild": "npm install --legacy-peer-deps && npm run build",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -76,5 +77,8 @@
     "eslint-config-next": "14.2.6",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
-  }
+  },"engines": {
+  "node": "18.x",
+  "npm": "9.x"
+}
 }
