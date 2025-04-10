@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "heroku-postbuild": "npm install --legacy-peer-deps && npm run build",
-    "dev": "next dev",
+    "preinstall": "npm install --legacy-peer-deps",
+    "heroku-postbuild": "npm run build",
+        "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
