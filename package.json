@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "preinstall": "npm install --force",
-    "heroku-postbuild": "npm run build",
-        "dev": "next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -56,12 +54,13 @@
     "react-quill": "^2.0.0",
     "react-scroll": "^1.9.3",
     "react-select": "^5.8.0",
-    "react-sweetalert2": "^0.5.2",
     "react-text-mask-legacy": "^5.5.3",
     "react-toastify": "^10.0.5",
     "react-visibility-sensor": "^5.1.1",
     "sass": "^1.77.8",
     "simplebar-react": "^3.2.6",
+    "sweetalert2": "^11.17.2",
+    "sweetalert2-react-content": "^5.1.0",
     "swiper": "^11.1.11",
     "youtube-transcript": "^1.2.1",
     "yup": "^1.4.0"
@@ -77,8 +76,9 @@
     "eslint-config-next": "14.2.6",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
-  },"engines": {
-  "node": "18.x",
-  "npm": "9.x"
-}
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  }
 }
