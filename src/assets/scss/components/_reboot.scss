@@ -1,0 +1,76 @@
+//
+// _reboot.scss
+//
+
+body {
+    overflow-x: hidden;
+}
+
+.row>* {
+    position: relative;
+}
+
+.scroll-hidden {
+    &::-webkit-scrollbar {
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    &::-webkit-scrollbar:vertical {
+        width: 0px;
+    }
+}
+
+
+// Iconify
+iconify-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+}
+
+.app-search {
+
+    .form-control {
+        padding-left: 40px;
+        padding-right: 15px;
+        height: 38px;
+    }
+
+    .search-widget-icon {
+        position: absolute;
+        z-index: 10;
+        font-size: 18px;
+        left: 11px;
+        top: 50%;
+        color: $gray-500;
+        transform: translateY(-50%);
+        cursor: pointer;
+    }
+
+    .search-widget-icon-close {
+        right: 7px;
+        left: auto !important;
+    }
+}
+
+.quantity{
+    .input-step {
+        height: 37.5px;
+        input {
+            width: 4em;
+        }
+        button {
+            width: 1.4em;
+        }
+    } 
+}
+
+.customer-bg{
+    // background-image: url("/assets/images/customer-bg.jpg");
+    background-image: url("../../../assets/images/customer-bg.jpg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    padding: 80px;
+}

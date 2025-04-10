@@ -1,0 +1,93 @@
+// 
+// _theme-mode.scss
+// 
+
+
+/* Root Prefix Variable */
+:root {
+    --#{$prefix}logo-lg-height:                30px;
+    --#{$prefix}logo-sm-height:                28px;
+
+    --#{$prefix}main-nav-width:               260px;
+    --#{$prefix}main-nav-width-sm:             75px; 
+    --#{$prefix}main-nav-item-icon-size:       18px;
+    --#{$prefix}main-nav-item-font-size:       15px;
+    --#{$prefix}main-nav-item-padding-x:       15px;
+    --#{$prefix}main-nav-item-padding-y:       10px;
+    --#{$prefix}main-nav-item-margin-y:       2px;
+
+    --#{$prefix}topbar-height:                 70px;
+    --#{$prefix}footer-height:                 60px;
+    
+    --#{$prefix}input-border-color:             #d8dfe7;
+    --#{$prefix}input-focus-border-color:       #b0b0bb;
+}
+
+
+/* Color system - Dark Mode only */
+html[data-bs-theme="dark"],
+[data-bs-theme="dark"] {
+    --#{$prefix}light:                           #{$body-tertiary-bg-dark};
+    --#{$prefix}dark:                            #{$body-tertiary-color-dark};
+    --#{$prefix}light-rgb:                       #{to-rgb($body-tertiary-bg-dark)};
+    --#{$prefix}dark-rgb:                        #{to-rgb($body-tertiary-color-dark)};
+}
+
+
+/* Main Menu Light */
+html[data-menu-color="light"]{
+    --#{$prefix}main-nav-bg:                               #eeeef3;
+    --#{$prefix}main-nav-item-color:                       #696b84;
+    --#{$prefix}main-nav-item-hover-bg:                    #{$gray-100};
+    --#{$prefix}main-nav-item-hover-color:                 #{$primary};
+    --#{$prefix}main-nav-item-active-color:                #{$primary};
+    --#{$prefix}main-nav-border-color:                     #eaedf1;
+}
+
+
+/* Main Menu Dark */
+html[data-menu-color="dark"] {
+    --#{$prefix}main-nav-bg:                               #1C252E;
+    --#{$prefix}main-nav-item-color:                       #a8b2b5;
+    --#{$prefix}main-nav-item-hover-bg:                    #{rgba($white, 0.06)};
+    --#{$prefix}main-nav-item-hover-color:                 #{$white};
+    --#{$prefix}main-nav-item-active-color:                 #{$gray-200};
+    --#{$prefix}main-nav-border-color:                     #2f3944;
+}
+
+
+/* Main Menu Dark (Dark Mode Only) */
+html[data-bs-theme="dark"][data-menu-color="dark"],
+html[data-bs-theme="dark"][data-menu-color="light"] {
+    --#{$prefix}main-nav-bg:                               #1C252E;
+    --#{$prefix}main-nav-item-color:                       #afb9cf;
+    --#{$prefix}main-nav-item-hover-bg:                    #303943;
+    --#{$prefix}main-nav-item-hover-color:                 #{$white};
+    --#{$prefix}main-nav-item-active-color:                 #{$gray-200};
+    --#{$prefix}main-nav-border-color:                     #2f3944;
+}
+
+
+/* Topbar Light */
+html[data-topbar-color="light"] {
+    --#{$prefix}topbar-bg:                                 #{$white};
+    --#{$prefix}topbar-item-color:                         #707793;
+    --#{$prefix}topbar-search-bg:                          #e8edf1;
+}
+
+
+/* Topbar Dark */
+html[data-topbar-color="dark"] {
+    --#{$prefix}topbar-bg:                                 #141A21;
+    --#{$prefix}topbar-item-color:                         #afb9cf;
+    --#{$prefix}topbar-search-bg:                          #212b36;
+}
+
+
+/* Topbar Dark (Dark Mode Only) */
+html[data-bs-theme="dark"][data-topbar-color="dark"], 
+html[data-bs-theme="dark"][data-topbar-color="light"] {
+    --#{$prefix}topbar-bg:                                 #141A21;
+    --#{$prefix}topbar-item-color:                         #afb9cf;
+    --#{$prefix}topbar-search-bg:                          #303943;
+}

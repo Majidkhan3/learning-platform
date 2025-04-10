@@ -1,0 +1,228 @@
+//
+// app-chat.scss
+//
+
+// chat
+
+.chat-search {
+    display: table;
+    width: 100%;
+    padding-bottom: $spacer;
+
+    .chat-search-box {
+        display: table-cell;
+        vertical-align: middle;
+        position: relative;
+
+        .search-icon {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+        }
+    }
+
+    .form-control {
+        padding-right: 2rem;
+    }
+}
+
+.chat-conversation-list {
+    list-style: none;
+
+    li {
+        margin-bottom: 20px;
+
+        .chat-conversation-text {
+            margin-bottom: $spacer * 0.25;
+
+            .chat-ctext-wrap {
+                position: relative;
+                // &::before {
+                //     content: "";
+                //     position: absolute;
+                //     left: 0;
+                //     transform: translateX(-100%);
+                //     top: 0;
+                //     border: solid transparent;
+                //     height: 0;
+                //     width: 0;
+                //     border-top-color: var(--#{$prefix}tertiary-bg);
+                //     border-width: 6px;
+                //     margin-right: -1px;
+                //     border-right-color: var(--#{$prefix}tertiary-bg);
+                // }
+            }
+
+            &:hover {
+                .chat-conversation-actions {
+                    // display: flex;
+                    opacity: 1;
+                    align-items: top;
+                }
+            }
+        }
+
+        .chat-conversation-actions {
+            // display: none;
+            opacity: 0;
+            float: right;
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .chat-ctext-wrap {
+        background: var(--#{$prefix}tertiary-bg);
+        border-radius: 0 10px 10px;
+        display: inline-block;
+        padding: 16px 25px;
+        position: relative;
+        max-width: 750px;
+        // margin-left: 10px;
+
+        i {
+            display: block;
+            font-size: $h6-font-size;
+            font-style: normal;
+            font-weight: bold;
+            position: relative;
+        }
+
+        p {
+            margin: 0;
+            padding: 0;
+        }
+    }
+
+    .odd {
+        .chat-conversation-text {
+            float: right !important;
+            text-align: right !important;
+            // margin-right: 10px;
+            clear: both;
+
+            //    .chat-ctext-wrap {
+            //         &::before {
+            //             left: auto !important;
+            //             right: 0;
+            //             transform: translateX(100%) !important;
+            //             border-color: transparent;
+            //             border-left-color: $primary;
+            //             border-top-color: $primary;
+            //             right: 3px;
+            //             left: auto;
+            //         }
+            //     }
+        }
+
+        .chat-ctext-wrap {
+            background-color: $primary;
+            color: $white;
+            border-radius: 10px 0 10px 10px;
+        }
+    }
+}
+
+.chat-user-status-box {
+    position: relative;
+    display: flex;
+    justify-content: center;
+
+    span {
+        position: relative;
+
+        &::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            right: 2px;
+            height: 11px;
+            width: 11px;
+            background-color: $success;
+            border: 2px solid $border-color;
+            border-radius: 50%;
+        }
+    }
+}
+
+// video call
+.video-call {
+    background-image: url("../../images/users/chat.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 500px;
+    width: 350px;
+    position: relative;
+
+    .video-call-head {
+        img {
+            height: 4rem;
+            width: 4rem;
+        }
+    }
+
+    .video-call-action {
+        position: absolute;
+        bottom: 0px;
+        left: 0;
+        right: 0;
+        padding: 60px 0 16px;
+        background: linear-gradient(to top, $black 0, rgba($black, 0) 90%);
+    }
+}
+
+// voice call
+.voice-call {
+    background-image: radial-gradient(circle at center center, #fafafa, #ffffff), repeating-radial-gradient(circle at center center, #fafafa, #fafafa, 32px, transparent 64px, transparent 32px);
+    background-blend-mode: multiply;
+    background-color:  var(--#{$prefix}body-bg);
+
+    height: 500px;
+    width: 350px;
+    position: relative;
+
+    .voice-call-head {
+        img {
+            width: 6rem;
+            height: 6rem;
+        }
+    }
+
+    .voice-call-action {
+        position: absolute;
+        bottom: 0px;
+        left: 0;
+        right: 0;
+    }
+}
+
+// setting
+.app-chat-setting {
+
+    .accordion-button,
+    .accordion-body {
+        background-color: $card-bg !important;
+    }
+}
+
+.chatbox-height {
+    max-height: calc(100vh - 364px);
+}
+
+.chat-setting-height {
+    max-height: calc(100vh - 522px);
+}
+
+// .chat-tab-pills {
+//     // background-color: var(--#{$prefix}light);
+
+//     // .nav-link {
+//     //     &.active {
+//     //         background-color: var(--#{$prefix}success);
+//     //         color: var(--#{$prefix}light);
+//     //     }
+//     // }
+// }

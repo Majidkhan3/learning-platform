@@ -1,0 +1,155 @@
+// 
+// topbar.scss
+// 
+
+header {
+     position: sticky;
+     top: 0;
+     background: $main-nav-bg;
+     z-index: 1005;
+     padding-top: 10px;
+}
+
+
+.topbar {
+     transition: all 0.3s ease-in-out;
+     height: $topbar-height;
+     background-color: $topbar-bg;
+     margin-left: $main-nav-width;
+     margin-right: 10px;
+     border-bottom: $card-border-width solid $card-border-color;
+     border-top-left-radius: 15px;
+     border-top-right-radius: 15px;
+     box-shadow: $box-shadow-sm;
+
+     .navbar-header {
+          display: flex;
+          margin: 0 auto;
+          align-items: center;
+          justify-content: space-between;
+     }
+
+     .topbar-item {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: $topbar-height;
+
+          .topbar-button {
+               border: none;
+               border-radius: 50%;
+               background: transparent;
+               transition: all 0.3s ease-in-out;
+               color: $topbar-item-color;
+               padding: $btn-padding-y $btn-padding-y;
+               position: relative;
+
+               &.show,
+               &.active,
+               &:active,
+               &:hover {
+                    color: $primary;
+               }
+          }
+     }
+
+     .topbar-badge {
+          right: -7px;
+          top: 7px !important;
+     }
+
+     .app-search {
+          .form-control {
+               background: $topbar-search-bg;
+               color: $topbar-item-color;
+          }
+     }
+}
+
+
+// fullscreen exit icon
+[data-toggle="fullscreen"] {
+     .fullscreen {
+          display: block;
+     }
+
+     .quit-fullscreen {
+          display: none;
+     }
+}
+
+.fullscreen-enable {
+     .fullscreen {
+          display: none;
+     }
+
+     .quit-fullscreen {
+          display: block;
+     }
+}
+
+
+// Dark Mode Icon
+.topbar {
+     #light-dark-mode {
+          .light-mode {
+               display: block;
+          }
+
+          .dark-mode {
+               display: none;
+          }
+     }
+}
+
+[data-bs-theme="dark"] {
+     .topbar {
+          #light-dark-mode {
+               .light-mode {
+                    display: none;
+               }
+
+               .dark-mode {
+                    display: block;
+               }
+          }
+     }
+}
+
+
+html[data-menu-size="hidden"] {
+     .topbar {
+          padding: 0 $spacer;
+          margin-left: 10px;
+     }
+}
+
+
+// @include media-breakpoint-down(md) {
+@media (max-width: 375px) {
+     .topbar {
+          padding: 0 0.5 * $spacer !important;
+     }
+}
+
+@media (max-width: 600px) {
+     .topbar {
+          .dropdown {
+               position: static;
+
+               .dropdown-menu {
+                    width: 100%;
+               }
+          }
+     }
+
+     header {
+          padding-top: 0;
+     }
+
+     .topbar {
+          padding: 0 $spacer;
+          margin-left: 0;
+          border-radius: 0;
+     }
+}

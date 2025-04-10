@@ -1,0 +1,72 @@
+//
+// authentication.scss
+//
+
+body {
+     &.authentication-bg {
+          background: linear-gradient(90deg, hsla(205, 46%, 30%, 1) 0%, hsla(260, 29%, 36%, 1) 100%);
+
+          .account-pages {
+               align-items: center;
+               display: flex;
+               min-height: 100vh;
+          }
+     }
+}
+
+.auth-logo {
+     .logo-dark {
+          display: block;
+     }
+
+     .logo-light {
+          display: none;
+     }
+}
+
+html[data-bs-theme="dark"] {
+     .auth-logo {
+          .logo-dark {
+               display: none;
+          }
+
+          .logo-light {
+               display: block;
+          }
+     }
+}
+
+
+.auth-page-sidebar {
+     padding: 4rem;
+     background-color: $card-bg;
+     border-radius: $border-radius-sm;
+     height: 100%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+}
+
+p.no-span {
+     display: table;
+     white-space: nowrap;
+     padding: 10px 0;
+
+     &::before,
+     &::after {
+          border-top: 1px solid #{$card-border-color};
+          content: "";
+          display: table-cell;
+          position: relative;
+          top: 0.7em;
+          width: 50%;
+     }
+
+     &::before {
+          right: 1.5%;
+     }
+
+     &::after {
+          left: 1.5%;
+     }
+}

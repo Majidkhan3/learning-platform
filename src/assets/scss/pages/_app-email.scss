@@ -1,0 +1,45 @@
+//
+// _email.scss
+//
+
+.email-menu-list {
+    a {
+        color: var(--#{$prefix}body-tertiary-color);
+        font-weight: 500;
+        padding: 3px 0;
+        @extend .d-flex;
+        @extend .align-items-center;
+        transition: all 0.2s ease-in-out;
+
+        &.active,
+        &:hover {
+            color: var(--#{$prefix}primary);
+
+            iconify-icon.text-muted {
+                color: var(--#{$prefix}primary) !important;
+            }
+        }
+
+        &.active {
+            font-weight: $font-weight-semibold;
+        }
+    }
+}
+
+.email-list-group {
+    li {
+        .mail-select {
+            &:hover {
+                background-color: rgba(var(--#{$prefix}light-rgb), 0.7);
+            }
+        }
+    }
+
+    .selected {
+        background-color:var(--#{$prefix}primary) !important;
+    }
+}
+
+.email-read-done {
+    @extend .text-muted;
+}
