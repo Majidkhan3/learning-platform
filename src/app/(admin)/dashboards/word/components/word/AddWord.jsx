@@ -17,7 +17,7 @@ const AddWord = () => {
     selectedTags: [],
     summary: EditorState.createEmpty(),
     image: '',
-    note:0,
+    note: 0, // Default note value
   });
 
   const [availableTags, setAvailableTags] = useState([]); // State for fetched tags
@@ -80,6 +80,11 @@ const AddWord = () => {
     setFormData((prev) => ({ ...prev, summary: editorState }));
   };
 
+  // Handle star rating change
+  const handleRatingChange = (rating) => {
+    setFormData((prev) => ({ ...prev, note: rating }));
+  };
+
   // Save content to backend
   const saveContent = async () => {
     if (!formData.word.trim()) {
@@ -114,6 +119,7 @@ const AddWord = () => {
           selectedTags: [],
           summary: EditorState.createEmpty(),
           image: null,
+          note: 0,
         });
         setError('');
       } else {
@@ -205,17 +211,23 @@ const AddWord = () => {
                 </div>
               </Form.Group>
 
-              {/* Youglish Link */}
+              {/* Star Rating Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h5>Youglish link:</h5>
+                  <h4>Rating:</h4>
                 </Form.Label>
-                <Form.Control
-                  type="text"
-                  value={`https://youglish.com/pronounce/${formData.word}/spanish`}
-                  readOnly
-                />
-                <small className="text-muted">Automatically generated from the word</small>
+                <div className="d-flex align-items-center">
+                  {[1, 2, 3, 4].map((star) => (
+                    <span
+                      key={star}
+                      className={`me-2 ${formData.note >= star ? 'text-warning' : 'text-muted'}`}
+                      style={{ cursor: 'pointer', fontSize: '1.5rem' }}
+                      onClick={() => handleRatingChange(star)}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
               </Form.Group>
 
               {/* Picture Upload */}

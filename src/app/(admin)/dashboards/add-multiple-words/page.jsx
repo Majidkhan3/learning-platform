@@ -15,6 +15,7 @@ export default function AddWordsPage() {
   const [successMessage, setSuccessMessage] = useState('')
   const [fetchingTags, setFetchingTags] = useState(true)
   const [getwords, setGetWords] = useState([])
+  const [wordRatings, setWordRatings] = useState({}) // Track star ratings for each word
   const { user } = useAuth()
   const userId = user._id
   const fetchWords = async () => {
@@ -66,35 +67,41 @@ export default function AddWordsPage() {
 
   const handleTagChange = (e) => {
     const selected = Array.from(e.target.selectedOptions, (option) => option.value)
-    console.log('[DEBUG] Selected tags:', selected)
     setSelectedTags(selected)
   }
 
+  const handleRatingChange = (word, rating) => {
+    setWordRatings((prevRatings) => ({
+      ...prevRatings,
+      [word]: rating,
+    }))
+  }
+
   const handleSubmit = async () => {
-    setLoading(true);
-    setError('');
-    setSuccessMessage('');
-  
+    setLoading(true)
+    setError('')
+    setSuccessMessage('')
+
     const wordList = words
       .split('\n')
       .map((word) => word.trim())
-      .filter((word) => word !== '');
-  
+      .filter((word) => word !== '')
+
     if (wordList.length === 0) {
-      setError('Please enter at least one word.');
-      setLoading(false);
-      return;
+      setError('Please enter at least one word.')
+      setLoading(false)
+      return
     }
-  
+
     if (selectedTags.length === 0) {
-      setError('Please select at least one tag.');
-      setLoading(false);
-      return;
+      setError('Please select at least one tag.')
+      setLoading(false)
+      return
     }
-  
+
     try {
-      let addedWords = 0;
-  
+      let addedWords = 0
+
       // Loop through each word and make an API call
       for (const word of wordList) {
         const response = await fetch(`/api/words?userId=${user._id}`, {
@@ -105,54 +112,58 @@ export default function AddWordsPage() {
           body: JSON.stringify({
             word, // Send one word at a time
             tags: selectedTags,
-            note: 4,
+            note: wordRatings[word] || 0, // Default to 1 if no rating is selected
             image: '',
             userId: user._id,
           }),
-        });
-  
-        const data = await response.json();
-  
+        })
+
+        const data = await response.json()
+
         if (!response.ok) {
-          throw new Error(data.error || `Failed to add word: ${word}`);
+          throw new Error(data.error || `Failed to add word: ${word}`)
         }
-  
-        addedWords++;
+
+        addedWords++
       }
-  
-      setSuccessMessage(`Successfully added ${addedWords} words!`);
-      setWords('');
-      setSelectedTags([]);
+
+      setSuccessMessage(`Successfully added ${addedWords} words!`)
+      setWords('')
+      setSelectedTags([])
+      setWordRatings({})
     } catch (err) {
-      setError(err.message);
+      setError(err.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
   const handleCheckDuplicates = () => {
-    setError('');
-    setSuccessMessage('');
-  
+    setError('')
+    setSuccessMessage('')
+
     // Split the input into individual words
-    const wordList = words.split('\n').map((word) => word.trim()).filter((word) => word !== '');
-  
+    const wordList = words
+      .split('\n')
+      .map((word) => word.trim())
+      .filter((word) => word !== '')
+
     if (wordList.length === 0) {
-      setError('Please enter at least one word to check for duplicates.');
-      return;
+      setError('Please enter at least one word to check for duplicates.')
+      return
     }
-  
+
     // Extract existing words from getwords
-    const existingWords = getwords.map((wordObj) => wordObj.word.toLowerCase());
-  
+    const existingWords = getwords.map((wordObj) => wordObj.word.toLowerCase())
+
     // Find duplicates
-    const duplicateWords = wordList.filter((word) => existingWords.includes(word.toLowerCase()));
-  
+    const duplicateWords = wordList.filter((word) => existingWords.includes(word.toLowerCase()))
+
     if (duplicateWords.length > 0) {
-      setError(`The following words already exist: ${duplicateWords.join(', ')}`);
+      setError(`The following words already exist: ${duplicateWords.join(', ')}`)
     } else {
-      setSuccessMessage('No duplicates found. You can proceed to add the words.');
+      setSuccessMessage('No duplicates found. You can proceed to add the words.')
     }
-  };
+  }
   console.log('[DEBUG] User ID:', tags)
 
   return (
@@ -218,6 +229,30 @@ export default function AddWordsPage() {
                       />
                     </div>
                   </Form.Group>
+                </Col>
+              </Row>
+
+              <Row className="mt-4">
+                <Col>
+                  <h5>Set Star Ratings for Words</h5>
+                  {words
+                    .split('\n')
+                    .map((word) => word.trim())
+                    .filter((word) => word !== '')
+                    .map((word) => (
+                      <div key={word} className="d-flex align-items-center mb-2">
+                        <span className="me-3">{word}</span>
+                        {[1, 2, 3, 4].map((star) => (
+                          <span
+                            key={star}
+                            className={`me-2 ${wordRatings[word] >= star ? 'text-warning' : 'text-muted'}`}
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => handleRatingChange(word, star)}>
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                    ))}
                 </Col>
               </Row>
 

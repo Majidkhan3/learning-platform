@@ -121,7 +121,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete }) => {
                   </Button>
                 </td>
                 <td>
-                  <Button variant="soft-primary" size="sm">
+                  <Button variant="soft-primary" size="sm" onClick={() => window.open(`https://youglish.com/pronounce/${item.word}/spanish`, '_blank')}>
                     <IconifyIcon icon="ri:youtube-line" className="align-middle fs-18" />
                   </Button>
                 </td>
