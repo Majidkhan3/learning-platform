@@ -26,18 +26,19 @@ const Table = ({ loading, words }) => {
   const [resultsPerPage, setResultsPerPage] = useState(10) // Default results per page
 
   useEffect(() => {
-    const tag = searchParams.get('tag')
-    const rating = searchParams.get('rating')
-
+    const tag = searchParams.get('tag');
+    const rating = searchParams.get('rating');
+  
     // Filter words based on selected tag and rating
     const filtered = words.filter((word) => {
-      const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag)
-      const matchesRating = !rating || rating === 'All' || word.note >= parseInt(rating)
-      return matchesTag && matchesRating
-    })
-
-    setFilteredData(filtered)
-  }, [searchParams, words])
+      const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag);
+      const matchesRating =
+        !rating || rating === 'All' || (word.note && word.note === parseInt(rating));
+      return matchesTag && matchesRating;
+    });
+  
+    setFilteredData(filtered);
+  }, [searchParams, words]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / resultsPerPage)
@@ -51,19 +52,20 @@ const Table = ({ loading, words }) => {
 
   const handleResultsPerPageChange = (e) => {
     setResultsPerPage(parseInt(e.target.value))
-    setCurrentPage(1) 
+    setCurrentPage(1)
   }
 
   const handleSort = (order) => {
     const sortedData = [...filteredData].sort((a, b) => {
       if (order === 'asc') {
-        return a.word.localeCompare(b.word); // Sort A to Z
+        return a.word.localeCompare(b.word) // Sort A to Z
       } else {
-        return b.word.localeCompare(a.word); // Sort Z to A
+        return b.word.localeCompare(a.word) // Sort Z to A
       }
-    });
-    setFilteredData(sortedData);
-  };
+    })
+    setFilteredData(sortedData)
+  }
+
   return (
     <Row>
       <Col xl={12}>

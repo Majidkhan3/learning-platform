@@ -6,25 +6,26 @@ import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 export default function AddWordsPage() {
   const [words, setWords] = useState('')
   const [selectedTags, setSelectedTags] = useState([])
-  const [tags, setTags] = useState([]) // Dynamically fetched tags
+  const [tags, setTags] = useState([])
   const [ignoreExisting, setIgnoreExisting] = useState(true)
-  const [noSummary, setNoSummary] = useState(false)
-  const [noImage, setNoImage] = useState(false)
+  const [autoGenerateImage, setAutoGenerateImage] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [fetchingTags, setFetchingTags] = useState(true)
-  const [getwords, setGetWords] = useState([])
-  const [wordRatings, setWordRatings] = useState({}) // Track star ratings for each word
+  const [existingWords, setExistingWords] = useState([]) // Store existing words from the database
+  const [wordRatings, setWordRatings] = useState({})
   const { user } = useAuth()
   const userId = user._id
+
+  // Fetch existing words from the database
   const fetchWords = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/words?userId=${userId}`) // Replace with your API endpoint
+      const res = await fetch(`/api/words?userId=${userId}`)
       const data = await res.json()
       if (data.success) {
-        setGetWords(data.words) // Assuming the API returns words in this format
+        setExistingWords(data.words.map((wordObj) => wordObj.word.toLowerCase())) // Store existing words in lowercase
       } else {
         setError(data.error || 'Failed to fetch words')
       }
@@ -35,13 +36,14 @@ export default function AddWordsPage() {
       setLoading(false)
     }
   }
-  console.log('getwords', getwords)
+
   useEffect(() => {
     if (userId) {
       fetchWords()
     }
-  }, [userId]) // Ensure this runs only when `userId` changes
-  // Fetch tags dynamically
+  }, [userId])
+
+  // Fetch tags from the backend
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -102,8 +104,19 @@ export default function AddWordsPage() {
     try {
       let addedWords = 0
 
+      // Filter out existing words if ignoreExisting is true
+      const filteredWords = ignoreExisting
+        ? wordList.filter((word) => !existingWords.includes(word.toLowerCase()))
+        : wordList
+
+      if (filteredWords.length === 0) {
+        setError('All the entered words already exist in the database.')
+        setLoading(false)
+        return
+      }
+
       // Loop through each word and make an API call
-      for (const word of wordList) {
+      for (const word of filteredWords) {
         const response = await fetch(`/api/words?userId=${user._id}`, {
           method: 'POST',
           headers: {
@@ -112,8 +125,8 @@ export default function AddWordsPage() {
           body: JSON.stringify({
             word, // Send one word at a time
             tags: selectedTags,
-            note: wordRatings[word] || 0, // Default to 1 if no rating is selected
-            image: '',
+            note: wordRatings[word] || 0, // Default to 0 if no rating is selected
+            autoGenerateImage, // Pass the autoGenerateImage flag
             userId: user._id,
           }),
         })
@@ -137,6 +150,7 @@ export default function AddWordsPage() {
       setLoading(false)
     }
   }
+
   const handleCheckDuplicates = () => {
     setError('')
     setSuccessMessage('')
@@ -152,9 +166,6 @@ export default function AddWordsPage() {
       return
     }
 
-    // Extract existing words from getwords
-    const existingWords = getwords.map((wordObj) => wordObj.word.toLowerCase())
-
     // Find duplicates
     const duplicateWords = wordList.filter((word) => existingWords.includes(word.toLowerCase()))
 
@@ -164,7 +175,6 @@ export default function AddWordsPage() {
       setSuccessMessage('No duplicates found. You can proceed to add the words.')
     }
   }
-  console.log('[DEBUG] User ID:', tags)
 
   return (
     <Row>
@@ -211,15 +221,9 @@ export default function AddWordsPage() {
                     <div className="mt-3">
                       <Form.Check
                         type="checkbox"
-                        label="Do not automatically generate the summary"
-                        checked={noSummary}
-                        onChange={(e) => setNoSummary(e.target.checked)}
-                      />
-                      <Form.Check
-                        type="checkbox"
-                        label="Do not automatically generate the image"
-                        checked={noImage}
-                        onChange={(e) => setNoImage(e.target.checked)}
+                        label="Automatically generate the image"
+                        checked={autoGenerateImage}
+                        onChange={(e) => setAutoGenerateImage(e.target.checked)}
                       />
                       <Form.Check
                         type="checkbox"

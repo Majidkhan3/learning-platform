@@ -18,6 +18,7 @@ const AddWord = () => {
     summary: EditorState.createEmpty(),
     image: '',
     note: 0, // Default note value
+    autoGenerateImage: false, // New state for the checkbox
   });
 
   const [availableTags, setAvailableTags] = useState([]); // State for fetched tags
@@ -75,6 +76,14 @@ const AddWord = () => {
     }
   };
 
+  // Handle checkbox change for auto-generate image
+  const handleAutoGenerateImageChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      autoGenerateImage: e.target.checked, // Example placeholder image
+    }));
+  };
+
   // Update summary in formData state
   const onEditorStateChange = (editorState) => {
     setFormData((prev) => ({ ...prev, summary: editorState }));
@@ -84,6 +93,7 @@ const AddWord = () => {
   const handleRatingChange = (rating) => {
     setFormData((prev) => ({ ...prev, note: rating }));
   };
+  console.log("formData",formData)
 
   // Save content to backend
   const saveContent = async () => {
@@ -101,6 +111,7 @@ const AddWord = () => {
         tags: formData.selectedTags,
         image: formData.image,
         note: formData.note,
+        autoGenerateImage: formData.autoGenerateImage,
         summary: convertToRaw(formData.summary.getCurrentContent()),
         userId,
       };
@@ -120,6 +131,7 @@ const AddWord = () => {
           summary: EditorState.createEmpty(),
           image: null,
           note: 0,
+          autoGenerateImage: false,
         });
         setError('');
       } else {
@@ -236,22 +248,32 @@ const AddWord = () => {
                   <h5>Picture:</h5>
                 </Form.Label>
                 <div className="d-flex align-items-center gap-3">
-                  <Form.Control
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="w-auto"
+                  <Form.Check
+                    type="checkbox"
+                    label="Generate image automatically"
+                    checked={formData.autoGenerateImage}
+                    onChange={handleAutoGenerateImageChange}
                   />
-                  {formData.image && (
-                    <Image
-                      src={formData.image}
-                      alt="Preview"
-                      width={100}
-                      height={100}
-                      className="border rounded"
-                    />
-                  )}
                 </div>
+                {!formData.autoGenerateImage && (
+                  <div className="d-flex align-items-center gap-3 mt-3">
+                    <Form.Control
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="w-auto"
+                    />
+                    {formData.image && (
+                      <Image
+                        src={formData.image}
+                        alt="Preview"
+                        width={100}
+                        height={100}
+                        className="border rounded"
+                      />
+                    )}
+                  </div>
+                )}
               </Form.Group>
 
               <Button
