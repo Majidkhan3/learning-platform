@@ -24,56 +24,87 @@ export async function POST(req) {
     let transcriptData
     try {
       transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
+      if (!transcriptData || transcriptData.length === 0) {
+        console.warn('Transcript is empty or unavailable in Spanish, falling back to English.')
+        throw new Error('Empty transcript in Spanish')
+      }
     } catch (error) {
-      if (error.message.includes('No transcripts are available in es')) {
+      console.error('Transcript Fetch Error (Spanish):', error.message)
+      if (error.message.includes('No transcripts are available in es') || error.message === 'Empty transcript in Spanish') {
         console.warn('Spanish transcript not available, falling back to English.')
-        transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' })
+        try {
+          transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' })
+          if (!transcriptData || transcriptData.length === 0) {
+            console.error('Transcript is empty or unavailable in English.')
+            return NextResponse.json({ error: 'Unable to fetch transcript in any language' }, { status: 500 })
+          }
+        } catch (fallbackError) {
+          console.error('Fallback Transcript Fetch Error (English):', fallbackError.message)
+          return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
+        }
       } else {
-        throw error
+        return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
       }
     }
 
     const transcript = transcriptData.map((line) => line.text).join(' ')
+    console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
 
     // Send to Claude API to generate dialogues
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': process.env.CLAUDE_API_KEY || '',
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 2000,
-        system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
-        messages: [
-          {
-            role: 'user',
-            content: generatePrompt(transcript),
-          },
-        ],
-      }),
-    })
+    let claudeResponse
+    try {
+      claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.CLAUDE_API_KEY || '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 2000,
+          system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
+          messages: [
+            {
+              role: 'user',
+              content: generatePrompt(transcript),
+            },
+          ],
+        }),
+      })
+    } catch (error) {
+      console.error('Claude API Request Error:', error.message)
+      return NextResponse.json({ error: 'Failed to connect to Claude API' }, { status: 500 })
+    }
 
     const data = await claudeResponse.json()
+    if (!claudeResponse.ok) {
+      console.error('Claude API Response Error:', data)
+      return NextResponse.json({ error: 'Claude API returned an error' }, { status: 500 })
+    }
+
     const content = data?.content?.[0]?.text || ''
     console.log('Claude response:', data)
 
     // Save dialogue to MongoDB
-    const dialogue = new Dialogue({
-      userId: body.userId, // Assuming userId is passed in the body
-      url: youtubeUrl,
-      dialogue: content, // Save the single string dialogue
-    })
+    try {
+      const dialogue = new Dialogue({
+        userId: body.userId, // Assuming userId is passed in the body
+        url: youtubeUrl,
+        dialogue: content, // Save the single string dialogue
+      })
 
-    await dialogue.save()
+      await dialogue.save()
 
-    // Redirect to the dialogue view page
-    const dialogueId = dialogue?._id.toString()
-    return NextResponse.json({ status: 'success', dialogueId, dialogue: content }, { status: 200 })
+      // Redirect to the dialogue view page
+      const dialogueId = dialogue?._id.toString()
+      return NextResponse.json({ status: 'success', dialogueId, dialogue: content }, { status: 200 })
+    } catch (dbError) {
+      console.error('Database Save Error:', dbError.message)
+      return NextResponse.json({ error: 'Failed to save dialogue to database' }, { status: 500 })
+    }
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Unexpected Error:', error.stack || error.message || error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
