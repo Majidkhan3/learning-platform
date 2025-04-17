@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { YoutubeTranscript } from 'youtube-transcript'
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
+
 export async function POST(req) {
   try {
     await connectToDatabase()
@@ -20,7 +21,18 @@ export async function POST(req) {
     }
 
     // Get transcript
-    const transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
+    let transcriptData
+    try {
+      transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
+    } catch (error) {
+      if (error.message.includes('No transcripts are available in es')) {
+        console.warn('Spanish transcript not available, falling back to English.')
+        transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' })
+      } else {
+        throw error
+      }
+    }
+
     const transcript = transcriptData.map((line) => line.text).join(' ')
 
     // Send to Claude API to generate dialogues
