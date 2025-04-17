@@ -23,6 +23,7 @@ export async function POST(req) {
     // Get transcript
     let transcriptData
     try {
+      console.log('Attempting to fetch transcript in Spanish for video ID:', videoId)
       transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
       if (!transcriptData || transcriptData.length === 0) {
         console.warn('Transcript is empty or unavailable in Spanish, falling back to English.')
@@ -31,8 +32,9 @@ export async function POST(req) {
     } catch (error) {
       console.error('Transcript Fetch Error (Spanish):', error.message)
       if (error.message.includes('No transcripts are available in es') || error.message === 'Empty transcript in Spanish') {
-        console.warn('Spanish transcript not available, falling back to English.')
+        console.warn('Spanish transcript not available, attempting to fetch in English.')
         try {
+          console.log('Attempting to fetch transcript in English for video ID:', videoId)
           transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' })
           if (!transcriptData || transcriptData.length === 0) {
             console.error('Transcript is empty or unavailable in English.')
@@ -43,13 +45,13 @@ export async function POST(req) {
           return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
         }
       } else {
+        console.error('Unexpected Transcript Fetch Error:', error.message)
         return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
       }
     }
 
     const transcript = transcriptData.map((line) => line.text).join(' ')
     console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
-
     // Send to Claude API to generate dialogues
     let claudeResponse
     try {
