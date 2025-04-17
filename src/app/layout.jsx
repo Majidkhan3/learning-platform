@@ -51,7 +51,7 @@ export default function RootLayout({ children }) {
         <style suppressHydrationWarning>{splashScreenStyles}</style>
       </head>
       <body className={figtree.className}>
-        {/* <div id="splash-screen">
+        <div id="splash-screen">
           <Image
             alt="Logo"
             width={112}
@@ -63,7 +63,7 @@ export default function RootLayout({ children }) {
             }}
             priority
           />
-        </div> */}
+        </div>
         <NextTopLoader color="#604ae3" showSpinner={false} />
         <div id="__next_splash">
           

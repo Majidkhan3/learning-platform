@@ -65,6 +65,25 @@ const Table = ({ loading, words }) => {
     })
     setFilteredData(sortedData)
   }
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`/api/words/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove the deleted row from the state
+        setFilteredData((prevData) => prevData.filter((word) => word._id !== id));
+        alert('Word deleted successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to delete word: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting word:', error);
+      alert('An error occurred while deleting the word.');
+    }
+  };
 
   return (
     <Row>
@@ -98,7 +117,7 @@ const Table = ({ loading, words }) => {
           </CardHeader>
           <CardBody className="p-0">
             <div className="table-responsive">
-              <SynthesisModal reviewData={paginatedData} loading={loading} />
+              <SynthesisModal reviewData={paginatedData} loading={loading} onDelete={handleDelete}/>
             </div>
           </CardBody>
           <CardFooter>
