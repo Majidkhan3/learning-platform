@@ -30,7 +30,7 @@ export async function POST(req) {
         throw new Error('Empty transcript in Spanish')
       }
     } catch (error) {
-      console.error('Transcript Fetch Error (Spanish):', error.message)
+      console.error('Transcript Fetch Error (Spanish):', error.stack || error.message)
       if (error.message.includes('No transcripts are available in es') || error.message === 'Empty transcript in Spanish') {
         console.warn('Spanish transcript not available, attempting to fetch in English.')
         try {
@@ -41,11 +41,11 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Unable to fetch transcript in any language' }, { status: 500 })
           }
         } catch (fallbackError) {
-          console.error('Fallback Transcript Fetch Error (English):', fallbackError.message)
+          console.error('Fallback Transcript Fetch Error (English):', fallbackError.stack || fallbackError.message)
           return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
         }
       } else {
-        console.error('Unexpected Transcript Fetch Error:', error.message)
+        console.error('Unexpected Transcript Fetch Error:', error.stack || error.message)
         return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
       }
     }
