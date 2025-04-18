@@ -14,6 +14,7 @@ const CreateStory = () => {
   const [difficulty, setDifficulty] = useState(0)
   const [theme, setTheme] = useState('')
   const [selectedTags, setSelectedTags] = useState([])
+  const [words, setWords] = useState('') // New state for words input
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState(null)
@@ -50,6 +51,8 @@ const CreateStory = () => {
     setSuccessMessage(null)
     setLoading(true)
 
+    const wordArray = words.split(',').map((word) => word.trim()) // Convert input to an array of words
+
     try {
       const response = await fetch('/api/story/create', {
         method: 'POST',
@@ -62,6 +65,7 @@ const CreateStory = () => {
           selectedTags,
           rating: difficulty,
           userId: user?._id,
+          words: wordArray.map((word) => ({ word })), // Format words as objects
         }),
       })
 
@@ -73,7 +77,7 @@ const CreateStory = () => {
 
       setSuccessMessage('Story generated successfully!')
       setTimeout(() => {
-        router.push(`/dashboards/story/${data.storyId}`) // Redirect to the story details page
+        router.push(`/dashboards/story/view/${data.storyId}`) // Redirect to the story details page
       }, 2000)
     } catch (err) {
       console.error('Error generating story:', err.message)
@@ -151,6 +155,20 @@ const CreateStory = () => {
                 onChange={(e) => setTheme(e.target.value)}
               />
               <Form.Text className="text-muted">Provide details on the desired theme for the story</Form.Text>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>
+                Words (comma-separated) <span className="text-danger">*</span>
+              </Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="e.g., breakfast, coffee, meeting"
+                value={words}
+                onChange={(e) => setWords(e.target.value)}
+                required
+              />
+              <Form.Text className="text-muted">Enter words to be used in the story, separated by commas</Form.Text>
             </Form.Group>
 
             {error && <Alert variant="danger">{error}</Alert>}
