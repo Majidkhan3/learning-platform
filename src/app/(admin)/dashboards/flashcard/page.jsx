@@ -13,7 +13,6 @@ const FlashCard = () => {
   const [error, setError] = useState('')
   const [cards, setCards] = useState([]) // State for fetched cards
   const searchParams = useSearchParams()
-  const [showImageModal, setShowImageModal] = useState(false); // State for image modal
 
   const router = useRouter()
   const currentIndex = parseInt(searchParams.get('index') || '1', 10)
@@ -90,9 +89,7 @@ const FlashCard = () => {
       setError('Error updating rating')
     }
   }
-  const handleImageModal = () => {
-    setShowImageModal(!showImageModal);
-  };
+  
   // Automatically speak the word when the card appears
   useEffect(() => {
     if (currentCard && 'speechSynthesis' in window) {
@@ -171,9 +168,16 @@ const FlashCard = () => {
                   <i className="bi bi-info-circle ms-2" title="Synthesis Information"></i> {/* Synthesis Icon */}
                 </Card.Subtitle>
                 <div className="text-center mb-3">
-                  <Button variant="link" onClick={handleImageModal} aria-label="View Image">
-                    <IconifyIcon icon="mdi:image" style={{ fontSize: '1.5rem', color: '#007bff' }} />
-                  </Button>
+                  {currentCard?.image ? (
+                    <img
+                      src={currentCard.image}
+                      alt="Card"
+                      className="img-fluid"
+                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <p>No image available for this card.</p>
+                  )}
                 </div>
                 {/* Synthesis Content */}
                 <div className="mb-3 text-center">
@@ -220,9 +224,12 @@ const FlashCard = () => {
         </div>
 
         {/* Navigation Controls */}
-        <Stack direction="horizontal" style={{
-          gap:"200px"
-        }} className="justify-content-center mt-3">
+        <Stack
+          direction="horizontal"
+          style={{
+            gap: '200px',
+          }}
+          className="justify-content-center mt-3">
           <Button variant="outline-secondary" onClick={() => goToCard(currentIndex - 1)} disabled={currentIndex <= 1}>
             ← Previous
           </Button>
@@ -231,18 +238,7 @@ const FlashCard = () => {
           </Button>
         </Stack>
       </div>
-      <Modal show={showImageModal} onHide={handleImageModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Card Image</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center">
-          {currentCard?.image ? (
-            <img src={currentCard.image} alt="Card" className="img-fluid" />
-          ) : (
-            <p>No image available for this card.</p>
-          )}
-        </Modal.Body>
-      </Modal>
+      
     </div>
   )
 }
