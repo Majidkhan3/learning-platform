@@ -12,6 +12,8 @@ const FlashCard = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [cards, setCards] = useState([]) // State for fetched cards
+  const [showModal, setShowModal] = useState(false) // State for modal visibility
+  const [modalImage, setModalImage] = useState('') // State for the image to display in the modal
   const searchParams = useSearchParams()
 
   const router = useRouter()
@@ -89,7 +91,17 @@ const FlashCard = () => {
       setError('Error updating rating')
     }
   }
-  
+
+  const openModal = (image) => {
+    setModalImage(image)
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setModalImage('')
+  }
+
   // Automatically speak the word when the card appears
   useEffect(() => {
     if (currentCard && 'speechSynthesis' in window) {
@@ -173,7 +185,8 @@ const FlashCard = () => {
                       src={currentCard.image}
                       alt="Card"
                       className="img-fluid"
-                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }}
+                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', cursor: 'pointer' }}
+                      onClick={() => openModal(currentCard.image)}
                     />
                   ) : (
                     <p>No image available for this card.</p>
@@ -238,7 +251,16 @@ const FlashCard = () => {
           </Button>
         </Stack>
       </div>
-      
+
+      {/* Modal for Image */}
+      <Modal show={showModal} onHide={closeModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Image Preview</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center">
+          <img src={modalImage} alt="Preview" className="img-fluid" style={{ maxWidth: '100%', maxHeight: '500px' }} />
+        </Modal.Body>
+      </Modal>
     </div>
   )
 }
