@@ -1,47 +1,52 @@
-"use client";
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Badge, Card, Form } from 'react-bootstrap';
-import { useState, useEffect } from 'react';
+'use client'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Badge, Card, Form } from 'react-bootstrap'
+import { useState, useEffect } from 'react'
 
-const FilterCard = ({ tags }) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [selectedTag, setSelectedTag] = useState('All');
-  const [selectedRating, setSelectedRating] = useState('All');
-  const [voice, setVoice] = useState('Lucia (Woman)');
-  const [flashCardMode, setFlashCardMode] = useState(false);
+const FilterCard = ({ tags, voices, onVoiceChange }) => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [selectedTag, setSelectedTag] = useState('All')
+  const [selectedRating, setSelectedRating] = useState('All')
+  const [voice, setVoice] = useState(voices[0]?.id || 'Lucia')
+  const [flashCardMode, setFlashCardMode] = useState(false)
 
-  const ratings = ['All', '1', '2', '3', '4'];
+  const ratings = ['All', '1', '2', '3', '4']
 
   useEffect(() => {
     // Initialize from URL params
-    const tag = searchParams.get('tag');
-    const rating = searchParams.get('rating');
-    if (tag) setSelectedTag(tag);
-    if (rating) setSelectedRating(rating);
-  }, [searchParams]);
+    const tag = searchParams.get('tag')
+    const rating = searchParams.get('rating')
+    if (tag) setSelectedTag(tag)
+    if (rating) setSelectedRating(rating)
+  }, [searchParams])
 
   const handleTagChange = (tagName) => {
-    setSelectedTag(tagName);
-    const params = new URLSearchParams(searchParams);
+    setSelectedTag(tagName)
+    const params = new URLSearchParams(searchParams)
     if (tagName === 'All') {
-      params.delete('tag');
+      params.delete('tag')
     } else {
-      params.set('tag', tagName);
+      params.set('tag', tagName)
     }
-    router.push(`?${params.toString()}`);
-  };
+    router.push(`?${params.toString()}`)
+  }
 
   const handleRatingChange = (rating) => {
-    setSelectedRating(rating);
-    const params = new URLSearchParams(searchParams);
+    setSelectedRating(rating)
+    const params = new URLSearchParams(searchParams)
     if (rating === 'All') {
-      params.delete('rating');
+      params.delete('rating')
     } else {
-      params.set('rating', rating);
+      params.set('rating', rating)
     }
-    router.push(`?${params.toString()}`);
-  };
+    router.push(`?${params.toString()}`)
+  }
+
+  const handleVoiceChange = (selectedVoice) => {
+    setVoice(selectedVoice)
+    onVoiceChange(selectedVoice) // Notify the parent component
+  }
 
   return (
     <Card className="mb-4">
@@ -56,8 +61,7 @@ const FilterCard = ({ tags }) => {
             text={selectedTag === 'All' ? 'white' : 'dark'}
             className="cursor-pointer"
             onClick={() => handleTagChange('All')}
-            style={{ cursor: 'pointer' }}
-          >
+            style={{ cursor: 'pointer' }}>
             All
           </Badge>
           {/* Render tags dynamically */}
@@ -69,8 +73,7 @@ const FilterCard = ({ tags }) => {
               text={selectedTag === tag.name ? 'white' : 'dark'}
               className="cursor-pointer"
               onClick={() => handleTagChange(tag.name)}
-              style={{ cursor: 'pointer' }}
-            >
+              style={{ cursor: 'pointer' }}>
               {tag.name}
             </Badge>
           ))}
@@ -86,8 +89,7 @@ const FilterCard = ({ tags }) => {
               text={selectedRating === rating ? 'white' : 'dark'}
               className="cursor-pointer"
               onClick={() => handleRatingChange(rating)}
-              style={{ cursor: 'pointer' }}
-            >
+              style={{ cursor: 'pointer' }}>
               {rating === 'All' ? rating : `${rating} ★`}
             </Badge>
           ))}
@@ -102,19 +104,19 @@ const FilterCard = ({ tags }) => {
             onChange={(e) => setFlashCardMode(e.target.checked)}
           />
 
-          <Form.Select
-            size="sm"
-            style={{ width: '180px' }}
-            value={voice}
-            onChange={(e) => setVoice(e.target.value)}
-          >
-            <option>Lucia (Woman)</option>
-            <option>Mark (Man)</option>
+          <Form.Select size="sm" style={{
+            width:"180px"
+          }} value={voice} onChange={(e) => handleVoiceChange(e.target.value)}>
+            {voices.map((voiceOption) => (
+              <option key={voiceOption.id} value={voiceOption.id}>
+                {voiceOption.name} ({voiceOption.gender})
+              </option>
+            ))}
           </Form.Select>
         </div>
       </Card.Body>
     </Card>
-  );
-};
+  )
+}
 
-export default FilterCard;
+export default FilterCard

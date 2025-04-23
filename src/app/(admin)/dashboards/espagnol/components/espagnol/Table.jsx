@@ -19,7 +19,7 @@ import {
 import { useEffect, useState } from 'react'
 import SynthesisModal from './SynthesisModal'
 
-const Table = ({ loading, words }) => {
+const Table = ({ loading, words,selectedVoice }) => {
   const searchParams = useSearchParams()
   const [filteredData, setFilteredData] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -117,8 +117,12 @@ const Table = ({ loading, words }) => {
           </CardHeader>
           <CardBody className="p-0">
             <div className="table-responsive">
-              <SynthesisModal reviewData={paginatedData} loading={loading} onDelete={handleDelete}/>
-            </div>
+            <SynthesisModal
+  reviewData={paginatedData}
+  loading={loading}
+  onDelete={handleDelete}
+  selectedVoice={selectedVoice}
+/>            </div>
           </CardBody>
           <CardFooter>
             <nav aria-label="Page navigation example">
