@@ -1,9 +1,10 @@
-'use client'
+'use client';
 
-import IconifyIcon from '@/components/wrappers/IconifyIcon'
-import { useParams } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
-import { Button, Card, Form, Row, Col } from 'react-bootstrap'
+import IconifyIcon from '@/components/wrappers/IconifyIcon';
+import { useParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Card, Form, Row, Col } from 'react-bootstrap';
+
 const preprocessDialogues = (dialogueString) => {
   const lines = dialogueString.split('\n');
   const dialogues = [];
@@ -31,7 +32,8 @@ const StoryViewer = () => {
   const [voiceA, setVoiceA] = useState('Lucia');
   const [voiceB, setVoiceB] = useState('Enrique');
   const [availableVoices, setAvailableVoices] = useState([]);
-  const synthRef = useRef(window.speechSynthesis);
+  const [isReading, setIsReading] = useState(false); // To track if reading is in progress
+  const audioRef = useRef(null); // To track the currently playing audio
 
   // Fetch the story by storyId
   useEffect(() => {
@@ -56,39 +58,84 @@ const StoryViewer = () => {
     if (id) fetchStory();
   }, [id]);
 
-  // Load voices when available
+  // Fetch available voices from the Polly API
   useEffect(() => {
-    const loadVoices = () => {
-      const voices = synthRef.current.getVoices();
-      setAvailableVoices(voices);
+    const fetchVoices = async () => {
+      try {
+        const res = await fetch('/api/polly'); // Replace with your Polly API endpoint
+        const data = await res.json();
+        if (res.ok) {
+          setAvailableVoices(data); // Assuming the API returns an array of voices
+        } else {
+          setError(data.error || 'Failed to fetch voices');
+        }
+      } catch (err) {
+        console.error('Error fetching voices:', err);
+        setError('Failed to fetch voices');
+      }
     };
 
-    // Some browsers load voices asynchronously
-    if (synthRef.current.onvoiceschanged !== undefined) {
-      synthRef.current.onvoiceschanged = loadVoices;
-    }
-
-    loadVoices();
+    fetchVoices();
   }, []);
 
-  const speak = (text, voiceLabel) => {
-    const utterance = new SpeechSynthesisUtterance(text);
+  const speak = async (text, voice) => {
+    try {
+      const response = await fetch('/api/polly', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          voice,
+          language: 'es-ES', // Adjust language as needed
+        }),
+      });
 
-    const selectedVoice = availableVoices.find((v) =>
-      v.name.toLowerCase().includes(voiceLabel.toLowerCase())
-    );
+      if (!response.ok) {
+        throw new Error('Failed to fetch Polly API');
+      }
 
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio; // Track the current audio instance
+      await new Promise((resolve, reject) => {
+        audio.onended = resolve; // Resolve when the audio finishes
+        audio.onerror = reject; // Reject if there's an error
+        audio.play();
+      });
+    } catch (error) {
+      console.error('Error fetching Polly API:', error);
+    }
+  };
+
+  const readDialoguesSequentially = async (dialogues, index = 0) => {
+    if (!isReading || index >= dialogues.length) {
+      setIsReading(false); // Stop reading when all dialogues are done or stopped
+      return;
     }
 
-    synthRef.current.speak(utterance);
+    const dialogue = dialogues[index];
+    if (dialogue.a) {
+      await speak(dialogue.a, voiceA); // Speak Person A's dialogue
+    }
+    if (dialogue.b) {
+      await speak(dialogue.b, voiceB); // Speak Person B's dialogue
+    }
+
+    // Move to the next dialogue
+    readDialoguesSequentially(dialogues, index + 1);
   };
 
-  const stopSpeaking = () => {
-    synthRef.current.cancel();
+  const stopReading = () => {
+    setIsReading(false);
+    if (audioRef.current) {
+      audioRef.current.pause(); // Stop the currently playing audio
+      audioRef.current = null; // Clear the reference
+    }
   };
-
   const dialogues = story?.storyText ? preprocessDialogues(story.storyText) : [];
 
   return (
@@ -112,24 +159,30 @@ const StoryViewer = () => {
 
         {/* Voice Configuration */}
         <Card className="mb-4">
-          <Card.Header className="bg-primary text-white">Configuration de la synthèse vocale (Amazon Polly)</Card.Header>
+          <Card.Header className="bg-primary text-white">Voice Configuration (Amazon Polly)</Card.Header>
           <Card.Body>
             <Row>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label>Voix pour Personne A:</Form.Label>
+                  <Form.Label>Voice for Person A:</Form.Label>
                   <Form.Select value={voiceA} onChange={(e) => setVoiceA(e.target.value)}>
-                    <option value="Lucia">Lucia (Female)</option>
-                    <option value="Conchita">Conchita (Female)</option>
+                    {availableVoices.map((voice) => (
+                      <option key={voice.id} value={voice.id}>
+                        {voice.name} ({voice.gender})
+                      </option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label>Voix pour Personne B:</Form.Label>
+                  <Form.Label>Voice for Person B:</Form.Label>
                   <Form.Select value={voiceB} onChange={(e) => setVoiceB(e.target.value)}>
-                    <option value="Enrique">Enrique (Male)</option>
-                    <option value="Miguel">Miguel (Male)</option>
+                    {availableVoices.map((voice) => (
+                      <option key={voice.id} value={voice.id}>
+                        {voice.name} ({voice.gender})
+                      </option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
               </Col>
@@ -143,50 +196,54 @@ const StoryViewer = () => {
             variant="success"
             className="me-2"
             onClick={() => {
-              dialogues.forEach((dialogue, i) => {
-                const delay = i * 3000;
-                if (dialogue.a) setTimeout(() => speak(dialogue.a, voiceA), delay);
-                if (dialogue.b) setTimeout(() => speak(dialogue.b, voiceB), delay + 1500);
-              });
+              if (!isReading) {
+                setIsReading(true);
+                readDialoguesSequentially(dialogues);
+              }
             }}
+            disabled={isReading} // Disable button while reading
           >
-            Lire tous les dialogues
+            Read All Dialogues
           </Button>
-          <Button variant="danger" onClick={stopSpeaking}>
-            Arrêter
+          <Button
+            variant="danger"
+            onClick={stopReading} // Stop reading when clicked
+          >
+            Stop
           </Button>
         </div>
 
+
         {/* Display Dialogues */}
         {dialogues.map((dialogue, idx) => (
-          <div key={idx}>
-            {dialogue.a && (
-              <Card className="mb-3">
-                <Card.Body>
-                  <div className="d-flex align-items-center justify-content-between">
-                    <strong>🧍 Personne A</strong>
-                    <Button variant="link" onClick={() => speak(dialogue.a, voiceA)} title="Lire ce texte">
-                      <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
-                    </Button>
-                  </div>
-                  <p>{dialogue.a}</p>
-                </Card.Body>
-              </Card>
-            )}
-            {dialogue.b && (
-              <Card className="mb-3">
-                <Card.Body>
-                  <div className="d-flex align-items-center justify-content-between">
-                    <strong>🧑 Personne B</strong>
-                    <Button variant="link" onClick={() => speak(dialogue.b, voiceB)} title="Lire ce texte">
-                      <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
-                    </Button>
-                  </div>
-                  <p>{dialogue.b}</p>
-                </Card.Body>
-              </Card>
-            )}
-          </div>
+          <Card className="mb-3" key={idx}>
+            <Card.Body>
+              <Row>
+                {dialogue.a && (
+                  <Col md={6}>
+                    <div className="d-flex align-items-center justify-content-between">
+                      <strong>🧍 Person A</strong>
+                      <Button variant="link" onClick={() => speak(dialogue.a, voiceA)} title="Read this text">
+                        <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
+                      </Button>
+                    </div>
+                    <p>{dialogue.a}</p>
+                  </Col>
+                )}
+                {dialogue.b && (
+                  <Col md={6}>
+                    <div className="d-flex align-items-center justify-content-between">
+                      <strong>🧑 Person B</strong>
+                      <Button variant="link" onClick={() => speak(dialogue.b, voiceB)} title="Read this text">
+                        <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
+                      </Button>
+                    </div>
+                    <p>{dialogue.b}</p>
+                  </Col>
+                )}
+              </Row>
+            </Card.Body>
+          </Card>
         ))}
       </>
     </div>
