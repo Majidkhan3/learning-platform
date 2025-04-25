@@ -23,9 +23,7 @@ const Page = () => {
         const data = await res.json()
         if (res.ok) {
           setStories(data.stories)
-        } else {
-          setError(data.error || 'Failed to fetch stories')
-        }
+        } 
       } catch (err) {
         console.error('Error fetching stories:', err)
         setError('Failed to fetch stories')
