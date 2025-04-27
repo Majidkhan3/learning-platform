@@ -6,9 +6,9 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 
-const AddTags = ( ) => {
-  const { user} = useAuth()
-  const userId = user?._id || '' // Assuming you have a way to get the user ID
+const AddTags = () => {
+  const { user } = useAuth();
+  const userId = user?._id || ''; 
   const [tags, setTags] = useState([]);
   const [newTagName, setNewTagName] = useState('');
   const [error, setError] = useState('');
@@ -18,10 +18,24 @@ const AddTags = ( ) => {
       const res = await fetch(`/api/tags?userId=${userId}`);
       const data = await res.json();
       if (data.success) {
-        setTags(data.tags);
+        // Fetch words to calculate the count for each tag
+        const wordsRes = await fetch(`/api/words?userId=${userId}`);
+        const wordsData = await wordsRes.json();
+
+        if (wordsData.success) {
+          const words = wordsData.words;
+
+          // Map tags with their associated word counts
+          const tagsWithCounts = data.tags.map((tag) => {
+            const wordCount = words.filter((word) => word.tags.includes(tag.name)).length;
+            return { ...tag, count: wordCount };
+          });
+
+          setTags(tagsWithCounts);
+        }
       }
     } catch (err) {
-      console.error('Error fetching tags:', err);
+      console.error('Error fetching tags or words:', err);
     }
   };
   useEffect(() => {
@@ -42,7 +56,7 @@ const AddTags = ( ) => {
 
       const data = await res.json();
       if (data.success) {
-        setTags([...tags, data.tag]);
+        setTags([...tags, { ...data.tag, count: 0 }]); // Add the new tag with a count of 0
         setNewTagName('');
         setError('');
       } else {

@@ -51,6 +51,40 @@ const FlashCard = () => {
   useEffect(() => {
     fetchWords()
   }, [])
+  
+  useEffect(() => {
+    const speakWithPolly = async (text) => {
+      try {
+        const response = await fetch('/api/polly', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text,
+            voice: 'Lucia', // Use the "Lucia" voice
+            language: 'es-ES', // Adjust language as needed
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch Polly API')
+        }
+
+        const audioBlob = await response.blob()
+        const audioUrl = URL.createObjectURL(audioBlob)
+
+        const audio = new Audio(audioUrl)
+        audio.play()
+      } catch (error) {
+        console.error('Error fetching Polly API:', error)
+      }
+    }
+
+    if (currentCard?.word) {
+      speakWithPolly(currentCard.word) // Speak the word using Polly
+    }
+  }, [currentCard?.word])
 
   const toggleFlip = () => {
     setIsFlipped(!isFlipped)
@@ -60,6 +94,20 @@ const FlashCard = () => {
     if (index >= 1 && index <= cards.length) {
       router.push(`/dashboards/flashcard?tag=&rating=&index=${index}`)
       setIsFlipped(false)
+    }
+  }
+
+  const handleTap = () => {
+    if (!isFlipped) {
+      toggleFlip() // Flip the card on the first tap
+    } else {
+      goToCard(currentIndex + 1) // Go to the next card on the second tap
+    }
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleTap() // Trigger the same behavior as tapping
     }
   }
 
@@ -102,64 +150,23 @@ const FlashCard = () => {
     setModalImage('')
   }
 
-  // Automatically speak the word when the card appears
   useEffect(() => {
-    const speakWithPolly = async (text) => {
-      try {
-        const response = await fetch('/api/polly', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text,
-            voice: 'Lucia', // Use the "Lucia" voice
-            language: 'es-ES', // Adjust language as needed
-          }),
-        });
-  
-        if (!response.ok) {
-          throw new Error('Failed to fetch Polly API');
-        }
-  
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-  
-        const audio = new Audio(audioUrl);
-        audio.play();
-      } catch (error) {
-        console.error('Error fetching Polly API:', error);
-      }
-    };
-  
-    if (currentCard?.word) {
-      speakWithPolly(currentCard.word); // Speak the word using Polly
-    }
-  }, [currentCard?.word]); // Trigger whenever the currentCard changes
-
-  // Handle "Enter" key behavior
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Enter') {
-        if (!isFlipped) {
-          toggleFlip() // Flip the card
-        } else {
-          goToCard(currentIndex + 1) // Go to the next card
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
+    // Add keypress listener for desktop behavior
+    window.addEventListener('keydown', handleKeyPress)
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keydown', handleKeyPress)
     }
-  }, [isFlipped, currentIndex, cards])
+  }, [isFlipped, currentIndex])
 
   if (loading) return <div className="text-center">Loading...</div>
   if (error) return <div className="text-center text-danger">{error}</div>
 
   return (
-    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+    <div
+      className="d-flex justify-content-center align-items-center"
+      style={{ minHeight: '100vh' }}
+      onClick={handleTap} // Handle tap for mobile devices
+    >
       <div className="flashcard-container" style={{ width: '400px' }}>
         <div className="text-center mb-2">
           <small>
@@ -173,12 +180,12 @@ const FlashCard = () => {
             <Card
               className={`position-absolute w-100 h-100 ${isFlipped ? 'd-none' : ''}`}
               style={{ backfaceVisibility: 'hidden', zIndex: '2' }}
-              onClick={toggleFlip}>
+            >
               <Card.Body className="d-flex flex-column h-100">
                 <Card.Title className="text-center mb-4">{currentCard?.word}</Card.Title>
                 <div className="mt-auto">
                   <div className="text-center mb-3">
-                    <small>Click the card or press Enter to reveal content</small>
+                    <small>Tap to reveal content</small>
                   </div>
                 </div>
               </Card.Body>
@@ -187,18 +194,21 @@ const FlashCard = () => {
             {/* Back Side */}
             <Card
               className={`position-absolute w-100 h-100 ${!isFlipped ? 'd-none' : ''}`}
-              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+            >
               <Card.Body>
                 <Card.Title className="text-center mb-4 d-flex justify-content-center align-items-center">
                   {currentCard?.word}
                   <Button
                     variant="link"
                     className="ms-2 p-0"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation() // Prevent triggering the tap handler
                       const utterance = new SpeechSynthesisUtterance(currentCard.word)
                       window.speechSynthesis.speak(utterance)
                     }}
-                    aria-label="Speak Word">
+                    aria-label="Speak Word"
+                  >
                     <i className="bi bi-volume-up"></i> {/* Speaker Icon */}
                   </Button>
                 </Card.Title>
@@ -213,7 +223,10 @@ const FlashCard = () => {
                       alt="Card"
                       className="img-fluid"
                       style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', cursor: 'pointer' }}
-                      onClick={() => openModal(currentCard.image)}
+                      onClick={(e) => {
+                        e.stopPropagation() // Prevent triggering the tap handler
+                        openModal(currentCard.image)
+                      }}
                     />
                   ) : (
                     <p>No image available for this card.</p>
@@ -233,7 +246,10 @@ const FlashCard = () => {
                         key={star}
                         icon={`ri:star${star <= currentCard?.rating ? '-fill' : '-s-line'}`}
                         style={{ cursor: 'pointer', fontSize: '1.5rem', color: '#ffc107' }}
-                        onClick={() => handleRating(star)}
+                        onClick={(e) => {
+                          e.stopPropagation() // Prevent triggering the tap handler
+                          handleRating(star)
+                        }}
                       />
                     ))}
                   </div>
@@ -254,7 +270,14 @@ const FlashCard = () => {
                 </Accordion>
 
                 <div className="text-center mt-3">
-                  <Button variant="outline-primary" size="sm" onClick={toggleFlip}>
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation() // Prevent triggering the tap handler
+                      toggleFlip()
+                    }}
+                  >
                     Flip Card
                   </Button>
                 </div>
@@ -269,11 +292,26 @@ const FlashCard = () => {
           style={{
             gap: '200px',
           }}
-          className="justify-content-center mt-3">
-          <Button variant="outline-secondary" onClick={() => goToCard(currentIndex - 1)} disabled={currentIndex <= 1}>
+          className="justify-content-center mt-3"
+        >
+          <Button
+            variant="outline-secondary"
+            onClick={(e) => {
+              e.stopPropagation() // Prevent triggering the tap handler
+              goToCard(currentIndex - 1)
+            }}
+            disabled={currentIndex <= 1}
+          >
             ← Previous
           </Button>
-          <Button variant="outline-secondary" onClick={() => goToCard(currentIndex + 1)} disabled={currentIndex >= cards.length}>
+          <Button
+            variant="outline-secondary"
+            onClick={(e) => {
+              e.stopPropagation() // Prevent triggering the tap handler
+              goToCard(currentIndex + 1)
+            }}
+            disabled={currentIndex >= cards.length}
+          >
             Next →
           </Button>
         </Stack>
