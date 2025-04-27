@@ -104,11 +104,38 @@ const FlashCard = () => {
 
   // Automatically speak the word when the card appears
   useEffect(() => {
-    if (currentCard && 'speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(currentCard.word)
-      window.speechSynthesis.speak(utterance)
+    const speakWithPolly = async (text) => {
+      try {
+        const response = await fetch('/api/polly', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text,
+            voice: 'Lucia', // Use the "Lucia" voice
+            language: 'es-ES', // Adjust language as needed
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to fetch Polly API');
+        }
+  
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+  
+        const audio = new Audio(audioUrl);
+        audio.play();
+      } catch (error) {
+        console.error('Error fetching Polly API:', error);
+      }
+    };
+  
+    if (currentCard?.word) {
+      speakWithPolly(currentCard.word); // Speak the word using Polly
     }
-  }, [currentCard?.word]) // Trigger whenever the currentCard changes
+  }, [currentCard?.word]); // Trigger whenever the currentCard changes
 
   // Handle "Enter" key behavior
   useEffect(() => {

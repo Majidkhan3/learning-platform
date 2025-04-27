@@ -101,7 +101,7 @@ const Youtube = () => {
         </Card>
       )}
 
-      <Button variant="secondary" onClick={() => router.push('/agent')}>
+      <Button variant="secondary" onClick={() => router.push('/dashboards/dialogues')}>
         ⬅ Return to the list of dialogues
       </Button>
     </>

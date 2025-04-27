@@ -9,7 +9,7 @@ const Footer = () => {
         <Row>
           <Col xs={12} className="text-center">
             {currentYear} Crafted by <IconifyIcon icon="solar:hearts-bold-duotone" className="fs-18 align-middle text-danger" />{' '}
-            <Link href="https://github.com/Majidkhan3" className="fw-bold footer-text" target="_blank">
+            <Link href="https://github.com/Majidkhan3" className="" target="_blank">
               Majid Dev
             </Link>
           </Col>
