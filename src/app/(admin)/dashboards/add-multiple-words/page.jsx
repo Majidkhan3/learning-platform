@@ -95,11 +95,11 @@ export default function AddWordsPage() {
       return
     }
 
-    if (selectedTags.length === 0) {
-      setError('Please select at least one tag.')
-      setLoading(false)
-      return
-    }
+    // if (selectedTags.length === 0) {
+    //   setError('Please select at least one tag.')
+    //   setLoading(false)
+    //   return
+    // }
 
     try {
       let addedWords = 0
