@@ -8,6 +8,7 @@ const wordSchema = new mongoose.Schema(
     image: { type: String, required: false },
     note: { type: Number, default: 0 },
     autoGenerateImage: { type: Boolean, default: false },
+    autoGenerateSummary: { type: Boolean, default: false },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   },
   { timestamps: true },

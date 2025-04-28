@@ -18,7 +18,8 @@ const AddWord = () => {
     summary: EditorState.createEmpty(),
     image: '',
     note: 0, // Default note value
-    autoGenerateImage: false, // New state for the checkbox
+    autoGenerateImage: false, // State for auto-generate image checkbox
+    autoGenerateSummary: false, // State for auto-generate summary checkbox
   });
 
   const [availableTags, setAvailableTags] = useState([]); // State for fetched tags
@@ -80,7 +81,15 @@ const AddWord = () => {
   const handleAutoGenerateImageChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      autoGenerateImage: e.target.checked, // Example placeholder image
+      autoGenerateImage: e.target.checked,
+    }));
+  };
+
+  // Handle checkbox change for auto-generate summary
+  const handleAutoGenerateSummaryChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      autoGenerateSummary: e.target.checked,
     }));
   };
 
@@ -93,7 +102,6 @@ const AddWord = () => {
   const handleRatingChange = (rating) => {
     setFormData((prev) => ({ ...prev, note: rating }));
   };
-  console.log("formData",formData)
 
   // Save content to backend
   const saveContent = async () => {
@@ -112,6 +120,7 @@ const AddWord = () => {
         image: formData.image,
         note: formData.note,
         autoGenerateImage: formData.autoGenerateImage,
+        autoGenerateSummary: formData.autoGenerateSummary,
         summary: convertToRaw(formData.summary.getCurrentContent()),
         userId,
       };
@@ -132,6 +141,7 @@ const AddWord = () => {
           image: null,
           note: 0,
           autoGenerateImage: false,
+          autoGenerateSummary: false,
         });
         setError('');
       } else {
@@ -221,6 +231,16 @@ const AddWord = () => {
                     placeholder="Enter your summary here..."
                   />
                 </div>
+              </Form.Group>
+
+              {/* Auto-Generate Summary Checkbox */}
+              <Form.Group className="mb-4">
+                <Form.Check
+                  type="checkbox"
+                  label="Generate summary automatically"
+                  checked={formData.autoGenerateSummary}
+                  onChange={handleAutoGenerateSummaryChange}
+                />
               </Form.Group>
 
               {/* Star Rating Section */}
