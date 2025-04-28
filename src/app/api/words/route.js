@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import connectToDatabase from '../../../lib/db'
 import Word from '../../../model/Word'
+import { v2 as cloudinary } from 'cloudinary'
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: 'dzzcfpydw',
+  api_key: '871199521185426',
+  api_secret: 't6lX7K4UCNYa3pV3nv-BbPmGLjc',
+})
 
 export async function POST(req) {
   try {
@@ -68,7 +76,7 @@ export async function POST(req) {
     // Handle image generation only if autoGenerateImage is true
     let imageUrl = image || ''
     if (autoGenerateImage) {
-      console.log('[DEBUG] Auto-generating image for word:')
+      console.log('[DEBUG] Auto-generating image for word:', word)
       const openAiApiKey = process.env.OPENAI_API_KEY
       if (!openAiApiKey) {
         return NextResponse.json({ error: 'OpenAI API key is missing in environment variables.' }, { status: 500 })
@@ -92,15 +100,48 @@ export async function POST(req) {
         body: JSON.stringify(openAiData),
       })
 
-      if (openAiResponse.ok) {
+      if (!openAiResponse.ok) {
+        console.error(`[ERROR] OpenAI API error: ${openAiResponse.status}, ${await openAiResponse.text()}`)
+      } else {
         const openAiResult = await openAiResponse.json()
         console.log('[DEBUG OpenAI] Response JSON:', openAiResult)
 
-        if (openAiResult?.data && Array.isArray(openAiResult.data) && openAiResult.data.length > 0) {
-          imageUrl = openAiResult.data[0]?.url || ''
+        if (openAiResult?.data?.[0]?.url) {
+          const generatedImageUrl = openAiResult.data[0].url
+
+          try {
+            // Upload to Cloudinary
+            console.log('[DEBUG] Uploading image to Cloudinary')
+
+            // First fetch the image as a buffer
+            const imageResponse = await fetch(generatedImageUrl)
+            const arrayBuffer = await imageResponse.arrayBuffer()
+            const buffer = Buffer.from(arrayBuffer)
+
+            // Upload buffer to Cloudinary
+            const cloudinaryResult = await new Promise((resolve, reject) => {
+              const uploadStream = cloudinary.uploader.upload_stream(
+                { folder: 'word-images' }, // Customize folder as needed
+                (error, result) => {
+                  if (error) {
+                    console.error('[ERROR] Cloudinary upload error:', error)
+                    reject(error)
+                  } else {
+                    resolve(result)
+                  }
+                },
+              )
+              uploadStream.end(buffer)
+            })
+
+            imageUrl = cloudinaryResult.secure_url
+            console.log('[DEBUG] Cloudinary upload successful:', imageUrl)
+          } catch (uploadError) {
+            console.error('[ERROR] Failed to upload image to Cloudinary:', uploadError)
+            // Fall back to OpenAI URL if upload fails (though it will expire)
+            imageUrl = generatedImageUrl
+          }
         }
-      } else {
-        console.error(`[ERROR] OpenAI API error: ${openAiResponse.status}, ${await openAiResponse.text()}`)
       }
     }
 
@@ -116,7 +157,14 @@ export async function POST(req) {
 
     await newWord.save()
 
-    return NextResponse.json({ success: true, message: 'Word saved successfully!', word: newWord }, { status: 201 })
+    return NextResponse.json(
+      {
+        success: true,
+        message: 'Word saved successfully!',
+        word: newWord,
+      },
+      { status: 201 },
+    )
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

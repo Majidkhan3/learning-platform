@@ -27,6 +27,7 @@
     "bcrypt": "^5.1.1",
     "bootstrap": "^5.3.3",
     "choices.js": "^10.2.0",
+    "cloudinary": "^2.6.0",
     "clsx": "^2.1.1",
     "crypto": "^1.0.1",
     "dayjs": "^1.11.13",
