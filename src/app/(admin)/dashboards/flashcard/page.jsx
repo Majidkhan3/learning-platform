@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, Button, ListGroup, Accordion, Stack, Modal } from 'react-bootstrap'
+import { useSwipeable } from 'react-swipeable' // Import react-swipeable
 import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
@@ -158,6 +159,14 @@ const FlashCard = () => {
     }
   }, [isFlipped, currentIndex])
 
+  // Swipe handlers for touch gestures
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => goToCard(currentIndex + 1), // Swipe left to go to the next card
+    onSwipedRight: () => goToCard(currentIndex - 1), // Swipe right to go to the previous card
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true, // Optional: Allow swipe gestures with a mouse
+  })
+
   if (loading) return <div className="text-center">Loading...</div>
   if (error) return <div className="text-center text-danger">{error}</div>
 
@@ -166,6 +175,7 @@ const FlashCard = () => {
       className="d-flex justify-content-center align-items-center"
       style={{ minHeight: '100vh' }}
       onClick={handleTap} // Handle tap for mobile devices
+      {...swipeHandlers} // Attach swipe handlers for touch gestures
     >
       <div className="flashcard-container" style={{ width: '400px' }}>
         <div className="text-center mb-2">
