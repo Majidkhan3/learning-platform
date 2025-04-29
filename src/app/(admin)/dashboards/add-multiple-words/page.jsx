@@ -9,6 +9,7 @@ export default function AddWordsPage() {
   const [tags, setTags] = useState([])
   const [ignoreExisting, setIgnoreExisting] = useState(true)
   const [autoGenerateImage, setAutoGenerateImage] = useState(false)
+  const [autoGenerateSummary, setAutoGenerateSummary] = useState(false) // New state for auto-generate summary
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -95,12 +96,6 @@ export default function AddWordsPage() {
       return
     }
 
-    // if (selectedTags.length === 0) {
-    //   setError('Please select at least one tag.')
-    //   setLoading(false)
-    //   return
-    // }
-
     try {
       let addedWords = 0
 
@@ -125,8 +120,10 @@ export default function AddWordsPage() {
           body: JSON.stringify({
             word, // Send one word at a time
             tags: selectedTags,
+            summary:"no synthesis",
             note: wordRatings[word] || 0, // Default to 0 if no rating is selected
             autoGenerateImage, // Pass the autoGenerateImage flag
+            autoGenerateSummary, // Pass the autoGenerateSummary flag
             userId: user._id,
           }),
         })
@@ -224,6 +221,12 @@ export default function AddWordsPage() {
                         label="Automatically generate the image"
                         checked={autoGenerateImage}
                         onChange={(e) => setAutoGenerateImage(e.target.checked)}
+                      />
+                      <Form.Check
+                        type="checkbox"
+                        label="Automatically generate the summary"
+                        checked={autoGenerateSummary}
+                        onChange={(e) => setAutoGenerateSummary(e.target.checked)}
                       />
                       <Form.Check
                         type="checkbox"
