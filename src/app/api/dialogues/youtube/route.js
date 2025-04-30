@@ -21,17 +21,9 @@ export async function POST(req) {
     }
 
     // Check transcript availability and fetch transcript
+    // Check transcript availability and fetch transcript
     let transcriptData
     try {
-      console.log('Checking available languages for video ID:', videoId)
-      const availableLanguages = await YoutubeTranscript.listAvailableLanguages(videoId)
-      console.log('Available languages:', availableLanguages)
-
-      if (!availableLanguages.includes('es') && !availableLanguages.includes('en')) {
-        console.error('No transcripts available in Spanish or English for this video.')
-        return NextResponse.json({ error: 'Transcripts are not available for this video' }, { status: 400 })
-      }
-
       console.log('Attempting to fetch transcript in Spanish for video ID:', videoId)
       transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
       if (!transcriptData || transcriptData.length === 0) {
@@ -40,7 +32,7 @@ export async function POST(req) {
       }
     } catch (error) {
       console.error('Transcript Fetch Error (Spanish):', error.stack || error.message)
-      if (error.message.includes('No transcripts are available in es') || error.message === 'Empty transcript in Spanish') {
+      if (error.message === 'Empty transcript in Spanish') {
         console.warn('Spanish transcript not available, attempting to fetch in English.')
         try {
           console.log('Attempting to fetch transcript in English for video ID:', videoId)
@@ -61,7 +53,6 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
       }
     }
-
     const transcript = transcriptData.map((line) => line.text).join(' ')
     console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
 
