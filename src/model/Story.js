@@ -11,10 +11,6 @@ const storySchema = new mongoose.Schema({
     ref: 'User', // Name of the referenced model
     required: true,
   },
-  title: {
-    type: String,
-    required: true,
-  },
   theme: {
     type: String,
     required: true,

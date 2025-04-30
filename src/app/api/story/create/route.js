@@ -120,9 +120,9 @@ async function generateStoryWithClaude(words, theme) {
 
 export async function POST(req, res) {
   await connectToDatabase() // Ensure you have a function to connect to your database
-  const { title, theme, selectedTags, rating, userId, words } = await req.json()
+  const { theme, selectedTags, rating, userId, words } = await req.json()
 
-  if (!title || !theme || !userId || !words || words.length === 0) {
+  if (!theme || !userId || !words || words.length === 0) {
     return new Response(JSON.stringify({ error: 'Title, theme, userId, and words are required.' }), { status: 400 })
   }
 
@@ -137,7 +137,7 @@ export async function POST(req, res) {
     const newStory = new Story({
       storyId,
       userId,
-      title,
+      // title,
       theme,
       tags: selectedTags,
       rating,

@@ -60,7 +60,7 @@ const CreateStory = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          title,
+          // title,
           theme,
           selectedTags,
           rating: difficulty,
@@ -105,7 +105,7 @@ const CreateStory = () => {
           <p className="text-muted mb-4">Define the criteria to generate a story with 2 dialogues in Spanish</p>
 
           <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
+            {/* <Form.Group className="mb-3">
               <Form.Label>
                 Story Title <span className="text-danger">*</span>
               </Form.Label>
@@ -116,7 +116,7 @@ const CreateStory = () => {
                 placeholder="Enter story title"
                 required
               />
-            </Form.Group>
+            </Form.Group> */}
 
             <Form.Group className="mb-3">
               <Form.Label>Select tags (optional)</Form.Label>

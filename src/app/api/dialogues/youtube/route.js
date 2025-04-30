@@ -20,9 +20,18 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 })
     }
 
-    // Get transcript
+    // Check transcript availability and fetch transcript
     let transcriptData
     try {
+      console.log('Checking available languages for video ID:', videoId)
+      const availableLanguages = await YoutubeTranscript.listAvailableLanguages(videoId)
+      console.log('Available languages:', availableLanguages)
+
+      if (!availableLanguages.includes('es') && !availableLanguages.includes('en')) {
+        console.error('No transcripts available in Spanish or English for this video.')
+        return NextResponse.json({ error: 'Transcripts are not available for this video' }, { status: 400 })
+      }
+
       console.log('Attempting to fetch transcript in Spanish for video ID:', videoId)
       transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
       if (!transcriptData || transcriptData.length === 0) {
@@ -44,6 +53,9 @@ export async function POST(req) {
           console.error('Fallback Transcript Fetch Error (English):', fallbackError.stack || fallbackError.message)
           return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
         }
+      } else if (error.message.includes('Transcript is disabled on this video')) {
+        console.error('Transcripts are disabled for this video.')
+        return NextResponse.json({ error: 'Transcripts are disabled for this video' }, { status: 400 })
       } else {
         console.error('Unexpected Transcript Fetch Error:', error.stack || error.message)
         return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
@@ -52,6 +64,7 @@ export async function POST(req) {
 
     const transcript = transcriptData.map((line) => line.text).join(' ')
     console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
+
     // Send to Claude API to generate dialogues
     let claudeResponse
     try {
