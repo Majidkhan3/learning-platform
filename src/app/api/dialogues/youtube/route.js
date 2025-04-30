@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { YoutubeTranscript } from 'youtube-transcript'
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
 
@@ -20,40 +19,22 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 })
     }
 
-    // Check transcript availability and fetch transcript
-    // Check transcript availability and fetch transcript
-    let transcriptData
+    // Fetch transcript using YouTube Data API
+    let transcript
     try {
-      console.log('Attempting to fetch transcript in Spanish for video ID:', videoId)
-      transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
-      if (!transcriptData || transcriptData.length === 0) {
-        console.warn('Transcript is empty or unavailable in Spanish, falling back to English.')
-        throw new Error('Empty transcript in Spanish')
+      const accessToken = await getOAuth2AccessToken() // Fetch OAuth2 access token
+      console.log('Access Token:', accessToken) // Log the access token for debugging
+      transcript = await fetchYouTubeTranscript(videoId, accessToken)
+      console.log('Transcript:', transcript) // Log the transcript for debugging
+      if (!transcript) {
+        console.error('Transcript is unavailable for this video.')
+        return NextResponse.json({ error: 'Transcript is unavailable for this video' }, { status: 400 })
       }
     } catch (error) {
-      console.error('Transcript Fetch Error (Spanish):', error.stack || error.message)
-      if (error.message === 'Empty transcript in Spanish') {
-        console.warn('Spanish transcript not available, attempting to fetch in English.')
-        try {
-          console.log('Attempting to fetch transcript in English for video ID:', videoId)
-          transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' })
-          if (!transcriptData || transcriptData.length === 0) {
-            console.error('Transcript is empty or unavailable in English.')
-            return NextResponse.json({ error: 'Unable to fetch transcript in any language' }, { status: 500 })
-          }
-        } catch (fallbackError) {
-          console.error('Fallback Transcript Fetch Error (English):', fallbackError.stack || fallbackError.message)
-          return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
-        }
-      } else if (error.message.includes('Transcript is disabled on this video')) {
-        console.error('Transcripts are disabled for this video.')
-        return NextResponse.json({ error: 'Transcripts are disabled for this video' }, { status: 400 })
-      } else {
-        console.error('Unexpected Transcript Fetch Error:', error.stack || error.message)
-        return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
-      }
+      console.error('Error fetching transcript:', error.message)
+      return NextResponse.json({ error: 'Failed to fetch transcript' }, { status: 500 })
     }
-    const transcript = transcriptData.map((line) => line.text).join(' ')
+
     console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
 
     // Send to Claude API to generate dialogues
@@ -119,6 +100,63 @@ function extractYouTubeId(url) {
   const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([\w-]{11})/
   const match = url.match(regex)
   return match ? match[1] : null
+}
+
+async function fetchYouTubeTranscript(videoId, accessToken) {
+  const captionsUrl = `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}`
+  const captionsResponse = await fetch(captionsUrl, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+  const captionsData = await captionsResponse.json()
+
+  if (!captionsResponse.ok || !captionsData.items || captionsData.items.length === 0) {
+    throw new Error('No captions available for this video.')
+  }
+
+  const captionTrack = captionsData.items.find((item) => item.snippet.language === 'es' || item.snippet.language === 'en')
+
+  if (!captionTrack) {
+    throw new Error('No captions available in Spanish or English.')
+  }
+
+  const transcriptUrl = `https://www.googleapis.com/youtube/v3/captions/${captionTrack.id}?tfmt=ttml`
+  const transcriptResponse = await fetch(transcriptUrl, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+  const transcriptText = await transcriptResponse.text()
+
+  if (!transcriptResponse.ok || !transcriptText) {
+    throw new Error('Failed to fetch transcript text.')
+  }
+
+  return transcriptText
+}
+
+async function getOAuth2AccessToken() {
+  const tokenUrl = 'https://oauth2.googleapis.com/token'
+  const response = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+      grant_type: 'refresh_token',
+    }),
+  })
+  console.log('Token response:', response)
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(`Failed to fetch OAuth2 access token: ${data.error}`)
+  }
+
+  return data.access_token
 }
 
 function generatePrompt(transcript) {
