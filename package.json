@@ -72,6 +72,7 @@
     "sweetalert2-react-content": "^5.1.0",
     "swiper": "^11.1.11",
     "youtube-transcript": "^1.2.1",
+    "youtubei.js": "^13.4.0",
     "yup": "^1.4.0"
   },
   "devDependencies": {
