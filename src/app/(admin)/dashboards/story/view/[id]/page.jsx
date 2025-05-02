@@ -112,21 +112,29 @@ const StoryViewer = () => {
   };
 
   const readDialoguesSequentially = async (dialogues, index = 0) => {
-    if (!isReading || index >= dialogues.length) {
-      setIsReading(false); // Stop reading when all dialogues are done or stopped
-      return;
-    }
-
+    console.log('Reading dialogue:', index, dialogues[index]);
+    // if (!isReading || index >= dialogues.length) {
+    //   console.log('Stopping reading:', index, dialogues[index]);
+    //   setIsReading(false); // Stop reading when all dialogues are done or stopped
+    //   return;
+    // }
+  
     const dialogue = dialogues[index];
-    if (dialogue.a) {
-      await speak(dialogue.a, voiceA); // Speak Person A's dialogue
+    console.log('Current dialogue:', dialogue);
+    try {
+      if (dialogue.a) {
+        await speak(dialogue.a, voiceA); // Use Polly to speak Person A's dialogue
+      }
+      if (dialogue.b) {
+        await speak(dialogue.b, voiceB); // Use Polly to speak Person B's dialogue
+      }
+  
+      // Move to the next dialogue
+      await readDialoguesSequentially(dialogues, index + 1);
+    } catch (error) {
+      console.error('Error reading dialogues:', error);
+      setIsReading(false); // Stop reading if an error occurs
     }
-    if (dialogue.b) {
-      await speak(dialogue.b, voiceB); // Speak Person B's dialogue
-    }
-
-    // Move to the next dialogue
-    readDialoguesSequentially(dialogues, index + 1);
   };
 
   const stopReading = () => {
