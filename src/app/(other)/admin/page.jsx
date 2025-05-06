@@ -21,7 +21,7 @@ const {showNotification} = useNotificationContext()
 
     if (adminToken && admin) {
       // Redirect to /admin/home if authenticated
-      router.push("/admin/home");
+      router.push("/admin/dashboard");
     }
   }, [router]);
 

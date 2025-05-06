@@ -68,10 +68,9 @@ export default function RootLayout({ children }) {
         <div id="__next_splash">
           
           <AppProvidersWrapper>
-            <AuthProtectionWrapper>
-
+            {/* <AuthProtectionWrapper> */}
               {children}
-            </AuthProtectionWrapper>
+            {/* </AuthProtectionWrapper> */}
           </AppProvidersWrapper>
         </div>
       </body>

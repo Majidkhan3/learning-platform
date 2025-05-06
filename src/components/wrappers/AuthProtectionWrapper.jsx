@@ -77,6 +77,7 @@ const AuthProtectionWrapper = ({ children }) => {
           user: null,
           isInitialized: true,
         });
+        console.log('Redirecting to login');
         push(`/login?redirectTo=${pathname}`);
       }
     };
