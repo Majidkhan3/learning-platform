@@ -1,10 +1,6 @@
 import PageTitle from '@/components/PageTitle';
 import { Card, CardHeader, Col, Row } from 'react-bootstrap';
-import BalanceCard from './components/BalanceCard';
-import SalesChart from './components/SalesChart';
-import SocialSource from './components/SocialSource';
-import Statistics from './components/Statistics';
-import Transaction from './components/Transaction';
+
 import PageWithFilters from '@/app/(admin)/dashboards/espagnol/components/espagnol/PageWithFilters';
 
 import IconifyIcon from '@/components/wrappers/IconifyIcon';

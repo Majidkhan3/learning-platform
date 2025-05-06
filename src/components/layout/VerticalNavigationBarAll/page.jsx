@@ -14,17 +14,12 @@ const page = ({isAdmin}) => {
       icon: 'ri:home-office-line',
       url: '/admin/dashboard',
     },
+    
     {
-      key: 'story',
-      label: 'Histoires',
-      icon: 'ri:arrow-left-right-line',
-      url: '/dashboards/story',
-    },
-    {
-      key: 'flashcard',
-      label: 'Flash Cards',
+      key: 'users',
+      label: 'Users',
       icon: 'ri:discuss-line',
-      url: '/dashboards/flashcard',
+      url: '/admin/dashboard/users',
     },
   ]
   console.log('isAdmin', isAdmin)
