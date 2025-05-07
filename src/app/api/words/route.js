@@ -26,9 +26,26 @@ export async function POST(req) {
     if (autoGenerateSummary) {
       // Generate summary using Claude API
       const prompt = `
-      Est-ce que le mot '${word}' est fréquemment utilisé ? Si oui, explique pour quels usages, 
-      avec plusieurs phrases exemples en espagnol (sans traduction). 
-      Puis, à la fin, liste 'synonymes :' suivi des synonymes et 'antonymes :' suivi des antonymes.
+      Generate a detailed synthesis for the word ${word} in the following structured format:
+
+1. **Use and Frequency**:
+   - Explain how frequently the word is used in the language and in which contexts it is commonly used. Provide a brief description.
+
+2. **Mnemonics**:
+   - Provide two creative mnemonics to help remember the word. These can include phonetic associations, visual stories, or other memory aids.
+
+3. **Main Uses**:
+   - List the main contexts or scenarios where the word is used. For each context:
+     - Provide a title for the context.
+     - Include 2-3 example sentences in the language (without translation).
+
+4. **Synonyms**:
+   - Provide a list of synonyms for the word.
+
+5. **Antonyms**:
+   - Provide a list of antonyms for the word.
+
+Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
     `
 
       const claudeApiKey = process.env.CLAUDE_API_KEY

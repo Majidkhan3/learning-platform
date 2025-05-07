@@ -19,26 +19,25 @@ import {
 import { useEffect, useState } from 'react'
 import SynthesisModal from './SynthesisModal'
 
-const Table = ({ loading, words,selectedVoice }) => {
+const Table = ({ loading, words, selectedVoice }) => {
   const searchParams = useSearchParams()
   const [filteredData, setFilteredData] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [resultsPerPage, setResultsPerPage] = useState(10) // Default results per page
 
   useEffect(() => {
-    const tag = searchParams.get('tag');
-    const rating = searchParams.get('rating');
-  
+    const tag = searchParams.get('tag')
+    const rating = searchParams.get('rating')
+
     // Filter words based on selected tag and rating
     const filtered = words.filter((word) => {
-      const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag);
-      const matchesRating =
-        !rating || rating === 'All' || (word.note && word.note === parseInt(rating));
-      return matchesTag && matchesRating;
-    });
-  
-    setFilteredData(filtered);
-  }, [searchParams, words]);
+      const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag)
+      const matchesRating = !rating || rating === 'All' || (word.note && word.note === parseInt(rating))
+      return matchesTag && matchesRating
+    })
+
+    setFilteredData(filtered)
+  }, [searchParams, words])
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / resultsPerPage)
@@ -69,21 +68,21 @@ const Table = ({ loading, words,selectedVoice }) => {
     try {
       const response = await fetch(`/api/words/${id}`, {
         method: 'DELETE',
-      });
+      })
 
       if (response.ok) {
         // Remove the deleted row from the state
-        setFilteredData((prevData) => prevData.filter((word) => word._id !== id));
-        alert('Word deleted successfully!');
+        setFilteredData((prevData) => prevData.filter((word) => word._id !== id))
+        alert('Word deleted successfully!')
       } else {
-        const errorData = await response.json();
-        alert(`Failed to delete word: ${errorData.error}`);
+        const errorData = await response.json()
+        alert(`Failed to delete word: ${errorData.error}`)
       }
     } catch (error) {
-      console.error('Error deleting word:', error);
-      alert('An error occurred while deleting the word.');
+      console.error('Error deleting word:', error)
+      alert('An error occurred while deleting the word.')
     }
-  };
+  }
 
   return (
     <Row>
@@ -117,12 +116,8 @@ const Table = ({ loading, words,selectedVoice }) => {
           </CardHeader>
           <CardBody className="p-0">
             <div className="table-responsive">
-            <SynthesisModal
-  reviewData={paginatedData}
-  loading={loading}
-  onDelete={handleDelete}
-  selectedVoice={selectedVoice}
-/>            </div>
+              <SynthesisModal reviewData={paginatedData} loading={loading} onDelete={handleDelete} selectedVoice={selectedVoice} />{' '}
+            </div>
           </CardBody>
           <CardFooter>
             <nav aria-label="Page navigation example">

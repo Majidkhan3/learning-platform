@@ -1,31 +1,31 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import IconifyIcon from '@/components/wrappers/IconifyIcon';
-import { Button, Modal } from 'react-bootstrap';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react'
+import IconifyIcon from '@/components/wrappers/IconifyIcon'
+import { Button, Modal } from 'react-bootstrap'
+import { useRouter } from 'next/navigation'
 
 const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
-  const [showModal, setShowModal] = useState(false);
-  const [selectedDescription, setSelectedDescription] = useState('');
-  const [selectedImage, setSelectedImage] = useState('');
-  const router = useRouter();
+  const [showModal, setShowModal] = useState(false)
+  const [selectedDescription, setSelectedDescription] = useState('')
+  const [selectedImage, setSelectedImage] = useState('')
+  const router = useRouter()
 
   const handleSynthesisClick = (description) => {
-    setSelectedDescription(description);
-    setShowModal(true);
-  };
+    setSelectedDescription(description)
+    setShowModal(true)
+  }
 
   const handleImageClick = (image) => {
-    setSelectedImage(image);
-    setShowModal(true);
-  };
+    setSelectedImage(image)
+    setShowModal(true)
+  }
 
   const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedDescription('');
-    setSelectedImage('');
-  };
+    setShowModal(false)
+    setSelectedDescription('')
+    setSelectedImage('')
+  }
 
   const speakWord = async (word) => {
     try {
@@ -39,26 +39,26 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
           voice: selectedVoice,
           language: 'es-ES', // Adjust language as needed
         }),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch Polly API');
+        throw new Error('Failed to fetch Polly API')
       }
 
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      const audioBlob = await response.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
 
-      const audio = new Audio(audioUrl);
-      audio.play();
+      const audio = new Audio(audioUrl)
+      audio.play()
     } catch (error) {
-      console.error('Error fetching Polly API:', error);
+      console.error('Error fetching Polly API:', error)
     }
-  };
+  }
 
   const handleEditClick = (id) => {
-    router.push(`/dashboards/espagnol/edit/${id}`); // Navigate to the edit page with the item's ID
-  };
-
+    router.push(`/dashboards/espagnol/edit/${id}`) // Navigate to the edit page with the item's ID
+  }
+  console.log('selected ', selectedDescription)
   return (
     <>
       <table className="table align-middle text-nowrap table-hover table-centered border-bottom mb-0">
@@ -87,12 +87,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
               <tr key={idx}>
                 <td>{item.word}</td>
                 <td>
-                  <Button
-                    variant="light"
-                    size="sm"
-                    className="p-1"
-                    onClick={() => speakWord(item.word)}
-                  >
+                  <Button variant="light" size="sm" className="p-1" onClick={() => speakWord(item.word)}>
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
                 </td>
@@ -109,20 +104,12 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                   </ul>
                 </td>
                 <td>
-                  <Button
-                    variant="soft-info"
-                    size="sm"
-                    onClick={() => handleSynthesisClick(item.summary)}
-                  >
+                  <Button variant="soft-info" size="sm" onClick={() => handleSynthesisClick(item.summary)}>
                     <IconifyIcon icon="ri:file-text-line" className="align-middle fs-18" />
                   </Button>
                 </td>
                 <td>
-                  <Button
-                    variant="soft-secondary"
-                    size="sm"
-                    onClick={() => handleImageClick(item.image)}
-                  >
+                  <Button variant="soft-secondary" size="sm" onClick={() => handleImageClick(item.image)}>
                     <IconifyIcon icon="ri:image-line" className="align-middle fs-18" />
                   </Button>
                 </td>
@@ -130,31 +117,17 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                   <Button
                     variant="soft-primary"
                     size="sm"
-                    onClick={() =>
-                      window.open(
-                        `https://youglish.com/pronounce/${item.word}/spanish`,
-                        '_blank'
-                      )
-                    }
-                  >
+                    onClick={() => window.open(`https://youglish.com/pronounce/${item.word}/spanish`, '_blank')}>
                     <IconifyIcon icon="ri:youtube-line" className="align-middle fs-18" />
                   </Button>
                 </td>
                 <td>
-                  <Button
-                    variant="soft-warning"
-                    size="sm"
-                    onClick={() => handleEditClick(item._id)}
-                  >
+                  <Button variant="soft-warning" size="sm" onClick={() => handleEditClick(item._id)}>
                     <IconifyIcon icon="ri:edit-line" className="align-middle fs-18" />
                   </Button>
                 </td>
                 <td>
-                  <Button
-                    variant="soft-danger"
-                    size="sm"
-                    onClick={() => onDelete(item._id)}
-                  >
+                  <Button variant="soft-danger" size="sm" onClick={() => onDelete(item._id)}>
                     <IconifyIcon icon="ri:delete-bin-line" className="align-middle fs-18" />
                   </Button>
                 </td>
@@ -167,15 +140,132 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
       {/* Modal for Synthesis or Image */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
-          <Modal.Title>
-            {selectedImage ? 'Word Image' : 'Word Synthesis'}
-          </Modal.Title>
+          <Modal.Title>{selectedImage ? 'Word Image' : 'Word Synthesis'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedImage ? (
             <img src={selectedImage} alt="Word Illustration" className="img-fluid" />
           ) : (
-            selectedDescription
+            <div className="synthesis-content">
+              {(() => {
+                const sections = []
+                const lines = selectedDescription.split('\n')
+                let currentSection = null
+                let currentSubsection = null
+
+                for (let i = 0; i < lines.length; i++) {
+                  const line = lines[i].trim()
+
+                  if (line.match(/^\d+\. \*\*.+\*\*/)) {
+                    currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1')
+                    currentSubsection = null
+                    continue
+                  }
+
+                  if (currentSection === 'Main Uses' && line.match(/^[A-Za-z\/]/) && !line.startsWith('"')) {
+                    currentSubsection = line
+                    continue
+                  }
+
+                  if (!line || line.startsWith("Here's a detailed synthesis")) continue
+
+                  if (currentSection) {
+                    if (!sections.find((s) => s.title === currentSection)) {
+                      sections.push({
+                        title: currentSection,
+                        subsections: [],
+                        content: [],
+                      })
+                    }
+
+                    const section = sections.find((s) => s.title === currentSection)
+
+                    if (currentSubsection) {
+                      let subsection = section.subsections.find((ss) => ss.title === currentSubsection)
+                      if (!subsection) {
+                        subsection = { title: currentSubsection, content: [] }
+                        section.subsections.push(subsection)
+                      }
+
+                      if (line.startsWith('"') && line.endsWith('"')) {
+                        subsection.content.push(line.slice(1, -1))
+                      }
+                    } else if (line && !line.match(/^[A-Za-z\/]/)) {
+                      section.content.push(line)
+                    }
+                  }
+                }
+
+                return sections.map((section, index) => (
+                  <div key={index} className="mb-4">
+                    <h5 className="fw-bold">{section.title}</h5>
+                    {section.title === 'Main Uses:' && section.content.length > 1 && (
+                      <ul>
+                        {section.content.map((item, idx) => (
+                          <li key={idx}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {section.title === 'Mnemonics:' && section.content.length > 1 && (
+                      <ul>
+                        {section.content.map((item, idx) => (
+                          <li key={idx}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {section.title === 'Use and Frequency:' && (
+                      <ul>
+                        {section.content.map((item, idx) => (
+                          <li key={idx}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {section.title === 'Synonyms:' && (
+                      <div className="d-flex flex-wrap gap-2 mb-3">
+                        {section.content.map((item, idx) => (
+                          <span
+                            key={idx}
+                            className="synonym-chip"
+                            style={{
+                              backgroundColor: '#e3f2fd',
+                              color: '#1976d2',
+                              padding: '4px 12px',
+                              borderRadius: '16px',
+                              fontSize: '0.875rem',
+                              fontWeight: '500',
+                              border: '1px solid #bbdefb',
+                            }}>
+                            {item.replace(/^- /, '')}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {section.title === 'Antonyms:' && (
+                      <div className="d-flex flex-wrap gap-2 mb-3">
+                        {section.content.map((item, idx) => (
+                          <span
+                            key={idx}
+                            className="antonym-chip"
+                            style={{
+                              backgroundColor: '#ffebee',
+                              color: '#d32f2f',
+                              padding: '4px 12px',
+                              borderRadius: '16px',
+                              fontSize: '0.875rem',
+                              fontWeight: '500',
+                              border: '1px solid #ffcdd2',
+                            }}>
+                            {item.replace(/^- /, '')}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                   
+                  </div>
+                ))
+              })()}
+            </div>
           )}
         </Modal.Body>
         <Modal.Footer>
@@ -185,7 +275,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
         </Modal.Footer>
       </Modal>
     </>
-  );
-};
+  )
+}
 
-export default SynthesisModal;
+export default SynthesisModal
