@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { fetchYouTubeTranscript } from '@/lib/YoutubeTranscript'
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
 
@@ -13,26 +14,23 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Missing YouTube URL' }, { status: 400 })
     }
 
+    // Extract Video ID
     const videoId = extractYouTubeId(youtubeUrl)
     if (!videoId) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 })
     }
 
+    // Get transcript using the new utility function
     let transcript
     try {
-      // Using a more reliable transcript fetching method
       transcript = await fetchYouTubeTranscript(videoId)
-      console.log('Transcript fetched:', transcript)
-      if (!transcript) {
-        return NextResponse.json({ error: 'Transcript is unavailable for this video' }, { status: 400 })
-      }
+      console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
     } catch (error) {
-      console.error('Error fetching transcript:', error)
-      return NextResponse.json({ error: 'Failed to fetch transcript' }, { status: 500 })
+      console.error('Transcript Fetch Error:', error.message)
+      return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
     }
 
-    console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...')
-
+    // Send to Claude API to generate dialogues
     let claudeResponse
     try {
       claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
@@ -43,7 +41,7 @@ export async function POST(req) {
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-3-sonnet-20240229',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 2000,
           system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
           messages: [
@@ -55,7 +53,7 @@ export async function POST(req) {
         }),
       })
     } catch (error) {
-      console.error('Claude API Request Error:', error)
+      console.error('Claude API Request Error:', error.message)
       return NextResponse.json({ error: 'Failed to connect to Claude API' }, { status: 500 })
     }
 
@@ -68,22 +66,25 @@ export async function POST(req) {
     const content = data?.content?.[0]?.text || ''
     console.log('Claude response:', data)
 
+    // Save dialogue to MongoDB
     try {
       const dialogue = new Dialogue({
-        userId: body.userId,
+        userId: body.userId, // Assuming userId is passed in the body
         url: youtubeUrl,
-        dialogue: content,
+        dialogue: content, // Save the single string dialogue
       })
 
       await dialogue.save()
+
+      // Redirect to the dialogue view page
       const dialogueId = dialogue?._id.toString()
       return NextResponse.json({ status: 'success', dialogueId, dialogue: content }, { status: 200 })
     } catch (dbError) {
-      console.error('Database Save Error:', dbError)
+      console.error('Database Save Error:', dbError.message)
       return NextResponse.json({ error: 'Failed to save dialogue to database' }, { status: 500 })
     }
   } catch (error) {
-    console.error('Unexpected Error:', error)
+    console.error('Unexpected Error:', error.stack || error.message || error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -92,20 +93,6 @@ function extractYouTubeId(url) {
   const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([\w-]{11})/
   const match = url.match(regex)
   return match ? match[1] : null
-}
-
-async function fetchYouTubeTranscript(videoId) {
-  console.log('Fetching transcript for video ID:', videoId)
-  // Using a third-party service or different approach since YouTube API doesn't provide transcripts directly
-  // This is a placeholder - you might want to use a library like youtube-transcript
-  try {
-    const response = await fetch(`https://youtube-transcript-api.example.com?videoId=${videoId}`)
-    console.log('Fetching transcript from:', response)
-    const data = await response.json()
-    return data.transcript
-  } catch (error) {
-    throw new Error('Failed to fetch transcript')
-  }
 }
 
 function generatePrompt(transcript) {
