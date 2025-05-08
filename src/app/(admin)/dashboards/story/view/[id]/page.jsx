@@ -4,7 +4,7 @@ import IconifyIcon from '@/components/wrappers/IconifyIcon';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Card, Form, Row, Col } from 'react-bootstrap';
-import AudioPlayer from './AudioPlayer'; // Import the new AudioPlayer component
+import AudioPlayer from '../../../../../../ui/AudioPlayer'; // Import the new AudioPlayer component
 
 const preprocessDialogues = (dialogueString) => {
   if (!dialogueString) return [];
