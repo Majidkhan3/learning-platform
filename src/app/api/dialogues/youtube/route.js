@@ -31,15 +31,34 @@ export async function POST(req) {
     try {
       // Try with Spanish as primary language, English as fallback
       transcript = await fetchYouTubeTranscript(videoId, 'es', 'en')
-      console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...')
 
       // Verify we actually got content
       if (!transcript || transcript.trim().length < 50) {
         console.error('Transcript is too short or empty:', transcript)
         return NextResponse.json({ error: 'Transcript is too short or empty' }, { status: 500 })
       }
+
+      console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...')
     } catch (error) {
       console.error('Transcript Fetch Error:', error.message)
+
+      // Check for specific error messages and provide better user feedback
+      if (error.message.includes('Transcript is disabled')) {
+        return NextResponse.json(
+          {
+            error: 'Transcript is disabled on this video. Please try a different video with captions enabled.',
+          },
+          { status: 400 },
+        )
+      } else if (error.message.includes('No transcripts are available')) {
+        return NextResponse.json(
+          {
+            error: 'No transcripts are available for this video. Please try a different video.',
+          },
+          { status: 400 },
+        )
+      }
+
       return NextResponse.json({ error: error.message || 'Unable to fetch transcript' }, { status: 500 })
     }
 
@@ -68,7 +87,7 @@ export async function POST(req) {
       })
 
       if (!claudeResponse.ok) {
-        const errorData = await claudeResponse.json()
+        const errorData = await claudeResponse.json().catch(() => ({}))
         console.error('Claude API Error Response:', errorData)
         return NextResponse.json(
           {
