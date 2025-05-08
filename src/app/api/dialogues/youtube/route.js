@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { fetchYouTubeTranscript } from '@/lib/YoutubeTranscript'
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
 
 export async function POST(req) {
+  console.log('YouTube dialogue generation request received')
+
   try {
     await connectToDatabase()
     const body = await req.json()
@@ -11,28 +13,40 @@ export async function POST(req) {
     const youtubeUrl = body.url
 
     if (!youtubeUrl) {
+      console.error('Missing YouTube URL in request')
       return NextResponse.json({ error: 'Missing YouTube URL' }, { status: 400 })
     }
 
     // Extract Video ID
     const videoId = extractYouTubeId(youtubeUrl)
     if (!videoId) {
+      console.error('Invalid YouTube URL:', youtubeUrl)
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 })
     }
 
-    // Get transcript using the new utility function
+    console.log('Extracted video ID:', videoId)
+
+    // Get transcript using the updated utility function
     let transcript
     try {
-      transcript = await fetchYouTubeTranscript(videoId)
-      console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
+      // Try with Spanish as primary language, English as fallback
+      transcript = await fetchYouTubeTranscript(videoId, 'es', 'en')
+      console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...')
+
+      // Verify we actually got content
+      if (!transcript || transcript.trim().length < 50) {
+        console.error('Transcript is too short or empty:', transcript)
+        return NextResponse.json({ error: 'Transcript is too short or empty' }, { status: 500 })
+      }
     } catch (error) {
       console.error('Transcript Fetch Error:', error.message)
-      return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
+      return NextResponse.json({ error: error.message || 'Unable to fetch transcript' }, { status: 500 })
     }
 
     // Send to Claude API to generate dialogues
     let claudeResponse
     try {
+      console.log('Sending request to Claude API')
       claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -52,33 +66,52 @@ export async function POST(req) {
           ],
         }),
       })
+
+      if (!claudeResponse.ok) {
+        const errorData = await claudeResponse.json()
+        console.error('Claude API Error Response:', errorData)
+        return NextResponse.json(
+          {
+            error: 'Claude API returned an error: ' + (errorData.error?.message || 'Unknown error'),
+          },
+          { status: 500 },
+        )
+      }
     } catch (error) {
       console.error('Claude API Request Error:', error.message)
       return NextResponse.json({ error: 'Failed to connect to Claude API' }, { status: 500 })
     }
 
     const data = await claudeResponse.json()
-    if (!claudeResponse.ok) {
-      console.error('Claude API Response Error:', data)
-      return NextResponse.json({ error: 'Claude API returned an error' }, { status: 500 })
-    }
+    console.log('Claude response received:', data?.content?.[0]?.text?.slice(0, 100) + '...')
 
     const content = data?.content?.[0]?.text || ''
-    console.log('Claude response:', data)
+    if (!content) {
+      console.error('Empty content from Claude API')
+      return NextResponse.json({ error: 'Empty response from Claude API' }, { status: 500 })
+    }
 
     // Save dialogue to MongoDB
     try {
+      console.log('Saving dialogue to database')
       const dialogue = new Dialogue({
-        userId: body.userId, // Assuming userId is passed in the body
+        userId: body.userId,
         url: youtubeUrl,
-        dialogue: content, // Save the single string dialogue
+        dialogue: content,
       })
 
       await dialogue.save()
+      console.log('Dialogue saved successfully, ID:', dialogue._id.toString())
 
-      // Redirect to the dialogue view page
-      const dialogueId = dialogue?._id.toString()
-      return NextResponse.json({ status: 'success', dialogueId, dialogue: content }, { status: 200 })
+      // Return success response with dialogue ID
+      return NextResponse.json(
+        {
+          status: 'success',
+          dialogueId: dialogue._id.toString(),
+          dialogue: content,
+        },
+        { status: 200 },
+      )
     } catch (dbError) {
       console.error('Database Save Error:', dbError.message)
       return NextResponse.json({ error: 'Failed to save dialogue to database' }, { status: 500 })
