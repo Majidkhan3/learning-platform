@@ -6,6 +6,7 @@ import { Col, Row, Card, Button, Form, Spinner } from 'react-bootstrap'
 import Link from 'next/link'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 import { extractTextFromPdf } from '@/utils/pdfUtils'
+import { useRouter } from 'next/navigation'
 
 // Define interfaces for better type safety
 interface AuthUser {
@@ -30,7 +31,7 @@ const CardText = () => {
   const [extractedText, setExtractedText] = useState('')
   const [fileName, setFileName] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
-
+  const router = useRouter()
   const generateDialoguesFromApi = useCallback(
     async (text: string) => {
       if (!text.trim() || !user?._id) {
@@ -55,6 +56,7 @@ const CardText = () => {
           throw new Error(errorData.message || `API error! status: ${res.status}`)
         }
         const data = await res.json()
+        router.push(`/dashboards/dialogues/view/${data.dialogueId}`)
 
         setGeneratedDialogues(data.dialogues || '') // API returns a string
       } catch (err) {

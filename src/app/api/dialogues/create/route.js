@@ -64,8 +64,8 @@ export async function POST(req) {
     })
 
     await dialogue.save()
-
-    return NextResponse.json({ status: 'success', dialogues }, { status: 200 })
+    const dialogueId = dialogue?._id.toString()
+    return NextResponse.json({ status: 'success', dialogues, dialogueId }, { status: 200 })
   } catch (error) {
     console.error('Error in /api/dialogues/create:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
