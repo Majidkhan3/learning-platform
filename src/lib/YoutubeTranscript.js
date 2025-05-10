@@ -31,7 +31,7 @@ export async function fetchYouTubeTranscript(videoId, primaryLang = 'es', fallba
         setTimeout(() => reject(new Error(`Transcript fetch timed out for language: ${lang}`)), 15000),
       )
 
-      const fetchPromise = YoutubeTranscript.fetchTranscript(videoId, { lang })
+      const fetchPromise = await YoutubeTranscript.fetchTranscript(videoId, { lang })
       const transcriptData = await Promise.race([fetchPromise, timeoutPromise])
 
       if (!transcriptData || transcriptData.length === 0) {

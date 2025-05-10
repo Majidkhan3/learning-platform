@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
-
+import { extractYouTubeId, fetchTranscript, generateDialogues } from '@/services/youtubeServices';
 const Youtube = () => {
   const { user } = useAuth();
   const [url, setUrl] = useState('');
@@ -18,7 +18,6 @@ const Youtube = () => {
     const regex = /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/;
     return regex.test(url);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -33,43 +32,91 @@ const Youtube = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/dialogues/youtube', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, userId: user?._id }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        // Handle different error types
-        if (data.error?.includes('Transcript is disabled')) {
-          setError('This video does not have available transcripts/captions.');
-          setErrorDetails(
-            'The video owner has disabled transcripts for this video. Please try a different video that has captions enabled.'
-          );
-        } else if (data.error?.includes('Unable to fetch transcript')) {
-          setError('Could not fetch transcript from this video.');
-          setErrorDetails(
-            'Please make sure the video has captions available and try again, or try with a different video.'
-          );
-        } else {
-          setError(data.error || 'Failed to generate dialogue.');
-        }
-        throw new Error(data.error || 'Failed to generate dialogue.');
+      // Extract video ID
+      const videoId = extractYouTubeId(url);
+      if (!videoId) {
+        throw new Error('Invalid YouTube URL');
       }
 
-      console.log('Generated dialogue:', data);
       
-      // Redirect to the dialogue view page after success
-      router.push(`/dashboards/dialogues/view/${data.dialogueId}`);
+      // Get transcript
+      const transcript = await fetchTranscript(videoId);  
+
+      console.log("transcript", transcript)
+      
+      
+      // Generate dialogues
+      const dialogues = await generateDialogues(transcript);
+      console.log('Generated dialogues:', dialogues); 
+      // Save dialogue
+      // const savedDialogue = saveDialogue({
+      //   url,
+      //   dialogue: dialogues,
+      //   userId: 'user123' // In a real app, this would be the authenticated user's ID
+      // });
+
+      
+      // Navigate to the dialogue view page
+      // router.push(`/dashboards/dialogues/view/${data.dialogueId}`);
     } catch (err) {
-      console.error('Error details:', err);
-      // Error message is already set above
+      const errMessage = err?.message || 'Failed to generate dialogue';
+      setError(errMessage);
+      toast.error(errMessage);
     } finally {
       setLoading(false);
     }
   };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setError('');
+  //   setErrorDetails('');
+  //   setDialogues(null);
+
+  //   if (!isValidYouTubeUrl(url)) {
+  //     setError('Please enter a valid YouTube URL.');
+  //     return;
+  //   }
+
+  //   setLoading(true);
+
+  //   try {
+  //     const res = await fetch('/api/dialogues/youtube', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ url, userId: user?._id }),
+  //     });
+
+  //     const data = await res.json();
+
+  //     if (!res.ok) {
+  //       // Handle different error types
+  //       if (data.error?.includes('Transcript is disabled')) {
+  //         setError('This video does not have available transcripts/captions.');
+  //         setErrorDetails(
+  //           'The video owner has disabled transcripts for this video. Please try a different video that has captions enabled.'
+  //         );
+  //       } else if (data.error?.includes('Unable to fetch transcript')) {
+  //         setError('Could not fetch transcript from this video.');
+  //         setErrorDetails(
+  //           'Please make sure the video has captions available and try again, or try with a different video.'
+  //         );
+  //       } else {
+  //         setError(data.error || 'Failed to generate dialogue.');
+  //       }
+  //       throw new Error(data.error || 'Failed to generate dialogue.');
+  //     }
+
+  //     console.log('Generated dialogue:', data);
+      
+  //     // Redirect to the dialogue view page after success
+  //     router.push(`/dashboards/dialogues/view/${data.dialogueId}`);
+  //   } catch (err) {
+  //     console.error('Error details:', err);
+  //     // Error message is already set above
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <>

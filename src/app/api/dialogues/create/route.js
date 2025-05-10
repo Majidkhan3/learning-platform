@@ -1,24 +1,21 @@
 import { NextResponse } from 'next/server'
 // import pdfParse from 'pdf-parse'
 import Dialogue from '@/model/Dialogue'
+import connectToDatabase from '@/lib/db'
 
 export async function POST(req) {
   try {
     await connectToDatabase()
 
-    const formData = await req.formData()
-    const file = formData.get('file')
+    const body = await req.json()
+    const { text: extractedText, userId } = body
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
+    if (!extractedText || typeof extractedText !== 'string' || !extractedText.trim()) {
+      return NextResponse.json({ error: 'Text is required and must be a non-empty string' }, { status: 400 })
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const pdfData = await pdfParse(buffer)
-    const extractedText = pdfData.text
-
-    if (!extractedText) {
-      return NextResponse.json({ error: 'Failed to extract text from PDF' }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
     // Send extracted text to Claude API to generate dialogues
@@ -30,7 +27,7 @@ export async function POST(req) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet-20240620', // Corrected model name to a valid one, adjust if needed
         max_tokens: 2000,
         system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
         messages: [
@@ -42,22 +39,36 @@ export async function POST(req) {
       }),
     })
 
+    if (!claudeResponse.ok) {
+      const errorData = await claudeResponse.json().catch(() => ({ message: 'Failed to parse Claude error response' }))
+      console.error('Claude API Error:', errorData)
+      throw new Error(errorData.error?.message || errorData.message || `Claude API error! status: ${claudeResponse.status}`)
+    }
+
     const data = await claudeResponse.json()
     const dialogues = data?.content?.[0]?.text || ''
+    console.log('dialogues', dialogues)
+    if (!dialogues) {
+      console.warn('Claude API did not return any dialogues.')
+      // Decide if this is an error or if empty dialogues are acceptable
+      // return NextResponse.json({ error: 'Failed to generate dialogues from Claude API' }, { status: 500 });
+    }
 
     // Save dialogues to MongoDB
     const dialogue = new Dialogue({
-      userId: formData.get('userId'), // Assuming userId is passed in the form data
-      source: 'PDF',
+      userId: userId,
+      source: 'PDF', // Indicates the original source type
       dialogue: dialogues,
+      originalText: extractedText, // Optionally store the original text
+      fileName: body.fileName || 'N/A', // Optionally store the file name if sent from client
     })
 
     await dialogue.save()
 
     return NextResponse.json({ status: 'success', dialogues }, { status: 200 })
   } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error in /api/dialogues/create:', error)
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
 

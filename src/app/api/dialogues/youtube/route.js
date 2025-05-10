@@ -1,11 +1,9 @@
-import { NextResponse } from 'next/server'
-import { fetchYouTubeTranscript } from '@/lib/YoutubeTranscript'
+import { NextRequest, NextResponse } from 'next/server'
+import { YoutubeTranscript } from 'youtube-transcript'
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
 
 export async function POST(req) {
-  console.log('YouTube dialogue generation request received')
-
   try {
     await connectToDatabase()
     const body = await req.json()
@@ -13,59 +11,50 @@ export async function POST(req) {
     const youtubeUrl = body.url
 
     if (!youtubeUrl) {
-      console.error('Missing YouTube URL in request')
       return NextResponse.json({ error: 'Missing YouTube URL' }, { status: 400 })
     }
 
     // Extract Video ID
     const videoId = extractYouTubeId(youtubeUrl)
     if (!videoId) {
-      console.error('Invalid YouTube URL:', youtubeUrl)
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 })
     }
 
-    console.log('Extracted video ID:', videoId)
-
-    // Get transcript using the updated utility function
-    let transcript
+    // Get transcript
+    let transcriptData
     try {
-      // Try with Spanish as primary language, English as fallback
-      transcript = await fetchYouTubeTranscript(videoId, 'es', 'en')
-
-      // Verify we actually got content
-      if (!transcript || transcript.trim().length < 50) {
-        console.error('Transcript is too short or empty:', transcript)
-        return NextResponse.json({ error: 'Transcript is too short or empty' }, { status: 500 })
+      console.log('Attempting to fetch transcript in Spanish for video ID:', videoId)
+      transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
+      if (!transcriptData || transcriptData.length === 0) {
+        console.warn('Transcript is empty or unavailable in Spanish, falling back to English.')
+        throw new Error('Empty transcript in Spanish')
       }
-
-      console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...')
     } catch (error) {
-      console.error('Transcript Fetch Error:', error.message)
-
-      // Check for specific error messages and provide better user feedback
-      if (error.message.includes('Transcript is disabled')) {
-        return NextResponse.json(
-          {
-            error: 'Transcript is disabled on this video. Please try a different video with captions enabled.',
-          },
-          { status: 400 },
-        )
-      } else if (error.message.includes('No transcripts are available')) {
-        return NextResponse.json(
-          {
-            error: 'No transcripts are available for this video. Please try a different video.',
-          },
-          { status: 400 },
-        )
+      console.error('Transcript Fetch Error (Spanish):', error.stack || error.message)
+      if (error.message.includes('No transcripts are available in es') || error.message === 'Empty transcript in Spanish') {
+        console.warn('Spanish transcript not available, attempting to fetch in English.')
+        try {
+          console.log('Attempting to fetch transcript in English for video ID:', videoId)
+          transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' })
+          if (!transcriptData || transcriptData.length === 0) {
+            console.error('Transcript is empty or unavailable in English.')
+            return NextResponse.json({ error: 'Unable to fetch transcript in any language' }, { status: 500 })
+          }
+        } catch (fallbackError) {
+          console.error('Fallback Transcript Fetch Error (English):', fallbackError.stack || fallbackError.message)
+          return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
+        }
+      } else {
+        console.error('Unexpected Transcript Fetch Error:', error.stack || error.message)
+        return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
       }
-
-      return NextResponse.json({ error: error.message || 'Unable to fetch transcript' }, { status: 500 })
     }
 
+    const transcript = transcriptData.map((line) => line.text).join(' ')
+    console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
     // Send to Claude API to generate dialogues
     let claudeResponse
     try {
-      console.log('Sending request to Claude API')
       claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -85,52 +74,33 @@ export async function POST(req) {
           ],
         }),
       })
-
-      if (!claudeResponse.ok) {
-        const errorData = await claudeResponse.json().catch(() => ({}))
-        console.error('Claude API Error Response:', errorData)
-        return NextResponse.json(
-          {
-            error: 'Claude API returned an error: ' + (errorData.error?.message || 'Unknown error'),
-          },
-          { status: 500 },
-        )
-      }
     } catch (error) {
       console.error('Claude API Request Error:', error.message)
       return NextResponse.json({ error: 'Failed to connect to Claude API' }, { status: 500 })
     }
 
     const data = await claudeResponse.json()
-    console.log('Claude response received:', data?.content?.[0]?.text?.slice(0, 100) + '...')
+    if (!claudeResponse.ok) {
+      console.error('Claude API Response Error:', data)
+      return NextResponse.json({ error: 'Claude API returned an error' }, { status: 500 })
+    }
 
     const content = data?.content?.[0]?.text || ''
-    if (!content) {
-      console.error('Empty content from Claude API')
-      return NextResponse.json({ error: 'Empty response from Claude API' }, { status: 500 })
-    }
+    console.log('Claude response:', data)
 
     // Save dialogue to MongoDB
     try {
-      console.log('Saving dialogue to database')
       const dialogue = new Dialogue({
-        userId: body.userId,
+        userId: body.userId, // Assuming userId is passed in the body
         url: youtubeUrl,
-        dialogue: content,
+        dialogue: content, // Save the single string dialogue
       })
 
       await dialogue.save()
-      console.log('Dialogue saved successfully, ID:', dialogue._id.toString())
 
-      // Return success response with dialogue ID
-      return NextResponse.json(
-        {
-          status: 'success',
-          dialogueId: dialogue._id.toString(),
-          dialogue: content,
-        },
-        { status: 200 },
-      )
+      // Redirect to the dialogue view page
+      const dialogueId = dialogue?._id.toString()
+      return NextResponse.json({ status: 'success', dialogueId, dialogue: content }, { status: 200 })
     } catch (dbError) {
       console.error('Database Save Error:', dbError.message)
       return NextResponse.json({ error: 'Failed to save dialogue to database' }, { status: 500 })

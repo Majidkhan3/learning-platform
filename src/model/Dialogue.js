@@ -8,7 +8,7 @@ const dialogueSchema = new mongoose.Schema({
   },
   url: {
     type: String,
-    required: true,
+    required: false,
   },
   dialogue: {
     // Single dialogue string
