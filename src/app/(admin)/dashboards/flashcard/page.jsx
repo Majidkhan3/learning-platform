@@ -52,7 +52,7 @@ const FlashCard = () => {
   useEffect(() => {
     fetchWords()
   }, [])
-  
+
   useEffect(() => {
     const speakWithPolly = async (text) => {
       try {
@@ -166,7 +166,7 @@ const FlashCard = () => {
     preventDefaultTouchmoveEvent: true,
     trackMouse: true, // Optional: Allow swipe gestures with a mouse
   })
-
+console.log("current",currentCard?.synthesis)
   if (loading) return <div className="text-center">Loading...</div>
   if (error) return <div className="text-center text-danger">{error}</div>
 
@@ -184,13 +184,10 @@ const FlashCard = () => {
           </small>
         </div>
 
-        <div className={`flip-card ${isFlipped ? 'flipped' : ''}`} style={{ height: '773px', perspective: '1000px' }}>
+        <div className={`flip-card ${isFlipped ? 'flipped' : ''}`} style={{ height: '1500px', perspective: '1000px' }}>
           <div className="flip-card-inner position-relative w-100 h-100" style={{ transition: 'transform 0.6s', transformStyle: 'preserve-3d' }}>
             {/* Front Side */}
-            <Card
-              className={`position-absolute w-100 h-100 ${isFlipped ? 'd-none' : ''}`}
-              style={{ backfaceVisibility: 'hidden', zIndex: '2' }}
-            >
+            <Card className={`position-absolute w-100 h-100 ${isFlipped ? 'd-none' : ''}`} style={{ backfaceVisibility: 'hidden', zIndex: '2' }}>
               <Card.Body className="d-flex flex-column h-100">
                 <Card.Title className="text-center mb-4">{currentCard?.word}</Card.Title>
                 <div className="mt-auto">
@@ -204,8 +201,7 @@ const FlashCard = () => {
             {/* Back Side */}
             <Card
               className={`position-absolute w-100 h-100 ${!isFlipped ? 'd-none' : ''}`}
-              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-            >
+              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
               <Card.Body>
                 <Card.Title className="text-center mb-4 d-flex justify-content-center align-items-center">
                   {currentCard?.word}
@@ -217,8 +213,7 @@ const FlashCard = () => {
                       const utterance = new SpeechSynthesisUtterance(currentCard.word)
                       window.speechSynthesis.speak(utterance)
                     }}
-                    aria-label="Speak Word"
-                  >
+                    aria-label="Speak Word">
                     <i className="bi bi-volume-up"></i> {/* Speaker Icon */}
                   </Button>
                 </Card.Title>
@@ -243,10 +238,105 @@ const FlashCard = () => {
                   )}
                 </div>
                 {/* Synthesis Content */}
-                <div className="mb-3 text-center">
+                {/* <div className="mb-3 text-center">
                   <p>{currentCard?.synthesis}</p>
-                </div>
+                </div> */}
+                  <div className="synthesis-content mb-3" style={{ fontSize: '0.9rem' }}>
+                  {(() => {
+                    const sections = []
+                    // Ensure synthesis is a string and split, provide default empty array
+                    const lines = (currentCard?.synthesis || '').split('\n')
+                    let currentSectionTitle = null
+                    let currentSubsectionTitle = null
 
+                    for (let i = 0; i < lines.length; i++) {
+                      const line = lines[i].trim()
+
+                      if (line.match(/^\d+\. \*\*(.+)\*\*/)) { // Capture title without asterisks
+                        currentSectionTitle = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1').trim()
+                        currentSubsectionTitle = null // Reset subsection
+                        // Ensure section object is created
+                        if (currentSectionTitle && !sections.find((s) => s.title === currentSectionTitle)) {
+                          sections.push({ title: currentSectionTitle, subsections: [], content: [] })
+                        }
+                        continue
+                      }
+                      
+                      // More robust subsection detection for "Main Uses"
+                      if (currentSectionTitle === 'Main Uses' && line.match(/^[A-Z][A-Za-z\s\/()'-]+:?$/) && !line.startsWith('"')) {
+                        currentSubsectionTitle = line.replace(/:$/, '').trim(); // Remove trailing colon if present
+                         const section = sections.find((s) => s.title === currentSectionTitle);
+                         if (section && !section.subsections.find(ss => ss.title === currentSubsectionTitle)) {
+                           section.subsections.push({ title: currentSubsectionTitle, content: [] });
+                         }
+                        continue;
+                      }
+
+                      if (!line || line.toLowerCase().startsWith("here's a detailed synthesis")) continue
+
+                      if (currentSectionTitle) {
+                        const section = sections.find((s) => s.title === currentSectionTitle)
+                        if (!section) continue; // Should not happen if section created above
+
+                        if (currentSubsectionTitle && section.title === 'Main Uses') {
+                           const subsection = section.subsections.find((ss) => ss.title === currentSubsectionTitle);
+                           if (subsection && line.startsWith('"') && line.endsWith('"')) {
+                             subsection.content.push(line.slice(1, -1));
+                           } else if (subsection && !line.match(/^[A-Z][A-Za-z\s\/()'-]+:?$/)) { // Add to existing subsection if not a new title
+                             subsection.content.push(line);
+                           }
+                        } else if (line) { // Add to general content of the section
+                          section.content.push(line)
+                        }
+                      }
+                    }
+
+                    return sections.map((section, sectionIndex) => (
+                      <div key={sectionIndex} className="mb-3">
+                        <h6 className="fw-bold">{section.title}</h6>
+                        {/* Corrected title comparisons (no colons) */}
+                        {(section.title === 'Main Uses' && section.subsections.length > 0) ? (
+                           section.subsections.map((sub, subIdx) => (
+                             <div key={subIdx} className="ms-2 mb-2">
+                               <p className="mb-1 fst-italic">{sub.title}:</p>
+                               {sub.content.length > 0 && (
+                                 <ul className="list-unstyled ps-3">
+                                   {sub.content.map((item, itemIdx) => <li key={itemIdx} style={{fontSize: '0.85rem'}}><em>{item}</em></li>)}
+                                 </ul>
+                               )}
+                             </div>
+                           ))
+                        ) : section.content.length > 0 && (
+                          <ul className="list-unstyled ps-3">
+                            {section.content.map((item, idx) => (
+                              <li key={idx} style={{fontSize: '0.85rem'}}>
+                                { (section.title === 'Synonyms' || section.title === 'Antonyms') ? (
+                                  <span
+                                    className={section.title === 'Synonyms' ? "synonym-chip" : "antonym-chip"}
+                                    style={{
+                                      backgroundColor: section.title === 'Synonyms' ? '#e3f2fd' : '#ffebee',
+                                      color: section.title === 'Synonyms' ? '#1976d2' : '#d32f2f',
+                                      padding: '3px 9px',
+                                      borderRadius: '12px',
+                                      fontSize: '0.8rem',
+                                      border: `1px solid ${section.title === 'Synonyms' ? '#bbdefb' : '#ffcdd2'}`,
+                                      display: 'inline-block',
+                                      margin: '2px'
+                                    }}>
+                                    {item.replace(/^- /, '')}
+                                  </span>
+                                ) : (
+                                  item
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))
+                  })()}
+                </div>
+               
                 {/* Rating Section */}
                 <div className="mb-3">
                   <strong>Rate this card:</strong>
@@ -286,8 +376,7 @@ const FlashCard = () => {
                     onClick={(e) => {
                       e.stopPropagation() // Prevent triggering the tap handler
                       toggleFlip()
-                    }}
-                  >
+                    }}>
                     Flip Card
                   </Button>
                 </div>
@@ -302,16 +391,14 @@ const FlashCard = () => {
           style={{
             gap: '200px',
           }}
-          className="justify-content-center mt-3"
-        >
+          className="justify-content-center mt-3">
           <Button
             variant="outline-secondary"
             onClick={(e) => {
               e.stopPropagation() // Prevent triggering the tap handler
               goToCard(currentIndex - 1)
             }}
-            disabled={currentIndex <= 1}
-          >
+            disabled={currentIndex <= 1}>
             ← Previous
           </Button>
           <Button
@@ -320,8 +407,7 @@ const FlashCard = () => {
               e.stopPropagation() // Prevent triggering the tap handler
               goToCard(currentIndex + 1)
             }}
-            disabled={currentIndex >= cards.length}
-          >
+            disabled={currentIndex >= cards.length}>
             Next →
           </Button>
         </Stack>
