@@ -40,17 +40,17 @@ const ProfileDropdown = () => {
           <span className="align-middle">Lock screen</span>
         </DropdownItem> */}
         <div className="dropdown-divider my-1" />
-        <DropdownItem
+         <DropdownItem
           className=" text-danger"
-          href="#"
-          >
-          <IconifyIcon icon="solar:logout-3-broken" className="align-middle me-2 fs-18" />
-          <span className="align-middle" onClick={(event) => {
-            event.preventDefault(); // Prevent default link behavior
+          onClick={(event) => {
+            event.preventDefault(); // Prevent default link behavior if any (though href is removed)
             localStorage.removeItem('user');
             localStorage.removeItem('token');
             window.location.href = '/login';
-          }}>Logout</span>
+          }}
+          >
+          <IconifyIcon icon="solar:logout-3-broken" className="align-middle me-2 fs-18" />
+          <span className="align-middle">Logout</span>
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>

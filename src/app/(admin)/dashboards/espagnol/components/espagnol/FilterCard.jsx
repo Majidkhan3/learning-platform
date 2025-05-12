@@ -47,6 +47,34 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
     setVoice(selectedVoice)
     onVoiceChange(selectedVoice) // Notify the parent component
   }
+  const handleFlashCardModeChange = (e) => {
+    const isChecked = e.target.checked
+    setFlashCardMode(isChecked)
+
+    if (isChecked) {
+      const params = new URLSearchParams()
+      if (selectedTag !== 'All') {
+        params.set('tag', selectedTag)
+      }
+      if (selectedRating !== 'All') {
+        params.set('rating', selectedRating)
+      }
+
+      if (params.toString()) {
+        // Only navigate if there's at least one filter
+        // The user mentioned "/id?" for the path.
+        // Please replace '/flashcards' with your specific flashcard route.
+        // For example, if your route is dynamic like '/flashcards/[id]',
+        // you'll need to determine the 'id' value.
+        // This example uses a generic '/flashcards' path.
+        const flashcardPath = '/flashcard'
+        router.push(`/dashboards/${flashcardPath}?${params.toString()}`)
+      }
+    }
+    // No explicit navigation is handled here for turning the switch OFF.
+    // It's assumed that returning from the flashcard page or managing the "OFF" state
+    // is handled elsewhere or by user navigation (e.g., browser back button).
+  }
 
   return (
     <Card className="mb-4">
@@ -96,17 +124,15 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
         </div>
 
         <div className="d-flex justify-content-between align-items-center">
-          <Form.Check
-            type="switch"
-            id="flashCardMode"
-            label="Flash Card Mode"
-            checked={flashCardMode}
-            onChange={(e) => setFlashCardMode(e.target.checked)}
-          />
+          <Form.Check type="switch" id="flashCardMode" label="Flash Card Mode" checked={flashCardMode} onChange={handleFlashCardModeChange} />
 
-          <Form.Select size="sm" style={{
-            width:"180px"
-          }} value={voice} onChange={(e) => handleVoiceChange(e.target.value)}>
+          <Form.Select
+            size="sm"
+            style={{
+              width: '180px',
+            }}
+            value={voice}
+            onChange={(e) => handleVoiceChange(e.target.value)}>
             {voices.map((voiceOption) => (
               <option key={voiceOption.id} value={voiceOption.id}>
                 {voiceOption.name} ({voiceOption.gender})

@@ -16,8 +16,9 @@ const FlashCard = () => {
   const [showModal, setShowModal] = useState(false) // State for modal visibility
   const [modalImage, setModalImage] = useState('') // State for the image to display in the modal
   const searchParams = useSearchParams()
-
   const router = useRouter()
+  const tag = searchParams.get('tag')
+  const rating = searchParams.get('rating')
   const currentIndex = parseInt(searchParams.get('index') || '1', 10)
 
   const currentCard = cards[currentIndex - 1] // Adjust index for zero-based array
@@ -25,11 +26,25 @@ const FlashCard = () => {
   const fetchWords = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/words?userId=${userId}`) // Replace with your API endpoint
+      // Construct the API URL with query parameters for tag and rating
+      let apiUrl = `/api/words?userId=${userId}`
+      if (tag) {
+        apiUrl += `&tag=${encodeURIComponent(tag)}`
+      }
+      if (rating) {
+        apiUrl += `&rating=${encodeURIComponent(rating)}`
+      }
+
+      const res = await fetch(apiUrl) // Use the updated API URL
       const data = await res.json()
       if (data.success) {
         // Map API response to the card structure
-        const mappedCards = data.words.map((word, index) => ({
+        const filteredCards = data.words.filter((word) => {
+          const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag)
+          const matchesRating = !rating || rating === 'All' || (word.note && word.note === parseInt(rating))
+          return matchesTag && matchesRating
+        })
+        const mappedCards = filteredCards.map((word, index) => ({
           id: word._id, // Use the database ID
           word: word.word,
           synthesis: word.summary,
@@ -38,6 +53,12 @@ const FlashCard = () => {
           tags: word.tags,
         }))
         setCards(mappedCards)
+        if (mappedCards.length > 0 && currentIndex > mappedCards.length) {
+          // If current index is out of bounds after filtering, reset to 1
+          router.push(`/dashboards/flashcard?tag=${tag || ''}&rating=${rating || ''}&index=1`)
+        } else if (mappedCards.length === 0) {
+          setError('No cards found for the selected filters.')
+        }
       } else {
         setError(data.error || 'Failed to fetch words')
       }
@@ -50,8 +71,11 @@ const FlashCard = () => {
   }
 
   useEffect(() => {
-    fetchWords()
-  }, [])
+    if (userId) {
+      // Ensure userId is available before fetching
+      fetchWords()
+    }
+  }, [userId, tag, rating])
 
   useEffect(() => {
     const speakWithPolly = async (text) => {
@@ -93,11 +117,19 @@ const FlashCard = () => {
 
   const goToCard = (index) => {
     if (index >= 1 && index <= cards.length) {
-      router.push(`/dashboards/flashcard?tag=&rating=&index=${index}`)
+      if (tag && rating) {
+        router.push(`/dashboards/flashcard?tag=${tag}&rating=${rating}&index=${index}`)
+      } else if (tag) {
+        router.push(`/dashboards/flashcard?tag=${tag}&index=${index}`)
+      } else if (rating) {
+        router.push(`/dashboards/flashcard?rating=${rating}&index=${index}`)
+      } else {
+        router.push(`/dashboards/flashcard?index=${index}`)
+      }
+      // router.push(`/dashboards/flashcard?tag=${tag}&rating=${rating}&index=${index}`)
       setIsFlipped(false)
     }
   }
-
   const handleTap = () => {
     if (!isFlipped) {
       toggleFlip() // Flip the card on the first tap
@@ -166,7 +198,8 @@ const FlashCard = () => {
     preventDefaultTouchmoveEvent: true,
     trackMouse: true, // Optional: Allow swipe gestures with a mouse
   })
-console.log("current",currentCard?.synthesis)
+  console.log('current', currentCard)
+  console.log('cards', cards)
   if (loading) return <div className="text-center">Loading...</div>
   if (error) return <div className="text-center text-danger">{error}</div>
 
@@ -241,7 +274,7 @@ console.log("current",currentCard?.synthesis)
                 {/* <div className="mb-3 text-center">
                   <p>{currentCard?.synthesis}</p>
                 </div> */}
-                  <div className="synthesis-content mb-3" style={{ fontSize: '0.9rem' }}>
+                <div className="synthesis-content mb-3" style={{ fontSize: '0.9rem' }}>
                   {(() => {
                     const sections = []
                     // Ensure synthesis is a string and split, provide default empty array
@@ -252,7 +285,8 @@ console.log("current",currentCard?.synthesis)
                     for (let i = 0; i < lines.length; i++) {
                       const line = lines[i].trim()
 
-                      if (line.match(/^\d+\. \*\*(.+)\*\*/)) { // Capture title without asterisks
+                      if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
+                        // Capture title without asterisks
                         currentSectionTitle = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1').trim()
                         currentSubsectionTitle = null // Reset subsection
                         // Ensure section object is created
@@ -261,31 +295,33 @@ console.log("current",currentCard?.synthesis)
                         }
                         continue
                       }
-                      
+
                       // More robust subsection detection for "Main Uses"
                       if (currentSectionTitle === 'Main Uses' && line.match(/^[A-Z][A-Za-z\s\/()'-]+:?$/) && !line.startsWith('"')) {
-                        currentSubsectionTitle = line.replace(/:$/, '').trim(); // Remove trailing colon if present
-                         const section = sections.find((s) => s.title === currentSectionTitle);
-                         if (section && !section.subsections.find(ss => ss.title === currentSubsectionTitle)) {
-                           section.subsections.push({ title: currentSubsectionTitle, content: [] });
-                         }
-                        continue;
+                        currentSubsectionTitle = line.replace(/:$/, '').trim() // Remove trailing colon if present
+                        const section = sections.find((s) => s.title === currentSectionTitle)
+                        if (section && !section.subsections.find((ss) => ss.title === currentSubsectionTitle)) {
+                          section.subsections.push({ title: currentSubsectionTitle, content: [] })
+                        }
+                        continue
                       }
 
                       if (!line || line.toLowerCase().startsWith("here's a detailed synthesis")) continue
 
                       if (currentSectionTitle) {
                         const section = sections.find((s) => s.title === currentSectionTitle)
-                        if (!section) continue; // Should not happen if section created above
+                        if (!section) continue // Should not happen if section created above
 
                         if (currentSubsectionTitle && section.title === 'Main Uses') {
-                           const subsection = section.subsections.find((ss) => ss.title === currentSubsectionTitle);
-                           if (subsection && line.startsWith('"') && line.endsWith('"')) {
-                             subsection.content.push(line.slice(1, -1));
-                           } else if (subsection && !line.match(/^[A-Z][A-Za-z\s\/()'-]+:?$/)) { // Add to existing subsection if not a new title
-                             subsection.content.push(line);
-                           }
-                        } else if (line) { // Add to general content of the section
+                          const subsection = section.subsections.find((ss) => ss.title === currentSubsectionTitle)
+                          if (subsection && line.startsWith('"') && line.endsWith('"')) {
+                            subsection.content.push(line.slice(1, -1))
+                          } else if (subsection && !line.match(/^[A-Z][A-Za-z\s\/()'-]+:?$/)) {
+                            // Add to existing subsection if not a new title
+                            subsection.content.push(line)
+                          }
+                        } else if (line) {
+                          // Add to general content of the section
                           section.content.push(line)
                         }
                       }
@@ -295,48 +331,52 @@ console.log("current",currentCard?.synthesis)
                       <div key={sectionIndex} className="mb-3">
                         <h6 className="fw-bold">{section.title}</h6>
                         {/* Corrected title comparisons (no colons) */}
-                        {(section.title === 'Main Uses' && section.subsections.length > 0) ? (
-                           section.subsections.map((sub, subIdx) => (
-                             <div key={subIdx} className="ms-2 mb-2">
-                               <p className="mb-1 fst-italic">{sub.title}:</p>
-                               {sub.content.length > 0 && (
-                                 <ul className="list-unstyled ps-3">
-                                   {sub.content.map((item, itemIdx) => <li key={itemIdx} style={{fontSize: '0.85rem'}}><em>{item}</em></li>)}
-                                 </ul>
-                               )}
-                             </div>
-                           ))
-                        ) : section.content.length > 0 && (
-                          <ul className="list-unstyled ps-3">
-                            {section.content.map((item, idx) => (
-                              <li key={idx} style={{fontSize: '0.85rem'}}>
-                                { (section.title === 'Synonyms' || section.title === 'Antonyms') ? (
-                                  <span
-                                    className={section.title === 'Synonyms' ? "synonym-chip" : "antonym-chip"}
-                                    style={{
-                                      backgroundColor: section.title === 'Synonyms' ? '#e3f2fd' : '#ffebee',
-                                      color: section.title === 'Synonyms' ? '#1976d2' : '#d32f2f',
-                                      padding: '3px 9px',
-                                      borderRadius: '12px',
-                                      fontSize: '0.8rem',
-                                      border: `1px solid ${section.title === 'Synonyms' ? '#bbdefb' : '#ffcdd2'}`,
-                                      display: 'inline-block',
-                                      margin: '2px'
-                                    }}>
-                                    {item.replace(/^- /, '')}
-                                  </span>
-                                ) : (
-                                  item
+                        {section.title === 'Main Uses' && section.subsections.length > 0
+                          ? section.subsections.map((sub, subIdx) => (
+                              <div key={subIdx} className="ms-2 mb-2">
+                                <p className="mb-1 fst-italic">{sub.title}:</p>
+                                {sub.content.length > 0 && (
+                                  <ul className="list-unstyled ps-3">
+                                    {sub.content.map((item, itemIdx) => (
+                                      <li key={itemIdx} style={{ fontSize: '0.85rem' }}>
+                                        <em>{item}</em>
+                                      </li>
+                                    ))}
+                                  </ul>
                                 )}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                              </div>
+                            ))
+                          : section.content.length > 0 && (
+                              <ul className="list-unstyled ps-3">
+                                {section.content.map((item, idx) => (
+                                  <li key={idx} style={{ fontSize: '0.85rem' }}>
+                                    {section.title === 'Synonyms' || section.title === 'Antonyms' ? (
+                                      <span
+                                        className={section.title === 'Synonyms' ? 'synonym-chip' : 'antonym-chip'}
+                                        style={{
+                                          backgroundColor: section.title === 'Synonyms' ? '#e3f2fd' : '#ffebee',
+                                          color: section.title === 'Synonyms' ? '#1976d2' : '#d32f2f',
+                                          padding: '3px 9px',
+                                          borderRadius: '12px',
+                                          fontSize: '0.8rem',
+                                          border: `1px solid ${section.title === 'Synonyms' ? '#bbdefb' : '#ffcdd2'}`,
+                                          display: 'inline-block',
+                                          margin: '2px',
+                                        }}>
+                                        {item.replace(/^- /, '')}
+                                      </span>
+                                    ) : (
+                                      item
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                       </div>
                     ))
                   })()}
                 </div>
-               
+
                 {/* Rating Section */}
                 <div className="mb-3">
                   <strong>Rate this card:</strong>
