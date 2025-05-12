@@ -4,25 +4,24 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
-import { extractYouTubeId, fetchTranscript, generateDialogues } from '@/services/youtubeServices';
+
 const Youtube = () => {
   const { user } = useAuth();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [errorDetails, setErrorDetails] = useState('');
-  const [dialogues, setDialogues] = useState(null);
+  const [dialogues, setDialogues] = useState(null); // State to store dialogues
   const router = useRouter();
 
   const isValidYouTubeUrl = (url) => {
     const regex = /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/;
     return regex.test(url);
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setErrorDetails('');
-    setDialogues(null);
+    setDialogues(null); // Reset dialogues on new submission
 
     if (!isValidYouTubeUrl(url)) {
       setError('Please enter a valid YouTube URL.');
@@ -32,91 +31,27 @@ const Youtube = () => {
     setLoading(true);
 
     try {
-      // Extract video ID
-      const videoId = extractYouTubeId(url);
-      if (!videoId) {
-        throw new Error('Invalid YouTube URL');
+      const res = await fetch('/api/dialogues/youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, userId: user?._id }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to generate dialogue.');
       }
 
-      
-      // Get transcript
-      const transcript = await fetchTranscript(videoId);  
+      const data = await res.json();
+      console.log('Generated dialogue:', data);
 
-      console.log("transcript", transcript)
-      
-      
-      // Generate dialogues
-      const dialogues = await generateDialogues(transcript);
-      console.log('Generated dialogues:', dialogues); 
-      // Save dialogue
-      // const savedDialogue = saveDialogue({
-      //   url,
-      //   dialogue: dialogues,
-      //   userId: 'user123' // In a real app, this would be the authenticated user's ID
-      // });
-
-      
-      // Navigate to the dialogue view page
-      // router.push(`/dashboards/dialogues/view/${data.dialogueId}`);
+      // Redirect to the dialogue view page after success
+      router.push(`/dashboards/dialogues/view/${data.dialogueId}`);
     } catch (err) {
-      const errMessage = err?.message || 'Failed to generate dialogue';
-      setError(errMessage);
-      toast.error(errMessage);
+      setError(err.message || 'Something went wrong.');
     } finally {
       setLoading(false);
     }
   };
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setError('');
-  //   setErrorDetails('');
-  //   setDialogues(null);
-
-  //   if (!isValidYouTubeUrl(url)) {
-  //     setError('Please enter a valid YouTube URL.');
-  //     return;
-  //   }
-
-  //   setLoading(true);
-
-  //   try {
-  //     const res = await fetch('/api/dialogues/youtube', {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ url, userId: user?._id }),
-  //     });
-
-  //     const data = await res.json();
-
-  //     if (!res.ok) {
-  //       // Handle different error types
-  //       if (data.error?.includes('Transcript is disabled')) {
-  //         setError('This video does not have available transcripts/captions.');
-  //         setErrorDetails(
-  //           'The video owner has disabled transcripts for this video. Please try a different video that has captions enabled.'
-  //         );
-  //       } else if (data.error?.includes('Unable to fetch transcript')) {
-  //         setError('Could not fetch transcript from this video.');
-  //         setErrorDetails(
-  //           'Please make sure the video has captions available and try again, or try with a different video.'
-  //         );
-  //       } else {
-  //         setError(data.error || 'Failed to generate dialogue.');
-  //       }
-  //       throw new Error(data.error || 'Failed to generate dialogue.');
-  //     }
-
-  //     console.log('Generated dialogue:', data);
-      
-  //     // Redirect to the dialogue view page after success
-  //     router.push(`/dashboards/dialogues/view/${data.dialogueId}`);
-  //   } catch (err) {
-  //     console.error('Error details:', err);
-  //     // Error message is already set above
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   return (
     <>
@@ -135,16 +70,11 @@ const Youtube = () => {
                 onChange={(e) => setUrl(e.target.value)}
               />
               <small className="text-muted">
-                Important: The video must have captions/subtitles enabled by the creator.
+                Dialogues will be generated using Claude (Anthropic)
               </small>
             </Form.Group>
 
-            {error && (
-              <Alert variant="danger">
-                <strong>{error}</strong>
-                {errorDetails && <p className="mt-2 mb-0">{errorDetails}</p>}
-              </Alert>
-            )}
+            {error && <Alert variant="danger">{error}</Alert>}
 
             <Button type="submit" variant="primary" disabled={loading}>
               {loading ? (

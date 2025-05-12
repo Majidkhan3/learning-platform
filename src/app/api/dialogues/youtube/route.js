@@ -1,120 +1,164 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { YoutubeTranscript } from 'youtube-transcript'
+// import TranscriptAPI from 'youtube-transcript-api' // Removed this line
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
+import axios from 'axios' // Added this line
 
+// Added TranscriptAPI class definition
+class TranscriptAPI {
+  /**
+   * Fetches the transcript of a particular video.
+   * @param {string} id - The YouTube video ID
+   * @param {string} [langCode] - ISO 639-1 language code
+   * @param {object} [config] - Request configurations for the Axios HTTP client.
+   */
+  static async getTranscript(id, langCode, config = {}) {
+    const url = new URL('https://www.youtube.com/watch')
+    url.searchParams.set('v', id)
+    try {
+      const response = await axios.post(
+        'https://tactiq-apps-prod.tactiq.io/transcript',
+        {
+          langCode: langCode || 'en',
+          videoUrl: url.toString(),
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          ...config,
+        },
+      )
+      console.log('Transcript API response:', response) // Debugging line
+      if (response.data && response.data.captions) {
+        return response.data.captions.map(({ dur, ...rest }) => ({
+          ...rest,
+          duration: dur,
+        }))
+      } else {
+        console.warn('Transcript API response did not contain captions:', response.data)
+        return []
+      }
+    } catch (e) {
+      console.log('error', e)
+      if (e.response) {
+        if (e.response.status === 415) {
+          throw new Error('Unsupported Media Type: Check Content-Type header and request body.')
+        } else if (e.response.status === 429) {
+          throw new Error('Too Many Requests: Rate limit exceeded.')
+        } else if (e.response.status === 406) {
+          throw new Error('Invalid video ID.')
+        } else if (e.response.status === 503) {
+          throw new Error('Video unavailable or captions disabled.')
+        }
+      }
+      throw e
+    }
+  }
+
+  /**
+   * Checks if a video with the specified ID exists on YouTube.
+   * @param {string} id - The YouTube video ID
+   * @param {object} [config] - Request configurations for the Axios HTTP client.
+   */
+  static async validateID(id, config = {}) {
+    const url = new URL('https://video.google.com/timedtext')
+    url.searchParams.set('type', 'track')
+    url.searchParams.set('v', id)
+    url.searchParams.set('id', 0) // This parameter might not be necessary or could be specific
+    url.searchParams.set('lang', 'en')
+
+    try {
+      await axios.get(url.toString(), config) // Ensure URL is passed as string
+      return true // Explicitly return true
+    } catch (_) {
+      return false // Explicitly return false
+    }
+  }
+}
+// ...existing code...
 export async function POST(req) {
   try {
     await connectToDatabase()
-    const body = await req.json()
-    console.log('Request body:', body)
-    const youtubeUrl = body.url
+    const { url: youtubeUrl, userId } = await req.json()
+    console.log('Request body:', { youtubeUrl, userId })
 
     if (!youtubeUrl) {
       return NextResponse.json({ error: 'Missing YouTube URL' }, { status: 400 })
     }
 
-    // Extract Video ID
     const videoId = extractYouTubeId(youtubeUrl)
     if (!videoId) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 })
     }
 
-    // Get transcript
     let transcriptData
-    try {
-      console.log('Attempting to fetch transcript in Spanish for video ID:', videoId)
-      transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'es' })
-      if (!transcriptData || transcriptData.length === 0) {
-        console.warn('Transcript is empty or unavailable in Spanish, falling back to English.')
-        throw new Error('Empty transcript in Spanish')
-      }
-    } catch (error) {
-      console.error('Transcript Fetch Error (Spanish):', error.stack || error.message)
-      if (error.message.includes('No transcripts are available in es') || error.message === 'Empty transcript in Spanish') {
-        console.warn('Spanish transcript not available, attempting to fetch in English.')
-        try {
-          console.log('Attempting to fetch transcript in English for video ID:', videoId)
-          transcriptData = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' })
-          if (!transcriptData || transcriptData.length === 0) {
-            console.error('Transcript is empty or unavailable in English.')
-            return NextResponse.json({ error: 'Unable to fetch transcript in any language' }, { status: 500 })
-          }
-        } catch (fallbackError) {
-          console.error('Fallback Transcript Fetch Error (English):', fallbackError.stack || fallbackError.message)
-          return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
+    // Try Spanish first, then English
+    for (const lang of ['es', 'en']) {
+      try {
+        console.log(`Fetching transcript [lang=${lang}] for ID:`, videoId)
+        console.log('video', videoId, lang)
+        transcriptData = await TranscriptAPI.getTranscript(videoId, lang) // Using your new class
+        console.log('tran', transcriptData)
+        if (transcriptData && transcriptData.length) break
+        // throw new Error('Empty transcript') // Consider if this throw is still needed or how to handle empty but successful fetches
+      } catch (err) {
+        console.warn(`Transcript fetch failed [${lang}]:`, err.message)
+        if (lang === 'en') {
+          // This means both 'es' and 'en' failed
+          return NextResponse.json({ error: 'Unable to fetch transcript in any language' }, { status: 500 })
         }
-      } else {
-        console.error('Unexpected Transcript Fetch Error:', error.stack || error.message)
-        return NextResponse.json({ error: 'Unable to fetch transcript' }, { status: 500 })
       }
+    }
+
+    // Ensure transcriptData is not undefined before proceeding
+    if (!transcriptData || transcriptData.length === 0) {
+      console.error('Transcript data is empty or undefined after attempting all languages.')
+      return NextResponse.json({ error: 'Failed to retrieve transcript content.' }, { status: 500 })
     }
 
     const transcript = transcriptData.map((line) => line.text).join(' ')
-    console.log('Transcript fetched successfully:', transcript.slice(0, 100), '...') // Log first 100 characters
-    // Send to Claude API to generate dialogues
-    let claudeResponse
-    try {
-      claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': process.env.CLAUDE_API_KEY || '',
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 2000,
-          system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
-          messages: [
-            {
-              role: 'user',
-              content: generatePrompt(transcript),
-            },
-          ],
-        }),
-      })
-    } catch (error) {
-      console.error('Claude API Request Error:', error.message)
-      return NextResponse.json({ error: 'Failed to connect to Claude API' }, { status: 500 })
-    }
+    console.log('Transcript snippet:', transcript.slice(0, 100), '...')
 
-    const data = await claudeResponse.json()
+    // Send to Claude API
+    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.CLAUDE_API_KEY || '',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 2000,
+        system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
+        messages: [{ role: 'user', content: generatePrompt(transcript) }],
+      }),
+    })
+
     if (!claudeResponse.ok) {
-      console.error('Claude API Response Error:', data)
+      const errData = await claudeResponse.json()
+      console.error('Claude API Error:', errData)
       return NextResponse.json({ error: 'Claude API returned an error' }, { status: 500 })
     }
 
-    const content = data?.content?.[0]?.text || ''
-    console.log('Claude response:', data)
+    const { content } = await claudeResponse.json()
+    const dialogueText = content?.[0]?.text || ''
 
-    // Save dialogue to MongoDB
-    try {
-      const dialogue = new Dialogue({
-        userId: body.userId, // Assuming userId is passed in the body
-        url: youtubeUrl,
-        dialogue: content, // Save the single string dialogue
-      })
+    // Save to MongoDB
+    const dialogue = new Dialogue({ userId, url: youtubeUrl, dialogue: dialogueText })
+    await dialogue.save()
 
-      await dialogue.save()
-
-      // Redirect to the dialogue view page
-      const dialogueId = dialogue?._id.toString()
-      return NextResponse.json({ status: 'success', dialogueId, dialogue: content }, { status: 200 })
-    } catch (dbError) {
-      console.error('Database Save Error:', dbError.message)
-      return NextResponse.json({ error: 'Failed to save dialogue to database' }, { status: 500 })
-    }
-  } catch (error) {
-    console.error('Unexpected Error:', error.stack || error.message || error)
+    return NextResponse.json({ status: 'success', dialogueId: dialogue._id.toString(), dialogue: dialogueText }, { status: 200 })
+  } catch (err) {
+    console.error('Unexpected Error:', err.stack || err.message)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 function extractYouTubeId(url) {
-  const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([\w-]{11})/
-  const match = url.match(regex)
-  return match ? match[1] : null
+  const m = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([\w-]{11})/)
+  return m ? m[1] : null
 }
 
 function generatePrompt(transcript) {
