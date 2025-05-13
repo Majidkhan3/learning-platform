@@ -24,3 +24,25 @@ export async function GET(req, { params }) {
     return new Response(JSON.stringify({ error: 'Internal server error.' }), { status: 500 })
   }
 }
+export async function DELETE(req, { params }) {
+  await connectToDatabase()
+
+  const { id: storyId } = params
+
+  if (!storyId) {
+    return new Response(JSON.stringify({ error: 'storyId is required.' }), { status: 400 })
+  }
+
+  try {
+    const deletedStory = await Story.findOneAndDelete({ storyId })
+
+    if (!deletedStory) {
+      return new Response(JSON.stringify({ message: 'Story not found.' }), { status: 404 })
+    }
+
+    return new Response(JSON.stringify({ message: 'Story deleted successfully.' }), { status: 200 })
+  } catch (error) {
+    console.error('Error deleting story:', error)
+    return new Response(JSON.stringify({ error: 'Internal server error.' }), { status: 500 })
+  }
+}

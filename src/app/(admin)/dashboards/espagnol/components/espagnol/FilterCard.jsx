@@ -2,6 +2,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Badge, Card, Form } from 'react-bootstrap'
 import { useState, useEffect } from 'react'
+import IconifyIcon from '@/components/wrappers/IconifyIcon'
 
 const FilterCard = ({ tags, voices, onVoiceChange }) => {
   const router = useRouter()
@@ -124,8 +125,20 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
         </div>
 
         <div className="d-flex justify-content-between align-items-center">
-          <Form.Check type="switch" id="flashCardMode" label="Flash Card Mode" checked={flashCardMode} onChange={handleFlashCardModeChange} />
-
+          <div
+            onClick={() => handleFlashCardModeChange({ target: { checked: !flashCardMode } })}
+            style={{ cursor: 'pointer' }}
+            className="d-flex align-items-center">
+            <IconifyIcon
+              icon="mdi:cards"
+              className={`me-2`}
+              style={{
+                color: flashCardMode ? '#0d6efd' : '#6c757d',
+                fontSize: '24px',
+              }}
+            />
+            <span>Flash Card Mode</span>
+          </div>
           <Form.Select
             size="sm"
             style={{

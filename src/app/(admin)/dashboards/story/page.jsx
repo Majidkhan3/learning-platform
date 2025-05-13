@@ -13,7 +13,26 @@ const Page = () => {
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+// Add after the existing state declarations
+const handleDelete = async (storyId) => {
+  if (window.confirm('Are you sure you want to delete this story?')) {
+    try {
+      const response = await fetch(`/api/story/create/${storyId}`, {
+        method: 'DELETE',
+      });
 
+      if (response.ok) {
+        // Remove the deleted story from the state
+        setStories(stories.filter(story => story.storyId !== storyId));
+      } else {
+        throw new Error('Failed to delete story');
+      }
+    } catch (error) {
+      console.error('Error deleting story:', error);
+      alert('Failed to delete story');
+    }
+  }
+};
   useEffect(() => {
     const fetchStories = async () => {
       if (!userId) return
@@ -23,7 +42,7 @@ const Page = () => {
         const data = await res.json()
         if (res.ok) {
           setStories(data.stories)
-        } 
+        }
       } catch (err) {
         console.error('Error fetching stories:', err)
         setError('Failed to fetch stories')
@@ -81,7 +100,13 @@ const Page = () => {
                 <Card>
                   <Card.Header className="d-flex justify-content-between align-items-center">
                     <strong>{story.title}</strong>
-                    <Icon icon="mdi:trash" className="text-danger" role="button" style={{ cursor: 'pointer' }} />
+                    <Icon
+                      icon="mdi:trash"
+                      className="text-danger"
+                      role="button"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleDelete(story.storyId)}
+                    />{' '}
                   </Card.Header>
                   <Card.Body>
                     <Card.Text className="mb-2">{story.rating || 'No rating'}</Card.Text>

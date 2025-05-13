@@ -53,6 +53,12 @@ export const MENU_ITEMS = [
     icon: 'ri:discuss-line',
     url: '/dashboards/flashcard',
   },
+  {
+    key: 'prompt',
+    label: 'Prompt',
+    icon: 'mdi:cards', // or 'ri:timer-flash-line' for a speed-related icon
+    url: '/dashboards/prompt',
+  },
   // {
   //   key: 'property',
   //   label: 'Property',

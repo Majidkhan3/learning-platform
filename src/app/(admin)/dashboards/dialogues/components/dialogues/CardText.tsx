@@ -148,8 +148,27 @@ const CardText = () => {
       setFetching(false)
     }
   }, [user?._id])
+  // Add this after other state declarations
+  const handleDelete = async (dialogueId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce dialogue ?')) {
+      try {
+        const res = await fetch(`/api/dialogues/${dialogueId}`, {
+          method: 'DELETE',
+        })
 
-  console.log('extractedText', extractedText)
+        if (res.ok) {
+          // Remove the deleted dialogue from state
+          setDialogues(dialogues.filter((d) => d._id !== dialogueId))
+        } else {
+          throw new Error('Failed to delete dialogue')
+        }
+      } catch (error) {
+        console.error('Error deleting dialogue:', error)
+        alert('Une erreur est survenue lors de la suppression')
+      }
+    }
+  }
   return (
     <>
       {/* <PageTitle title="Gestionnaire de Dialogues" /> */}
@@ -218,14 +237,19 @@ const CardText = () => {
             <Card className="mb-3" key={dialogue._id}>
               <Card.Body>
                 <p className="mb-1">
-                  <strong>{dialogue.url || 'Source inconnue'}</strong> {/* Added dialogue.fileName as a fallback */}
+                  <strong>{dialogue.url || 'Source inconnue'}</strong>
                 </p>
                 <p className="text-muted small">Ajouté le: {new Date(dialogue.createdAt).toLocaleString()}</p>
-                <Link href={`/dashboards/dialogues/view/${dialogue._id}`}>
-                  <Button variant="outline-primary" size="sm">
-                    Voir les dialogues
+                <div className="d-flex gap-2">
+                  <Link href={`/dashboards/dialogues/view/${dialogue._id}`}>
+                    <Button variant="outline-primary" size="sm">
+                      Voir les dialogues
+                    </Button>
+                  </Link>
+                  <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(dialogue._id, e)}>
+                    Supprimer
                   </Button>
-                </Link>
+                </div>
               </Card.Body>
             </Card>
           ),

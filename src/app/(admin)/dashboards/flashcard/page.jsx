@@ -1,10 +1,11 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Card, Button, ListGroup, Accordion, Stack, Modal } from 'react-bootstrap'
+import { Card, Button, ListGroup, Accordion, Stack, Modal, Col } from 'react-bootstrap'
 import { useSwipeable } from 'react-swipeable' // Import react-swipeable
 import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
+import { Icon } from '@iconify/react/dist/iconify.js'
 
 const FlashCard = () => {
   const { user } = useAuth()
@@ -198,9 +199,14 @@ const FlashCard = () => {
     preventDefaultTouchmoveEvent: true,
     trackMouse: true, // Optional: Allow swipe gestures with a mouse
   })
-  console.log('current', currentCard)
-  console.log('cards', cards)
-  if (loading) return <div className="text-center">Loading...</div>
+
+  if (loading)
+    return (
+      <Col className="text-center w-full justify-center py-5">
+        <Icon icon="eos-icons:loading" className="text-primary" width="50" height="50" spin />
+        <p className="text-muted">Loading FlashCards...</p>
+      </Col>
+    )
   if (error) return <div className="text-center text-danger">{error}</div>
 
   return (
