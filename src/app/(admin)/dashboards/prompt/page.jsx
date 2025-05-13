@@ -205,7 +205,7 @@ Important:
               <Card.Body>
                 <h4>Sélectionnez un prompt à personnaliser</h4>
                 <p className="text-muted">
-                  Choisissez l'un des prompts disponibles dans la liste à gauche pour commencer à le personnaliser
+                  Choisissez lun des prompts disponibles dans la liste à gauche pour commencer à le personnaliser
                 </p>
               </Card.Body>
             </Card>
