@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto'
 import Story from '@/model/Story' // Import the Story schema
+import Prompt from '@/model/Prompt' // Import the Prompt schema (for user prompts)
 import Word from '@/model/Word' // Import the Word schema (for filtered words)
 import axios from 'axios' // For making HTTP requests
 import connectToDatabase from '@/lib/db'
@@ -27,7 +28,7 @@ export async function GET(req) {
     return new Response(JSON.stringify({ error: 'Internal server error.' }), { status: 500 })
   }
 }
-async function generateStoryWithClaude(words, theme) {
+async function generateStoryWithClaude(words, theme, userId) {
   try {
     // Limit the number of words to use
     let selectedWords = words
@@ -50,37 +51,44 @@ async function generateStoryWithClaude(words, theme) {
     if (!apiKey) {
       throw new Error('Claude API key is missing')
     }
+    const userPrompt = await Prompt.findOne({ userId, isActive: true })
+    if (!userPrompt) {
+      throw new Error('No active prompt template found for this user')
+    }
 
-    const prompt = `
-      Por favor, crea exactamente 2 diálogos narrativos, naturales y coherentes en español, que simulen una conversación real entre dos personas.
+    // Replace placeholders in the prompt template
+    const finalPrompt = userPrompt.promptText.replace('${theme}', theme).replace('${group1Text}', group1Text).replace('${group2Text}', group2Text)
 
-      INSTRUCCIONES IMPORTANTES:
-      1. Utiliza exclusivamente las etiquetas 'Personne A:' y 'Personne B:' (no uses nombres propios).
-      2. Cada intervención debe consistir en 4 a 5 frases completas, descriptivas y naturales, sin limitarse a un número fijo de palabras por frase.
-      3. Cada frase debe terminar con un punto u otro signo de puntuación apropiado.
-      4. No escribas frases incompletas ni uses 'etc.' o '...'.
-      5. Incorpora de forma coherente el tema y las siguientes palabras clave obligatorias, pero utiliza también otras palabras que enriquezcan la narrativa y permitan transiciones lógicas entre las ideas.
-      6. Si las palabras clave son verbos, conjúgalos correctamente según el contexto, y ajusta el género de los sustantivos o adjetivos para que la conversación sea natural.
-      7. El diálogo debe parecer una conversación real: incluye preguntas, respuestas, comentarios espontáneos, interjecciones y transiciones naturales.
-      8. El tema es: ${theme}
+    // const prompt = `
+    //   Por favor, crea exactamente 2 diálogos narrativos, naturales y coherentes en español, que simulen una conversación real entre dos personas.
 
-      Para el PRIMER diálogo, integra obligatoriamente las siguientes palabras clave: ${group1Text}
-      Para el SEGUNDO diálogo, integra obligatoriamente las siguientes palabras clave: ${group2Text}
+    //   INSTRUCCIONES IMPORTANTES:
+    //   1. Utiliza exclusivamente las etiquetas 'Personne A:' y 'Personne B:' (no uses nombres propios).
+    //   2. Cada intervención debe consistir en 4 a 5 frases completas, descriptivas y naturales, sin limitarse a un número fijo de palabras por frase.
+    //   3. Cada frase debe terminar con un punto u otro signo de puntuación apropiado.
+    //   4. No escribas frases incompletas ni uses 'etc.' o '...'.
+    //   5. Incorpora de forma coherente el tema y las siguientes palabras clave obligatorias, pero utiliza también otras palabras que enriquezcan la narrativa y permitan transiciones lógicas entre las ideas.
+    //   6. Si las palabras clave son verbos, conjúgalos correctamente según el contexto, y ajusta el género de los sustantivos o adjetivos para que la conversación sea natural.
+    //   7. El diálogo debe parecer una conversación real: incluye preguntas, respuestas, comentarios espontáneos, interjecciones y transiciones naturales.
+    //   8. El tema es: ${theme}
 
-      FORMATO EXACTO A SEGUIR:
+    //   Para el PRIMER diálogo, integra obligatoriamente las siguientes palabras clave: ${group1Text}
+    //   Para el SEGUNDO diálogo, integra obligatoriamente las siguientes palabras clave: ${group2Text}
 
-      Dialogue 1:
-      Personne A: [Frase 1. Frase 2. Frase 3. Frase 4.]
-      Personne B: [Frase 1. Frase 2. Frase 3. Frase 4.]
-      FIN DIALOGUE 1
+    //   FORMATO EXACTO A SEGUIR:
 
-      Dialogue 2:
-      Personne A: [Frase 1. Frase 2. Frase 3. Frase 4.]
-      Personne B: [Frase 1. Frase 2. Frase 3. Frase 4.]
-      FIN DIALOGUE 2
+    //   Dialogue 1:
+    //   Personne A: [Frase 1. Frase 2. Frase 3. Frase 4.]
+    //   Personne B: [Frase 1. Frase 2. Frase 3. Frase 4.]
+    //   FIN DIALOGUE 1
 
-      Asegúrate de que ambos diálogos estén completos, sean coherentes, parezcan una conversación real y no se corten.
-    `
+    //   Dialogue 2:
+    //   Personne A: [Frase 1. Frase 2. Frase 3. Frase 4.]
+    //   Personne B: [Frase 1. Frase 2. Frase 3. Frase 4.]
+    //   FIN DIALOGUE 2
+
+    //   Asegúrate de que ambos diálogos estén completos, sean coherentes, parezcan una conversación real y no se corten.
+    // `
 
     const response = await axios.post(
       'https://api.anthropic.com/v1/messages',
@@ -88,7 +96,7 @@ async function generateStoryWithClaude(words, theme) {
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 2000,
         temperature: 0.7,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: finalPrompt }],
       },
       {
         headers: {
@@ -128,7 +136,7 @@ export async function POST(req, res) {
 
   try {
     // Generate the story using Claude API
-    const { storyText, wordsUsed } = await generateStoryWithClaude(words, theme)
+    const { storyText, wordsUsed } = await generateStoryWithClaude(words, theme, userId)
 
     // Create a new story document
     const storyId = randomUUID()
