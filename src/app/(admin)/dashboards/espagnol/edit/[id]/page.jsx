@@ -140,7 +140,7 @@ const EditEspagnol = ({ params }) => {
       const data = await response.json();
       if (response.ok) {
         alert('Word updated successfully!');
-        router.push('/dashboards/espagnol'); // Redirect back to the main page
+         // Redirect back to the main page
       } else {
         setError(data.error || 'Failed to update word');
       }

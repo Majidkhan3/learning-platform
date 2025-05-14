@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 export function middleware(request) {
   const response = NextResponse.next()
-  if (request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboards/espagnol', request.url))
-  }
+  // if (request.nextUrl.pathname === '/') {
+  //   return NextResponse.redirect(new URL('/dashboards/espagnol', request.url))
+  // }
   return response
 }
 
