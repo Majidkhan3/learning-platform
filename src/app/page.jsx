@@ -8,25 +8,25 @@ const languages = [
   {
     title: 'Espagnol',
     route: '/dashboards/espagnol',
-    bg: '#44287d',
+    bg: '#fef3c7',
     icon: <FaFlag size={32} />,
   },
   {
     title: 'Portugal',
     route: '/dashboards/portugal',
-    bg: '#1d613e',
+    bg: '#d1fae5',
     icon: <FaFlag size={32} />,
   },
   {
     title: 'English',
     route: '/dashboards/english',
-    bg: '#954433',
+    bg: '#e0f2fe',
     icon: <FaFlag size={32} />,
   },
   {
     title: 'Coming Soon',
     route: null,
-    bg: '#25282f',
+    bg: '#f3f4f6',
     icon: <FaLock size={32} />,
   },
 ];
