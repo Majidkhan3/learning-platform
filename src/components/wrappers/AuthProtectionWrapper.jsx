@@ -6,7 +6,15 @@ import FallbackLoading from '../FallbackLoading';
 
 export const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
-
+const hasLanguageAccess = (user, path) => {
+  if (!user || !path) return false;
+  
+  if (path.includes('/espagnol') && !user.languages?.includes('Espagnol')) {
+    return false;
+  }
+  // Add more language checks here if needed
+  return true;
+};
 const AuthProtectionWrapper = ({ children }) => {
   const [state, setState] = useState({
     isAuthenticated: false,
@@ -64,6 +72,13 @@ const AuthProtectionWrapper = ({ children }) => {
       const user = localStorage.getItem('user');
 
       if (token && user) {
+        const userData = JSON.parse(user);
+        
+        // Check language access
+        if (!hasLanguageAccess(userData, pathname)) {
+          router.push('/');
+          return;
+        }
         setState({
           isAuthenticated: true,
           user: JSON.parse(user),
