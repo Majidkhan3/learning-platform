@@ -15,6 +15,7 @@ import {
   DropdownToggle,
   Row,
   Form,
+  InputGroup,
 } from 'react-bootstrap'
 import { useEffect, useState } from 'react'
 import SynthesisModal from './SynthesisModal'
@@ -24,20 +25,24 @@ const Table = ({ loading, words, selectedVoice }) => {
   const [filteredData, setFilteredData] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [resultsPerPage, setResultsPerPage] = useState(10) // Default results per page
+  const [searchTerm, setSearchTerm] = useState('')
 
-  useEffect(() => {
+ useEffect(() => {
     const tag = searchParams.get('tag')
     const rating = searchParams.get('rating')
 
-    // Filter words based on selected tag and rating
+    // Filter words based on selected tag, rating, and search term
     const filtered = words.filter((word) => {
       const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag)
       const matchesRating = !rating || rating === 'All' || (word.note && word.note === parseInt(rating))
-      return matchesTag && matchesRating
+      const matchesSearch = !searchTerm || 
+        word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        word.translation?.toLowerCase().includes(searchTerm.toLowerCase())
+      return matchesTag && matchesRating && matchesSearch
     })
 
     setFilteredData(filtered)
-  }, [searchParams, words])
+  }, [searchParams, words, searchTerm])
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / resultsPerPage)
@@ -93,6 +98,21 @@ const Table = ({ loading, words, selectedVoice }) => {
               <CardTitle as={'h4'}>Liste de vocabulaire</CardTitle>
             </div>
             <div className="d-flex align-items-center">
+               <InputGroup size="sm" className="me-2" style={{ width: '200px' }}>
+                <Form.Control
+                  placeholder="Search words..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <Button 
+                    variant="outline-secondary"
+                    onClick={() => setSearchTerm('')}
+                  >
+                    <IconifyIcon icon="mdi:close" />
+                  </Button>
+                )}
+              </InputGroup>
               <Form.Select size="sm" className="me-2" value={resultsPerPage} onChange={handleResultsPerPageChange}>
                 <option value={5}>5</option>
                 <option value={10}>10</option>
