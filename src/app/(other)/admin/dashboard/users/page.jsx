@@ -28,6 +28,7 @@ const UsersPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+     languages: [], 
   });
 
   useEffect(() => {
@@ -55,6 +56,7 @@ const UsersPage = () => {
     setFormData({
       email: '',
       password: '',
+      languages: Array.isArray(users.languages) ? users.languages : [],
     });
   };
 
@@ -126,6 +128,7 @@ const UsersPage = () => {
                     <tr>
                       <th>Email</th>
                       <th>Created At</th>
+                      <th>Languages</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -134,6 +137,13 @@ const UsersPage = () => {
                       <tr key={user._id}>
                         <td>{user.email}</td>
                         <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                   <td>{user.languages && user.languages.length > 0 ? user.languages.join(', ') : 'N/A'}</td>
+                   {console.log('User languages:', user.languages)}
+
+
+
+
+
                         <td>
                           <div className="d-flex gap-2">
                             <Button
@@ -144,6 +154,7 @@ const UsersPage = () => {
                                 setFormData({
                                   email: user.email,
                                   password: '',
+                                   languages: user.languages || [],
                                 });
                                 setShowModal(true);
                               }}
@@ -226,8 +237,28 @@ const UsersPage = () => {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
-              </Form.Group>
+              </Form.Group> 
             )}
+            <Form.Group className="mb-3">
+            <Form.Label>Languages</Form.Label>
+            <div className="d-flex gap-3">
+              {['Espagnol', 'Portuguese', 'English'].map((lang) => (
+                <Form.Check
+                  key={lang}
+                  type="checkbox"
+                  label={lang}
+                  checked={formData.languages.includes(lang)}
+                  onChange={(e) => {
+                    const updatedLanguages = e.target.checked
+                      ? [...formData.languages, lang]
+                      : formData.languages.filter((l) => l !== lang);
+                    setFormData({ ...formData, languages: updatedLanguages });
+                  }}
+                />
+              ))}
+            </div>
+          </Form.Group>
+
           </Form>
         </Modal.Body>
         <Modal.Footer>
