@@ -40,15 +40,20 @@ const ProfileDropdown = () => {
           <span className="align-middle">Lock screen</span>
         </DropdownItem> */}
         <div className="dropdown-divider my-1" />
-         <DropdownItem
-          className=" text-danger"
+        <DropdownItem
+          className="text-danger"
           onClick={(event) => {
-            event.preventDefault(); // Prevent default link behavior if any (though href is removed)
-            localStorage.removeItem('user');
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-          }}
-          >
+            event.preventDefault()
+            if (window.location.pathname.includes('dashboard')) {
+              localStorage.removeItem('admin')
+              localStorage.removeItem('admin_token')
+              window.location.href = '/admin'
+            } else {
+              localStorage.removeItem('user')
+              localStorage.removeItem('token')
+              window.location.href = '/login'
+            }
+          }}>
           <IconifyIcon icon="solar:logout-3-broken" className="align-middle me-2 fs-18" />
           <span className="align-middle">Logout</span>
         </DropdownItem>
