@@ -1,12 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import FallbackLoading from '../FallbackLoading';
 
-// Create AuthContext
-const AuthContext = createContext(null);
-
+export const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 const AuthProtectionWrapper = ({ children }) => {
@@ -16,7 +14,7 @@ const AuthProtectionWrapper = ({ children }) => {
     isInitialized: false,
   });
 
-  const { push } = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
 
   const login = ({ jwt, email, avatar, ...others }) => {
@@ -49,7 +47,7 @@ const AuthProtectionWrapper = ({ children }) => {
       user: null,
       isInitialized: true,
     });
-    push('/login');
+    router.push('/login');
   };
 
   const updateUser = (user) => {
@@ -61,7 +59,7 @@ const AuthProtectionWrapper = ({ children }) => {
   };
 
   useEffect(() => {
-    const checkToken = async () => {
+    const checkToken = () => {
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');
 
@@ -77,27 +75,23 @@ const AuthProtectionWrapper = ({ children }) => {
           user: null,
           isInitialized: true,
         });
-        console.log('Redirecting to login');
-        push(`/login?redirectTo=${pathname}`);
+
+        // Only redirect to login if not already there
+        if (!pathname.includes('/login')) {
+          router.push(`/login?redirectTo=${pathname}`);
+        }
       }
     };
 
     checkToken();
-  }, [pathname, push]);
+  }, [pathname, router]);
 
   if (!state.isInitialized) {
     return <FallbackLoading />;
   }
 
-  const authContextValue = {
-    ...state,
-    login,
-    logout,
-    updateUser,
-  };
-
   return (
-    <AuthContext.Provider value={authContextValue}>
+    <AuthContext.Provider value={{ ...state, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

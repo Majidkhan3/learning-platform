@@ -1,24 +1,22 @@
-// 'use client'
+'use client';
 
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
-import { AuthContext } from '@/context/AuthContext';
-import React, { useContext, useState } from 'react'
-import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap'
+import React, { useState } from 'react';
+import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
+import { useRouter } from 'next/navigation';
 
 const LoginPage = () => {
-  const { login,user } = useAuth();
-  console.log("user",user)
-
-  // const { login } = useContext(AuthContext);
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter(); // use router for redirection
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     try {
       const res = await fetch('/api/login', {
@@ -27,28 +25,24 @@ const LoginPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
-      })
+      });
 
-      const data = await res.json()
-      
-      console.log(data,"data")
-      if(res.ok) {
-        // login(data);
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        console.log("login data",data)
-        // localStorage.setItem("token", data.token);
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        login(data); // Call login to update the global state
+        router.push('/'); // Redirect to the home page
+      } else {
+        throw new Error(data.message || 'Login failed');
       }
-      if (!res.ok) throw new Error(data.message || 'Login failed')
-
-      // Redirect or show success
-      window.location.href = '/' 
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
@@ -63,7 +57,7 @@ const LoginPage = () => {
                 type="email"
                 placeholder="Enter email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </Form.Group>
@@ -74,7 +68,7 @@ const LoginPage = () => {
                 type="password"
                 placeholder="Password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </Form.Group>
@@ -86,7 +80,7 @@ const LoginPage = () => {
         </Col>
       </Row>
     </Container>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;
