@@ -44,7 +44,7 @@ const ProfileDropdown = () => {
           className="text-danger"
           onClick={(event) => {
             event.preventDefault()
-            if (window.location.pathname.includes('dashboard')) {
+            if (window.location.pathname.includes('admin')) {
               localStorage.removeItem('admin')
               localStorage.removeItem('admin_token')
               window.location.href = '/admin'
