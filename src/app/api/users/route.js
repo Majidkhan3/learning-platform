@@ -7,7 +7,10 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   try {
     await connectToDatabase()
-    const users = await User.find({}).select('-password').sort({ createdAt: -1 })
+    const users = await User.find({})
+    .select('email createdAt languages')
+    .select('-password').sort({ createdAt: -1 })
+    console.log("Fetched users:", users);
     return NextResponse.json(users, { status: 200 })
   } catch (error) {
     console.error('Error fetching users:', error)
@@ -25,7 +28,8 @@ export async function POST(req) {
   try {
     await connectToDatabase()
     const body = await req.json()
-    const { email, password, dentist, address } = body
+    console.log('Received request body:', body)
+    const { email, password, dentist, address, languages = [] } = body
 
     // Validate required fields
     if (!email || !password) {
@@ -39,6 +43,7 @@ export async function POST(req) {
     const newUser = await User.create({
       email,
       password: hashedPassword,
+      languages, 
     })
 
     // Exclude password from the response

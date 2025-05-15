@@ -8,9 +8,9 @@ export async function PUT(req, { params }) {
     await connectToDatabase()
     const { id } = params
     const body = await req.json()
-    const { email, password } = body
+    const { email, password,languages } = body
 
-    const updateData = { email }
+    const updateData = { email, languages  }
 
     // Only hash and update password if provided
     if (password) {
