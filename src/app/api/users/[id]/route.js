@@ -8,9 +8,9 @@ export async function PUT(req, { params }) {
     await connectToDatabase()
     const { id } = params
     const body = await req.json()
-    const { email, password,languages } = body
+    const { email, password, languages } = body
 
-    const updateData = { email, languages  }
+    const updateData = { email, languages }
 
     // Only hash and update password if provided
     if (password) {
@@ -36,7 +36,28 @@ export async function PUT(req, { params }) {
     )
   }
 }
+export async function GET(req, { params }) {
+  try {
+    await connectToDatabase()
+    const { id } = params
 
+    const user = await User.findById(id).select('-password')
+
+    if (!user) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 })
+    }
+
+    return NextResponse.json(user, { status: 200 })
+  } catch (error) {
+    console.error('Error fetching user:', error)
+    return NextResponse.json(
+      {
+        message: error instanceof Error ? error.message : 'Internal server error',
+      },
+      { status: 500 },
+    )
+  }
+}
 // DELETE - Remove user
 export async function DELETE(req, { params }) {
   try {
