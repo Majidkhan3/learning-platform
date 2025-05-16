@@ -45,7 +45,7 @@ const Youtube = () => {
       console.log('Generated dialogue:', data);
 
       // Redirect to the dialogue view page after success
-      router.push(`/dashboards/espagnol/dialogues/view/${data.dialogueId}`);
+      router.push(`/dashboards/dialogues/view/${data.dialogueId}`);
     } catch (err) {
       setError(err.message || 'Something went wrong.');
     } finally {

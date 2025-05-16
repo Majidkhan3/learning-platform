@@ -2,7 +2,7 @@
 
 import { Card, Row, Col, Container } from 'react-bootstrap'
 import { useRouter } from 'next/navigation'
-import { FaFlag, FaLock } from 'react-icons/fa'
+import { FaFlag } from 'react-icons/fa'
 import AuthProtectionWrapper from '@/components/wrappers/AuthProtectionWrapper'
 
 const languages = [
@@ -25,10 +25,10 @@ const languages = [
     icon: <FaFlag size={32} />,
   },
   {
-    title: 'Coming Soon',
-    route: null,
-    bg: '#25282f',
-    icon: <FaLock size={32} />,
+    title: 'French',
+    route: '/dashboards/french',
+    bg: '#FFB300',
+    icon: <FaFlag size={32} />,
   },
 ]
 

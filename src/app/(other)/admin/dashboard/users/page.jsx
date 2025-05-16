@@ -242,7 +242,7 @@ const UsersPage = () => {
             <Form.Group className="mb-3">
             <Form.Label>Languages</Form.Label>
             <div className="d-flex gap-3">
-              {['Espagnol', 'Portuguese', 'English'].map((lang) => (
+              {['Espagnol', 'Portuguese', 'English','French'].map((lang) => (
                 <Form.Check
                   key={lang}
                   type="checkbox"

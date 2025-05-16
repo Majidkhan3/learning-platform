@@ -18,20 +18,20 @@ export const MENU_ITEMS = [
       {
         key: 'tags',
         label: 'Gérer les tags',
-        url: '/dashboards/tags',
+        url: '/dashboards/espagnol/tags',
         parentKey: 'dashboards',
       },
       {
         key: 'word',
         label: 'Ajouter un mot',
-        url: '/dashboards/word',
+        url: '/dashboards/espagnol/word',
         parentKey: 'dashboards',
       },
       {
         key: 'add-multiple-words',
         label: 'Ajouter plusieurs mots',
         // icon: 'ri:inbox-line',
-        url: '/dashboards/add-multiple-words',
+        url: '/dashboards/espagnol/add-multiple-words',
       },
     ],
   },
@@ -39,25 +39,25 @@ export const MENU_ITEMS = [
     key: 'dialogues',
     label: 'Dialogues',
     icon: 'ri:home-office-line',
-    url: '/dashboards/dialogues',
+    url: '/dashboards/espagnol/dialogues',
   },
   {
     key: 'story',
     label: 'Histoires',
     icon: 'ri:arrow-left-right-line',
-    url: '/dashboards/story',
+    url: '/dashboards/espagnol/story',
   },
   {
     key: 'flashcard',
     label: 'Flash Cards',
     icon: 'ri:discuss-line',
-    url: '/dashboards/flashcard',
+    url: '/dashboards/espagnol/flashcard',
   },
   {
     key: 'prompt',
     label: 'Prompt',
     icon: 'mdi:cards', // or 'ri:timer-flash-line' for a speed-related icon
-    url: '/dashboards/prompt',
+    url: '/dashboards/espagnol/prompt',
   },
   // {
   //   key: 'property',
