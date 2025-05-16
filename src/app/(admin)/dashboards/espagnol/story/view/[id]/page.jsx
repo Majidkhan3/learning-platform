@@ -3,9 +3,9 @@
 import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Card, Form, Row, Col } from 'react-bootstrap'
-import AudioPlayer from '../../../../../../ui/AudioPlayer' // Import the new AudioPlayer component
+import { Card, Form, Row, Col } from 'react-bootstrap'// Import the new AudioPlayer component
 import { Icon } from '@iconify/react/dist/iconify.js'
+import AudioPlayer from '../../../../../../../ui/AudioPlayer'
 
 const preprocessDialogues = (dialogueString) => {
   if (!dialogueString) return []

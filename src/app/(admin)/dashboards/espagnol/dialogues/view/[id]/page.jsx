@@ -4,7 +4,7 @@ import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { useParams } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { Button, Card, Form, Row, Col } from 'react-bootstrap'
-import AudioPlayer from '../../../../../../ui/AudioPlayer' // Import the new AudioPlayer component
+import AudioPlayer from '../../../../../../../ui/AudioPlayer'
 const DialogueViewer = () => {
   const { id } = useParams()
   const [dialogue, setDialogue] = useState(null)
