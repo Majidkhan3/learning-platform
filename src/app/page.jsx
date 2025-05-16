@@ -14,7 +14,7 @@ const languages = [
   },
   {
     title: 'Portugal',
-    route: '/dashboards/portugal',
+    route: '/dashboards/portugais',
     bg: '#1d613e',
     icon: <FaFlag size={32} />,
   },

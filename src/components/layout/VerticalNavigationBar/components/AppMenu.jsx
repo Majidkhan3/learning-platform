@@ -100,9 +100,31 @@ const MenuItemLink = ({ item, className }) => {
 const AppMenu = ({ menuItems }) => {
   const pathname = usePathname()
   const [activeMenuItems, setActiveMenuItems] = useState([])
+   const [filteredMenuItems, setFilteredMenuItems] = useState([])
+
   const toggleMenu = (menuItem, show) => {
     if (show) setActiveMenuItems([menuItem.key, ...findAllParent(menuItems, menuItem)])
   }
+const filterMenusByLanguage = useCallback(() => {
+    if (!pathname) return menuItems
+
+    const languageMap = {
+      'espagnol': 'spanish-dashboard',
+      'portugais': 'portuguese-dashboard',
+      'french': 'french-dashboard',
+      'english': 'english-dashboard'
+    }
+
+    // Find which language section we're in
+    const currentLanguage = Object.keys(languageMap).find(lang => pathname.includes(lang))
+    
+    if (!currentLanguage) return menuItems
+
+    // Filter menu items to only show the relevant language section
+    return menuItems.filter(item => {
+      return item.isTitle || item.key === languageMap[currentLanguage]
+    })
+  }, [pathname, menuItems])
   const getActiveClass = useCallback(
     (item) => {
       return activeMenuItems?.includes(item.key) ? 'active' : ''
@@ -153,11 +175,15 @@ const AppMenu = ({ menuItems }) => {
     }
   }, [pathname, menuItems])
   useEffect(() => {
-    if (menuItems && menuItems.length > 0) activeMenu()
-  }, [activeMenu, menuItems])
+    if (menuItems && menuItems.length > 0) {
+      setFilteredMenuItems(filterMenusByLanguage())
+      activeMenu()
+    }
+  }, [activeMenu, menuItems, filterMenusByLanguage])
+
   return (
-    <ul className="navbar-nav" id="navbar-nav">
-      {(menuItems || []).map((item, idx) => {
+   <ul className="navbar-nav" id="navbar-nav">
+      {(filteredMenuItems || []).map((item, idx) => {
         return (
           <Fragment key={item.key + idx}>
             {item.isTitle ? (
