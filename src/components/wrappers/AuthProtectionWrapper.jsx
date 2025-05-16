@@ -11,9 +11,11 @@ const hasLanguageAccess = (user, path) => {
 
   if (path.includes('/espagnol') && !user.languages?.includes('Espagnol')) {
     return false
-  } else if (path.includes('/portugal') && !user.languages?.includes('Portuguese')) {
+  } else if (path.includes('/portugais') && !user.languages?.includes('Portuguese')) {
     return false
   } else if (path.includes('/english') && !user.languages?.includes('English')) {
+    return false
+  } else if (path.includes('/french') && !user.languages?.includes('French')) {
     return false
   }
   // Add more language checks here if needed
@@ -28,11 +30,11 @@ const AuthProtectionWrapper = ({ children }) => {
 
   const router = useRouter()
   const pathname = usePathname()
- const fetchUserData = async () => {
+  const fetchUserData = async () => {
     try {
       const token = localStorage.getItem('token')
       const storedUser = JSON.parse(localStorage.getItem('user'))
-      
+
       if (!token || !storedUser?._id) return
 
       const response = await fetch(`/api/users/${storedUser._id}`, {
@@ -43,13 +45,13 @@ const AuthProtectionWrapper = ({ children }) => {
 
       if (response.ok) {
         const userData = await response.json()
-        
+
         // Compare if user data has changed
         if (JSON.stringify(userData) !== JSON.stringify(storedUser)) {
           localStorage.setItem('user', JSON.stringify(userData))
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
-            user: userData
+            user: userData,
           }))
         }
       } else if (response.status === 401) {
@@ -119,7 +121,7 @@ const AuthProtectionWrapper = ({ children }) => {
           user: JSON.parse(user),
           isInitialized: true,
         })
-         fetchUserData()
+        fetchUserData()
       } else {
         setState({
           isAuthenticated: false,
@@ -135,7 +137,7 @@ const AuthProtectionWrapper = ({ children }) => {
     }
 
     checkToken()
-     const refreshInterval = setInterval(fetchUserData, 5 * 60 * 1000)
+    const refreshInterval = setInterval(fetchUserData, 5 * 60 * 1000)
 
     return () => clearInterval(refreshInterval)
   }, [pathname, router])
