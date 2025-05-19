@@ -42,7 +42,7 @@ export const MENU_ITEMS = [
       {
         key: 'spanish-stories',
         label: 'Historias',
-        url: '/dashboards/espagnol/stories',
+        url: '/dashboards/espagnol/story',
         parentKey: 'spanish-dashboard',
       },
       {
@@ -91,7 +91,7 @@ export const MENU_ITEMS = [
       {
         key: 'portuguese-stories',
         label: 'Histórias',
-        url: '/dashboards/portugais/stories',
+        url: '/dashboards/portugais/story',
         parentKey: 'portuguese-dashboard',
       },
       {
@@ -140,7 +140,7 @@ export const MENU_ITEMS = [
       {
         key: 'french-stories',
         label: 'Histoires',
-        url: '/dashboards/french/stories',
+        url: '/dashboards/french/story',
         parentKey: 'french-dashboard',
       },
       {
@@ -189,7 +189,7 @@ export const MENU_ITEMS = [
       {
         key: 'english-stories',
         label: 'Stories',
-        url: '/dashboards/english/stories',
+        url: '/dashboards/english/story ',
         parentKey: 'english-dashboard',
       },
       {

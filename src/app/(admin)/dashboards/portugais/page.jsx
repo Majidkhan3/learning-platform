@@ -11,7 +11,7 @@ export const metadata = {
 };
 const AnalyticsPage = () => {
   return <>
-      <PageTitle title="Espagnol" subName="Dashboard" />
+      <PageTitle title="Portugaise" subName="Dashboard" />
       {/* <Statistics />
       <Row>
         <SalesChart />
@@ -43,21 +43,21 @@ const AnalyticsPage = () => {
                 </Col>
                 <Col lg={6}>
                   <div className="text-md-end mt-3 mt-md-0">
-                    <a href="/dashboards/espagnol/tags">
+                    <a href="/dashboards/portugais/tags">
 
                     <button type="button"  className="btn btn-outline-primary me-2">
                       <IconifyIcon icon="ri:settings-2-line" className="me-1" />
-                      Gérer les tags
+                      Gerenciar etiquetas
                     </button>
                     </a>
-                    <a href="/dashboards/espagnol/word">
+                    <a href="/dashboards/portugais/word">
                     <button type="button" className="btn btn-outline-primary me-2">
-                      <IconifyIcon icon="ri:add-line" className="me-1" /> Ajouter un mot
+                      <IconifyIcon icon="ri:add-line" className="me-1" />Adicionar uma palavra
                     </button>
                     </a>
-                    <a href="/dashboards/espagnol/add-multiple-words">
+                    <a href="/dashboards/portugais/add-multiple-words">
                     <button type="button" className="btn btn-success me-1">
-                      <IconifyIcon icon="ri:add-line" /> Ajouter plusieurs mots
+                      <IconifyIcon icon="ri:add-line" /> Adicionar várias palavras
                     </button>
                     </a>
                   </div>
