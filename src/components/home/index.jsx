@@ -47,6 +47,7 @@ const LanguageSelectionPage = () => {
   const handleClick = (route, access) => {
     if (route && hasAccess(access)) router.push(route)
   }
+console.log("helo")
 
   return (
       <Container className="py-5" style={{ maxWidth: '850px' }}>
