@@ -1,11 +1,11 @@
 // pages/api/dialogues/[id].js
-import Pordialgues  from '@/model/Pordialgues '
+import Pordialgues from '../../../../../model/Pordialogue'
 import { NextResponse } from 'next/server'
 export async function GET(req, { params }) {
   try {
     const { id } = params
     console.log('Fetching dialogue with ID:', id)
-    const dialogue = await Pordialgues .findById(id)
+    const dialogue = await Pordialgues.findById(id)
     if (!dialogue) {
       return new NextResponse(JSON.stringify({ error: 'Dialogue not found' }), { status: 404 })
     }

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 // import TranscriptAPI from 'youtube-transcript-api' // Removed this line
-import Pordialogue from '@/model/Pordialogue'
-import connectToDatabase from '@/lib/db'
+import connectToDatabase from '../../../../../lib/db'
 import axios from 'axios' // Added this line
+import Pordialogue from '../../../../../model/Pordialogue'
 
 // Added TranscriptAPI class definition
 class TranscriptAPI {

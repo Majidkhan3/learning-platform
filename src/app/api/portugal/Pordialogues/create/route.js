@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 // import pdfParse from 'pdf-parse'
-import Pordialogue  from '@/model/Pordialogue '
-import connectToDatabase from '@/lib/db'
+import Pordialogue from '../../../../../model/Pordialogue'
+import connectToDatabase from '../../../../../lib/db'
 
 export async function POST(req) {
   try {

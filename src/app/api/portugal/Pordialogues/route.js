@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import Dialogue from '@/model/Dialogue'
-import connectToDatabase from '@/lib/db'
+import connectToDatabase from '../../../../lib/db'
 
 export async function GET(req) {
   try {

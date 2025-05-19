@@ -1,5 +1,5 @@
-import connectToDatabase from '@/lib/db'
-import Porstory  from '@/model/Porstory' // Import the Porstory  schema
+import connectToDatabase from '@/lib/db' // Import the Porstory  schema
+import Porstory from '../../../../../model/Porstory'
 
 export async function GET(req, { params }) {
   await connectToDatabase() // Ensure the database connection is established
@@ -12,7 +12,7 @@ export async function GET(req, { params }) {
 
   try {
     // Fetch the story by storyId
-    const story = await Porstory .findOne({ storyId })
+    const story = await Porstory.findOne({ storyId })
 
     if (!story) {
       return new Response(JSON.stringify({ message: 'Story not found.' }), { status: 404 })
@@ -34,7 +34,7 @@ export async function DELETE(req, { params }) {
   }
 
   try {
-    const deletedStory = await Porstory .findOneAndDelete({ storyId })
+    const deletedStory = await Porstory.findOneAndDelete({ storyId })
 
     if (!deletedStory) {
       return new Response(JSON.stringify({ message: 'Story not found.' }), { status: 404 })
