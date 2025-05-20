@@ -79,7 +79,7 @@ const handleDelete = async (storyId) => {
           <h4>All stories</h4>
         </Col>
         <Col className="text-end">
-          <Button variant="success" onClick={() => router.push('/dashboards/story/create')}>
+          <Button variant="success" onClick={() => router.push('/dashboards/espagnol/story/create')}>
             <Icon icon="ic:round-plus" className="me-2" />
             Create a new story
           </Button>

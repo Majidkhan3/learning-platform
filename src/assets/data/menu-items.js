@@ -48,7 +48,7 @@ export const MENU_ITEMS = [
       {
         key: 'spanish-flashcards',
         label: 'Tarjetas de memoria',
-        url: '/dashboards/espagnol/flashcards',
+        url: '/dashboards/espagnol/flashcard',
         parentKey: 'spanish-dashboard',
       },
     ],
@@ -97,7 +97,7 @@ export const MENU_ITEMS = [
       {
         key: 'portuguese-flashcards',
         label: 'Cartões de memória',
-        url: '/dashboards/portugais/flashcards',
+        url: '/dashboards/portugais/flashcard',
         parentKey: 'portuguese-dashboard',
       },
     ],

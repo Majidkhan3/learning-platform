@@ -56,7 +56,7 @@ const FlashCard = () => {
         setCards(mappedCards)
         if (mappedCards.length > 0 && currentIndex > mappedCards.length) {
           // If current index is out of bounds after filtering, reset to 1
-          router.push(`/dashboards/portugais/flashcards?tag=${tag || ''}&rating=${rating || ''}&index=1`)
+          router.push(`/dashboards/portugais/flashcard?tag=${tag || ''}&rating=${rating || ''}&index=1`)
         } else if (mappedCards.length === 0) {
           setError('No cards found for the selected filters.')
         }
@@ -119,13 +119,13 @@ const FlashCard = () => {
   const goToCard = (index) => {
     if (index >= 1 && index <= cards.length) {
       if (tag && rating) {
-        router.push(`/dashboards/portugais/flashcards?tag=${tag}&rating=${rating}&index=${index}`)
+        router.push(`/dashboards/portugais/flashcard?tag=${tag}&rating=${rating}&index=${index}`)
       } else if (tag) {
-        router.push(`/dashboards/portugais/flashcards?tag=${tag}&index=${index}`)
+        router.push(`/dashboards/portugais/flashcard?tag=${tag}&index=${index}`)
       } else if (rating) {
-        router.push(`/dashboards/portugais/flashcards?rating=${rating}&index=${index}`)
+        router.push(`/dashboards/portugais/flashcard?rating=${rating}&index=${index}`)
       } else {
-        router.push(`/dashboards/portugais/flashcards?index=${index}`)
+        router.push(`/dashboards/portugais/flashcard?index=${index}`)
       }
       // router.push(`/dashboards/flashcard?tag=${tag}&rating=${rating}&index=${index}`)
       setIsFlipped(false)

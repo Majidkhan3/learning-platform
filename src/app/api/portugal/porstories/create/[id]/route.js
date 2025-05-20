@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db' // Import the Porstory  schema
-import Porstories from '../../../../../model/Porstories'
+import Porstories from '../../../../../../model/Porstories'
 
 export async function GET(req, { params }) {
   await connectToDatabase() // Ensure the database connection is established

@@ -69,7 +69,7 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
         // you'll need to determine the 'id' value.
         // This example uses a generic '/flashcards' path.
         const flashcardPath = '/flashcard'
-        router.push(`/dashboards/${flashcardPath}?${params.toString()}`)
+        router.push(`/dashboards/espagnol/${flashcardPath}?${params.toString()}`)
       }
     }
     // No explicit navigation is handled here for turning the switch OFF.
