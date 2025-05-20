@@ -17,7 +17,7 @@ const Page = () => {
 const handleDelete = async (storyId) => {
   if (window.confirm('Are you sure you want to delete this story?')) {
     try {
-      const response = await fetch(`/api/portugal/Porstory/create/${storyId}`, {
+      const response = await fetch(`/api/portugal/porstories/create/${storyId}`, {
         method: 'DELETE',
       });
 
@@ -38,7 +38,7 @@ const handleDelete = async (storyId) => {
       if (!userId) return
       try {
         setLoading(true)
-        const res = await fetch(`/api/portugal/Porstory/create?userId=${userId}`)
+        const res = await fetch(`/api/portugal/porstories/create?userId=${userId}`)
         const data = await res.json()
         if (res.ok) {
           setStories(data.stories)
@@ -79,7 +79,7 @@ const handleDelete = async (storyId) => {
           <h4>All stories</h4>
         </Col>
         <Col className="text-end">
-          <Button variant="success" onClick={() => router.push('/dashboards/story/create')}>
+          <Button variant="success" onClick={() => router.push('/dashboards/portugais/story/create')}>
             <Icon icon="ic:round-plus" className="me-2" />
             Create a new story
           </Button>
@@ -118,7 +118,7 @@ const handleDelete = async (storyId) => {
                     <Card.Text>
                       <strong>Theme:</strong> {story.theme}
                     </Card.Text>
-                    <Button variant="primary" className="w-100 mt-3" onClick={() => router.push(`/dashboards/espagnol/story/view/${story.storyId}`)}>
+                    <Button variant="primary" className="w-100 mt-3" onClick={() => router.push(`/dashboards/portugais/story/view/${story.storyId}`)}>
                       See the dialogues
                     </Button>
                   </Card.Body>

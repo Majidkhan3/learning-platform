@@ -23,7 +23,7 @@ export default function AddWordsPage() {
   const fetchWords = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/portugal/Porword?userId=${userId}`)
+      const res = await fetch(`/api/portugal/porword?userId=${userId}`)
       const data = await res.json()
       if (data.success) {
         setExistingWords(data.words.map((wordObj) => wordObj.word.toLowerCase())) // Store existing words in lowercase
@@ -50,7 +50,7 @@ export default function AddWordsPage() {
       try {
         if (!user?._id) return
 
-        const response = await fetch(`/api/portugal/Portags?userId=${user._id}`)
+        const response = await fetch(`/api/portugal/portags?userId=${user._id}`)
         const data = await response.json()
 
         if (!response.ok) {
@@ -112,7 +112,7 @@ export default function AddWordsPage() {
 
       // Loop through each word and make an API call
       for (const word of filteredWords) {
-        const response = await fetch(`/api/portugal/Porword?userId=${user._id}`, {
+        const response = await fetch(`/api/portugal/porword?userId=${user._id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

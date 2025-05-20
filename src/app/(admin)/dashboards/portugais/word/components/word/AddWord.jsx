@@ -30,7 +30,7 @@ const AddWord = () => {
   const fetchTags = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/portugal/Portags?userId=${userId}`); // Replace with your API endpoint
+      const res = await fetch(`/api/portugal/portags?userId=${userId}`); // Replace with your API endpoint
       const data = await res.json();
       if (data.success) {
         setAvailableTags(data.tags); // Assuming the API returns tags in this format
@@ -125,7 +125,7 @@ const AddWord = () => {
         userId,
       };
 
-      const res = await fetch('/api/portugal/Porword', {
+      const res = await fetch('/api/portugal/porword', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

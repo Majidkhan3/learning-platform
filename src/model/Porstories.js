@@ -39,6 +39,6 @@ const storySchema = new mongoose.Schema({
   },
 })
 
-const Porstory = mongoose.models.Porstory || mongoose.model('Porstory', storySchema)
+const Porstories = mongoose.models.Porstories || mongoose.model('Porstories', storySchema)
 
-export default Porstory
+export default Porstories

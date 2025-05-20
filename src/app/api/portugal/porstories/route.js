@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto'
 import Porword from '@/model/Porword' // Import the Word schema (for filtered words)
 import axios from 'axios' // For making HTTP requests
 import connectToDatabase from '@/lib/db'
-import Porstory from '../../../../model/Porstory'
+import Porstories from '../../../../model/Porstories'
 export async function GET(req) {
   await connectToDatabase() // Ensure the database connection is established
 
@@ -134,7 +134,7 @@ export async function POST(req, res) {
     const storyId = randomUUID()
     const creationDate = new Date().toISOString()
 
-    const newStory = new Porstory({
+    const newStory = new Porstories({
       storyId,
       userId,
       // title,

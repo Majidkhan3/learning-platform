@@ -19,7 +19,7 @@ const PageWithFilters = () => {
   const fetchTags = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/portugal/Portags?userId=${userId}`); // Replace with your API endpoint
+      const res = await fetch(`/api/tags?userId=${userId}`); // Replace with your API endpoint
       const data = await res.json();
       if (data.success) {
         setAvailableTags(data.tags); // Assuming the API returns tags in this format
@@ -38,7 +38,7 @@ const PageWithFilters = () => {
   const fetchWords = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/portugal/Porword?userId=${userId}`); // Replace with your API endpoint
+      const res = await fetch(`/api/words?userId=${userId}`); // Replace with your API endpoint
       const data = await res.json();
       if (data.success) {
         setWords(data.words); // Assuming the API returns words in this format

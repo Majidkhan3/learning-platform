@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import connectToDatabase from '../../../../lib/db'
-
+import Pordialogue from '../../../../model/Pordialogue'
 export async function GET(req) {
   try {
     // Connect to the database
@@ -13,9 +13,9 @@ export async function GET(req) {
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 })
     }
-
+ 
     // Fetch dialogues for the specific user
-    const dialogues = await Dialogue.find({ userId }).sort({ createdAt: -1 })
+    const dialogues = await Pordialogue.find({ userId }).sort({ createdAt: -1 })
 
     // Return the dialogues as a JSON response
     return NextResponse.json({ dialogues }, { status: 200 })

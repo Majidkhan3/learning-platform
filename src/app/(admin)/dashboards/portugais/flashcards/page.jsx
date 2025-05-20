@@ -28,7 +28,7 @@ const FlashCard = () => {
     try {
       setLoading(true)
       // Construct the API URL with query parameters for tag and rating
-      let apiUrl = `/api/portugal/Porword?userId=${userId}`
+      let apiUrl = `/api/portugal/porword?userId=${userId}`
       if (tag) {
         apiUrl += `&tag=${encodeURIComponent(tag)}`
       }
@@ -56,7 +56,7 @@ const FlashCard = () => {
         setCards(mappedCards)
         if (mappedCards.length > 0 && currentIndex > mappedCards.length) {
           // If current index is out of bounds after filtering, reset to 1
-          router.push(`/dashboards/flashcard?tag=${tag || ''}&rating=${rating || ''}&index=1`)
+          router.push(`/dashboards/portugais/flashcards?tag=${tag || ''}&rating=${rating || ''}&index=1`)
         } else if (mappedCards.length === 0) {
           setError('No cards found for the selected filters.')
         }
@@ -119,13 +119,13 @@ const FlashCard = () => {
   const goToCard = (index) => {
     if (index >= 1 && index <= cards.length) {
       if (tag && rating) {
-        router.push(`/dashboards/flashcard?tag=${tag}&rating=${rating}&index=${index}`)
+        router.push(`/dashboards/portugais/flashcards?tag=${tag}&rating=${rating}&index=${index}`)
       } else if (tag) {
-        router.push(`/dashboards/flashcard?tag=${tag}&index=${index}`)
+        router.push(`/dashboards/portugais/flashcards?tag=${tag}&index=${index}`)
       } else if (rating) {
-        router.push(`/dashboards/flashcard?rating=${rating}&index=${index}`)
+        router.push(`/dashboards/portugais/flashcards?rating=${rating}&index=${index}`)
       } else {
-        router.push(`/dashboards/flashcard?index=${index}`)
+        router.push(`/dashboards/portugais/flashcards?index=${index}`)
       }
       // router.push(`/dashboards/flashcard?tag=${tag}&rating=${rating}&index=${index}`)
       setIsFlipped(false)
@@ -153,7 +153,7 @@ const FlashCard = () => {
       setCards((prevCards) => prevCards.map((card) => (card.id === currentCard.id ? updatedCard : card)))
 
       // Update the rating in the database
-      const response = await fetch(`/api/portugal/Porword/${currentCard.id}`, {
+      const response = await fetch(`/api/portugal/porword/${currentCard.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -24,7 +24,7 @@ const CreateStory = () => {
       try {
         if (!user?._id) return
 
-        const response = await fetch(`/api/portugal/Portags?userId=${user._id}`)
+        const response = await fetch(`/api/portugal/portags?userId=${user._id}`)
         const data = await response.json()
 
         if (!response.ok) {
@@ -54,7 +54,7 @@ const CreateStory = () => {
     const wordArray = words.split(',').map((word) => word.trim()) // Convert input to an array of words
 
     try {
-      const response = await fetch('/api/portugal/Porstory/create', {
+      const response = await fetch('/api/portugal/porstories/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ const CreateStory = () => {
 
       setSuccessMessage('Story generated successfully!')
       setTimeout(() => {
-        router.push(`/dashboards/story/view/${data.storyId}`) // Redirect to the story details page
+        router.push(`/dashboards/portugais/story/view/${data.storyId}`) // Redirect to the story details page
       }, 2000)
     } catch (err) {
       console.error('Error generating story:', err.message)
@@ -93,7 +93,7 @@ const CreateStory = () => {
         <h2>
           <strong>ES</strong> Create a Story
         </h2>
-        <Button variant="outline-primary" onClick={() => router.push('/dashboards/story')}>
+        <Button variant="outline-primary" onClick={() => router.push('/dashboards/portugais/story')}>
           <Icon icon="mdi:arrow-left" className="me-2" />
           Back to stories
         </Button>

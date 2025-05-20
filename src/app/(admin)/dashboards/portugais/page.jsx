@@ -1,9 +1,7 @@
 import PageTitle from '@/components/PageTitle';
 import { Card, CardHeader, Col, Row } from 'react-bootstrap';
-
-import PageWithFilters from '@/app/(admin)/dashboards/espagnol/components/espagnol/PageWithFilters';
-
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
+import PageWithFilters from './components/Portugais/PageWithFilters';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 export const metadata = {
   title: 'Portugais',

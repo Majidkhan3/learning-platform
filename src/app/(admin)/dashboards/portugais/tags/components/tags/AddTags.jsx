@@ -15,11 +15,11 @@ const AddTags = () => {
 
   const fetchTags = async () => {
     try {
-      const res = await fetch(`/api/portugal/Portags?userId=${userId}`);
+      const res = await fetch(`/api/portugal/portags?userId=${userId}`);
       const data = await res.json();
       if (data.success) {
         // Fetch words to calculate the count for each tag
-        const wordsRes = await fetch(`/api/portugal/Porword?userId=${userId}`);
+        const wordsRes = await fetch(`/api/portugal/porword?userId=${userId}`);
         const wordsData = await wordsRes.json();
 
         if (wordsData.success) {
@@ -48,7 +48,7 @@ const AddTags = () => {
     if (!newTagName.trim()) return;
 
     try {
-      const res = await fetch('/api/portugal/Portags', {
+      const res = await fetch('/api/portugal/portags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newTagName.trim(), userId }),
@@ -70,7 +70,7 @@ const AddTags = () => {
 
   const handleDeleteTag = async (tagName) => {
     try {
-      const res = await fetch(`/api/portugal/Portags?name=${tagName}&userId=${userId}`, {
+      const res = await fetch(`/api/portugal/portags?name=${tagName}&userId=${userId}`, {
         method: 'DELETE',
       });
 

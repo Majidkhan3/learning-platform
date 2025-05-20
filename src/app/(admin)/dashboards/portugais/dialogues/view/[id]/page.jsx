@@ -17,7 +17,7 @@ const DialogueViewer = () => {
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/dialogues/${id}`)
+      fetch(`/api/portugal/pordialogues/${id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.dialogue) {

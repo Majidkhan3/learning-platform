@@ -40,7 +40,7 @@ const CardText = () => {
       }
       setLoading(true)
       try {
-        const res = await fetch('/api/portugal/Pordialogues/create', {
+        const res = await fetch('/api/portugal/pordialogues/create', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ const CardText = () => {
       }
       try {
         setFetching(true)
-        const res = await fetch(`/api/portugal/Pordialogues?userId=${user._id}`)
+        const res = await fetch(`/api/portugal/pordialogues?userId=${user._id}`)
         if (!res.ok) {
           throw new Error(`Failed to fetch dialogues: ${res.status}`)
         }
@@ -153,7 +153,7 @@ const CardText = () => {
     e.preventDefault()
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce dialogue ?')) {
       try {
-        const res = await fetch(`/api/portugal/Pordialogues/${dialogueId}`, {
+        const res = await fetch(`/api/portugal/pordialogues/${dialogueId}`, {
           method: 'DELETE',
         })
 

@@ -31,7 +31,7 @@ const Youtube = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/dialogues/youtube', {
+      const res = await fetch('/api/portugal/pordialogues/youtube', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, userId: user?._id }),
@@ -45,7 +45,7 @@ const Youtube = () => {
       console.log('Generated dialogue:', data);
 
       // Redirect to the dialogue view page after success
-      router.push(`/dashboards/dialogues/view/${data.dialogueId}`);
+      router.push(`/dashboards/portugais/dialogues/view/${data.dialogueId}`);
     } catch (err) {
       setError(err.message || 'Something went wrong.');
     } finally {
@@ -101,7 +101,7 @@ const Youtube = () => {
         </Card>
       )}
 
-      <Button variant="secondary" onClick={() => router.push('/dashboards/dialogues')}>
+      <Button variant="secondary" onClick={() => router.push('/dashboards/portugais/dialogues')}>
         ⬅ Return to the list of dialogues
       </Button>
     </>

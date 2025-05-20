@@ -66,7 +66,7 @@ const StoryViewer = () => {
     const fetchStory = async () => {
       try {
         setLoading(true)
-        const res = await fetch(`/api/portugal/Porstory/create/${id}`)
+        const res = await fetch(`/api/portugal/porstories/create/${id}`)
         const data = await res.json()
         if (res.ok) {
           setStory(data.story)
