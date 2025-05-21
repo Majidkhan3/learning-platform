@@ -95,7 +95,7 @@ const Table = ({ loading, words, selectedVoice }) => {
         <Card>
           <CardHeader className="d-flex justify-content-between align-items-center border-bottom">
             <div>
-              <CardTitle as={'h4'}>Lista de vocabulário</CardTitle>
+              <CardTitle as={'h4'}>Liste de vocabulaire</CardTitle>
             </div>
             <div className="d-flex align-items-center">
                <InputGroup size="sm" className="me-2" style={{ width: '200px' }}>
