@@ -17,7 +17,7 @@ const DialogueViewer = () => {
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/french/frdialogues/${id}`)
+      fetch(`/api/english/endialogues/${id}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.dialogue) {
@@ -134,19 +134,19 @@ const DialogueViewer = () => {
   return (
     <div>
       <h3>
-        📢 Dialogues générés pour YouTube -{' '}
+        📢 Dialogues generated from YouTube -{' '}
         <a href={dialogue.url} target="_blank" rel="noopener noreferrer">
           {dialogue.url}
         </a>
       </h3>
 
       <Card className="mb-4">
-        <Card.Header className="bg-primary text-white">Configuration de la synthèse vocale (Amazon Polly)</Card.Header>
+        <Card.Header className="bg-primary text-white">Setting up text-to-speech (Amazon Polly)</Card.Header>
         <Card.Body>
           <Row>
             <Col md={6}>
               <Form.Group>
-                <Form.Label>Voix pour Personne A:</Form.Label>
+                <Form.Label>Voice of person A:</Form.Label>
                 <Form.Select value={voiceA} onChange={(e) => setVoiceA(e.target.value)}>
                   {availableVoices.map((voice) => (
                     <option key={voice.id} value={voice.id}>
@@ -158,7 +158,7 @@ const DialogueViewer = () => {
             </Col>
             <Col md={6}>
               <Form.Group>
-                <Form.Label>Voix pour Personne B:</Form.Label>
+                <Form.Label>Voice of person B:</Form.Label>
                 <Form.Select value={voiceB} onChange={(e) => setVoiceB(e.target.value)}>
                   {availableVoices.map((voice) => (
                     <option key={voice.id} value={voice.id}>
@@ -181,7 +181,7 @@ const DialogueViewer = () => {
             <Row>
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
-                  <strong>🧍 Personne A</strong>
+                  <strong>🧍 Person A</strong>
                   <Button variant="link" onClick={() => speak(conv.a, voiceA)} title="Lire ce texte">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
@@ -190,7 +190,7 @@ const DialogueViewer = () => {
               </Col>
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
-                  <strong>🧑 Personne B</strong>
+                  <strong>🧑 Person B</strong>
                   <Button variant="link" onClick={() => speak(conv.b, voiceB)} title="Lire ce texte">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>

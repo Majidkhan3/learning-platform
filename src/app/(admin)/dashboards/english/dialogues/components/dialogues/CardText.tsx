@@ -40,7 +40,7 @@ const CardText = () => {
       }
       setLoading(true)
       try {
-        const res = await fetch('/api/french/frdialogues/create', {
+        const res = await fetch('/api/english/endialogues/create', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ const CardText = () => {
           throw new Error(errorData.message || `API error! status: ${res.status}`)
         }
         const data = await res.json()
-        router.push(`/dashboards/french/dialogues/view/${data.dialogueId}`)
+        router.push(`/dashboards/english/dialogues/view/${data.dialogueId}`)
 
         setGeneratedDialogues(data.dialogues || '') // API returns a string
       } catch (err) {
@@ -129,7 +129,7 @@ const CardText = () => {
       }
       try {
         setFetching(true)
-        const res = await fetch(`/api/french/frdialogues?userId=${user._id}`)
+        const res = await fetch(`/api/english/endialogues?userId=${user._id}`)
         if (!res.ok) {
           throw new Error(`Failed to fetch dialogues: ${res.status}`)
         }
@@ -153,7 +153,7 @@ const CardText = () => {
     e.preventDefault()
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce dialogue ?')) {
       try {
-        const res = await fetch(`/api/french/frdialogues/${dialogueId}`, {
+        const res = await fetch(`/api/english/endialogues/${dialogueId}`, {
           method: 'DELETE',
         })
 
@@ -173,17 +173,17 @@ const CardText = () => {
     <>
       {/* <PageTitle title="Gestionnaire de Dialogues" /> */}
       <div className="mb-4">
-        <Link href="/dashboards/french/dialogues/youtube">
-          <Button variant="primary">Utilise une vidéo YouTube</Button>
+        <Link href="/dashboards/english/dialogues/youtube">
+          <Button variant="primary">Use a Youtube video</Button>
         </Link>
       </div>
 
       <Card className="mb-4">
-        <Card.Header className="bg-light fw-bold">Envoyer un fichier PDF</Card.Header>
+        <Card.Header className="bg-light fw-bold">Send a PDF file</Card.Header>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group controlId="formFile" className="mb-3">
-              <Form.Label>Fichier PDF (podcast en french)</Form.Label>
+              <Form.Label>PDF file (podcast in English)</Form.Label>
               <Form.Control
                 id="file-upload"
                 type="file"
@@ -192,7 +192,7 @@ const CardText = () => {
                 className="hidden"
                 disabled={isProcessing || loading}
               />
-              <small className="text-muted">Les dialogues seront générés en utilisant Claude (Anthropic)</small>
+              <small className="text-muted">Dialogues will be generated using Claude (Anthropic)</small>
             </Form.Group>
             {isProcessing && (
               <div className="d-flex align-items-center mb-3">
@@ -207,7 +207,7 @@ const CardText = () => {
                   <span className="ms-1">Geração em andamento...</span>
                 </>
               ) : (
-                'Envoyer et générer des dialogues'
+                'Send and generate Dialogues'
               )}
             </Button>
           </Form>
@@ -225,7 +225,7 @@ const CardText = () => {
         </Card>
       )}
 
-      <h5 className="fw-bold mb-3">Fichiers traités</h5>
+      <h5 className="fw-bold mb-3">Processed files</h5>
 
       {fetching ? (
         <Spinner animation="border" />
@@ -239,15 +239,15 @@ const CardText = () => {
                 <p className="mb-1">
                   <strong>{dialogue.url || 'Source inconnue'}</strong>
                 </p>
-                <p className="text-muted small">Ajouté le: {new Date(dialogue.createdAt).toLocaleString()}</p>
+                <p className="text-muted small">Added on: {new Date(dialogue.createdAt).toLocaleString()}</p>
                 <div className="d-flex gap-2">
-                  <Link href={`/dashboards/french/dialogues/view/${dialogue._id}`}>
+                  <Link href={`/dashboards/engglish/dialogues/view/${dialogue._id}`}>
                     <Button variant="outline-primary" size="sm">
-                    Voir les dialogues
+                    See the dialogues
                     </Button>
                   </Link>
                   <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(dialogue._id, e)}>
-                Supprimer
+                DELETE
                   </Button>
                 </div>
               </Card.Body>
@@ -255,7 +255,7 @@ const CardText = () => {
           ),
         )
       ) : (
-        <p>Aucun dialogue trouvé.</p>
+        <p>No dialogue found.</p>
       )}
     </>
   )
