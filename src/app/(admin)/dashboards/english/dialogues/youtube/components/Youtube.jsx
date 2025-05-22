@@ -31,7 +31,7 @@ const Youtube = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/french/frdialogues/youtube', {
+      const res = await fetch('/api/english/endialogues/youtube', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, userId: user?._id }),
@@ -45,7 +45,7 @@ const Youtube = () => {
       console.log('Generated dialogue:', data);
 
       // Redirect to the dialogue view page after success
-      router.push(`/dashboards/french/dialogues/view/${data.dialogueId}`);
+      router.push(`/dashboards/english/dialogues/view/${data.dialogueId}`);
     } catch (err) {
       setError(err.message || 'Something went wrong.');
     } finally {
@@ -62,7 +62,7 @@ const Youtube = () => {
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>YouTube video URL (in Spanish)</Form.Label>
+              <Form.Label>YouTube video URL (in English)</Form.Label>
               <Form.Control
                 type="url"
                 placeholder="https://www.youtube.com/watch?v=..."
@@ -83,7 +83,7 @@ const Youtube = () => {
                   {' '}Generating...
                 </>
               ) : (
-                'Extraire et générer des dialogues'
+                'Extract and generate dialouges'
               )}
             </Button>
           </Form>
@@ -101,8 +101,8 @@ const Youtube = () => {
         </Card>
       )}
 
-      <Button variant="secondary" onClick={() => router.push('/dashboards/french/dialogues')}>
-        ⬅ Retour à la liste des dialogues
+      <Button variant="secondary" onClick={() => router.push('/dashboards/english/dialogues')}>
+        ⬅ Return to the list of dialogues
       </Button>
     </>
   );
