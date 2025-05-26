@@ -55,15 +55,15 @@ const DialogueViewer = () => {
     const dialogues = []
     let currentDialogue = {}
 
-    lines.forEach((line) => {
-      if (line.includes('Persona A:') || line.includes('Personne A:')) {
-        currentDialogue.a = line.split(/Persona A:|Personne A:/)[1]?.trim()
-      } else if (line.includes('Persona B:') || line.includes('Personne B:')) {
-        currentDialogue.b = line.split(/Persona B:|Personne B:/)[1]?.trim()
-        dialogues.push(currentDialogue) // Add the completed dialogue
-        currentDialogue = {} // Reset for the next dialogue
-      }
-    })
+     lines.forEach((line) => {
+    if (line.includes('Pessoa A:')) {
+      currentDialogue.a = line.split('Pessoa A:')[1]?.trim()
+    } else if (line.includes('Pessoa B:')) {
+      currentDialogue.b = line.split('Pessoa B:')[1]?.trim()
+      dialogues.push(currentDialogue)
+      currentDialogue = {}
+    }
+  })
 
     setParsedDialogues(dialogues)
   }
@@ -78,7 +78,7 @@ const DialogueViewer = () => {
         body: JSON.stringify({
           text,
           voice: voiceLabel,
-          language: 'es-ES', // Adjust language as needed
+          language: 'pt-PT', // Adjust language as needed
         }),
       })
 
@@ -146,7 +146,7 @@ const DialogueViewer = () => {
           <Row>
             <Col md={6}>
               <Form.Group>
-                <Form.Label>Voix pour Personne A:</Form.Label>
+                <Form.Label>Voix pour Pessoa A:</Form.Label>
                 <Form.Select value={voiceA} onChange={(e) => setVoiceA(e.target.value)}>
                   {availableVoices.map((voice) => (
                     <option key={voice.id} value={voice.id}>
@@ -158,7 +158,7 @@ const DialogueViewer = () => {
             </Col>
             <Col md={6}>
               <Form.Group>
-                <Form.Label>Voix pour Personne B:</Form.Label>
+                <Form.Label>Voix pour Pessoa B:</Form.Label>
                 <Form.Select value={voiceB} onChange={(e) => setVoiceB(e.target.value)}>
                   {availableVoices.map((voice) => (
                     <option key={voice.id} value={voice.id}>
@@ -181,7 +181,7 @@ const DialogueViewer = () => {
             <Row>
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
-                  <strong>🧍 Personne A</strong>
+                  <strong>🧍 Pessoa A</strong>
                   <Button variant="link" onClick={() => speak(conv.a, voiceA)} title="Lire ce texte">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
@@ -190,7 +190,7 @@ const DialogueViewer = () => {
               </Col>
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
-                  <strong>🧑 Personne B</strong>
+                  <strong>🧑 Pessoa B</strong>
                   <Button variant="link" onClick={() => speak(conv.b, voiceB)} title="Lire ce texte">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>

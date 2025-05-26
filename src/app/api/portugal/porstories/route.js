@@ -52,35 +52,35 @@ async function generateStoryWithClaude(words, theme) {
     }
 
     const prompt = `
-      Por favor, crea exactamente 2 diálogos narrativos, naturales y coherentes en español, que simulen una conversación real entre dos personas.
+      Por favor, crie exatamente 2 diálogos narrativos, naturais e coerentes em português, que simulem uma conversa real entre duas pessoas.
 
-      INSTRUCCIONES IMPORTANTES:
-      1. Utiliza exclusivamente las etiquetas 'Personne A:' y 'Personne B:' (no uses nombres propios).
-      2. Cada intervención debe consistir en 4 a 5 frases completas, descriptivas y naturales, sin limitarse a un número fijo de palabras por frase.
-      3. Cada frase debe terminar con un punto u otro signo de puntuación apropiado.
-      4. No escribas frases incompletas ni uses 'etc.' o '...'.
-      5. Incorpora de forma coherente el tema y las siguientes palabras clave obligatorias, pero utiliza también otras palabras que enriquezcan la narrativa y permitan transiciones lógicas entre las ideas.
-      6. Si las palabras clave son verbos, conjúgalos correctamente según el contexto, y ajusta el género de los sustantivos o adjetivos para que la conversación sea natural.
-      7. El diálogo debe parecer una conversación real: incluye preguntas, respuestas, comentarios espontáneos, interjecciones y transiciones naturales.
-      8. El tema es: ${theme}
+INSTRUÇÕES IMPORTANTES:
+1. Utilize exclusivamente as etiquetas 'Pessoa A:' e 'Pessoa B:' (não use nomes próprios).
+2. Cada intervenção deve conter de 4 a 5 frases completas, descritivas e naturais, sem se limitar a um número fixo de palavras por frase.
+3. Cada frase deve terminar com um ponto ou outro sinal de pontuação apropriado.
+4. Não escreva frases incompletas nem use 'etc.' ou '...'.
+5. Incorpore de forma coerente o tema e as seguintes palavras-chave obrigatórias, mas utilize também outras palavras que enriqueçam a narrativa e permitam transições lógicas entre as ideias.
+6. Se as palavras-chave forem verbos, conjugue-os corretamente de acordo com o contexto e ajuste o gênero dos substantivos ou adjetivos para que a conversa soe natural.
+7. O diálogo deve parecer uma conversa real: inclua perguntas, respostas, comentários espontâneos, interjeições e transições naturais.
+8. O tema é: ${theme}
 
-      Para el PRIMER diálogo, integra obligatoriamente las siguientes palabras clave: ${group1Text}
-      Para el SEGUNDO diálogo, integra obligatoriamente las siguientes palabras clave: ${group2Text}
+Para o PRIMEIRO diálogo, integre obrigatoriamente as seguintes palavras-chave: ${group1Text}
+Para o SEGUNDO diálogo, integre obrigatoriamente as seguintes palavras-chave: ${group2Text}
 
-      FORMATO EXACTO A SEGUIR:
+FORMATO EXATO A SEGUIR:
 
-      Dialogue 1:
-      Personne A: [Frase 1. Frase 2. Frase 3. Frase 4.]
-      Personne B: [Frase 1. Frase 2. Frase 3. Frase 4.]
-      FIN DIALOGUE 1
+Diálogo 1:
+Pessoa A: [Frase 1. Frase 2. Frase 3. Frase 4.]
+Pessoa B: [Frase 1. Frase 2. Frase 3. Frase 4.]
+FIM DO DIÁLOGO 1
 
-      Dialogue 2:
-      Personne A: [Frase 1. Frase 2. Frase 3. Frase 4.]
-      Personne B: [Frase 1. Frase 2. Frase 3. Frase 4.]
-      FIN DIALOGUE 2
+Diálogo 2:
+Pessoa A: [Frase 1. Frase 2. Frase 3. Frase 4.]
+Pessoa B: [Frase 1. Frase 2. Frase 3. Frase 4.]
+FIM DO DIÁLOGO 2
 
-      Asegúrate de que ambos diálogos estén completos, sean coherentes, parezcan una conversación real y no se corten.
-    `
+Certifique-se de que ambos os diálogos estejam completos, sejam coerentes, pareçam uma conversa real e não sejam cortados.
+`
 
     const response = await axios.post(
       'https://api.anthropic.com/v1/messages',

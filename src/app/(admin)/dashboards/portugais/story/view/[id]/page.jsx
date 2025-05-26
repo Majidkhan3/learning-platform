@@ -13,15 +13,12 @@ const preprocessDialogues = (dialogueString) => {
   const dialogues = []
   let currentDialogue = {}
 
-  lines.forEach((line) => {
-    const trimmedLine = line.trim()
-    if (trimmedLine.includes('Personne A:')) {
-      currentDialogue.a = trimmedLine.split('Personne A:')[1]?.trim()
-    } else if (trimmedLine.includes('Personne B:')) {
-      currentDialogue.b = trimmedLine.split('Personne B:')[1]?.trim()
-      if (currentDialogue.a || currentDialogue.b) {
-        dialogues.push(currentDialogue)
-      }
+   lines.forEach((line) => {
+    if (line.includes('Pessoa A:')) {
+      currentDialogue.a = line.split('Pessoa A:')[1]?.trim()
+    } else if (line.includes('Pessoa B:')) {
+      currentDialogue.b = line.split('Pessoa B:')[1]?.trim()
+      dialogues.push(currentDialogue)
       currentDialogue = {}
     }
   })
@@ -98,7 +95,7 @@ const StoryViewer = () => {
         body: JSON.stringify({
           text,
           voice,
-          language: 'es-ES',
+          language: 'pt-PT',
         }),
       })
 

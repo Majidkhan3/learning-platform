@@ -163,18 +163,18 @@ function extractYouTubeId(url) {
 
 function generatePrompt(transcript) {
   return `
-En te basant uniquement sur le texte suivant (une transcription d'un podcast en espagnol),
-génère 8 dialogues immersifs en espagnol. Chaque dialogue doit être structuré en deux lignes :
-la première correspond à une question posée par la personne A, et la seconde est une réponse
-détaillée de la personne B sous forme d'un paragraphe de 5 lignes.
+Based only on the following text (a transcript from a podcast in English),
+generate 8 immersive dialogues in English. Each dialogue must be structured in two lines:
+- The first line should be a question asked by Person A.
+- The second line should be a detailed response from Person B, written as a paragraph of 5 lines.
 
-Texte du podcast :
+Podcast Transcript:
 ${transcript}
 
-Merci de fournir uniquement les dialogues au format :
+Please provide only the dialogues in the following format:
 Dialogue 1:
-Personne A: ...
-Personne B: ...
-... jusqu'à Dialogue 8.
+Person A: ...
+Person B: ...
+... up to Dialogue 8.
 `
 }
