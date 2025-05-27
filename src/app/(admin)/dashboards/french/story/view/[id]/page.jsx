@@ -15,10 +15,10 @@ const preprocessDialogues = (dialogueString) => {
 
   lines.forEach((line) => {
     const trimmedLine = line.trim()
-    if (trimmedLine.includes('Personne A:')) {
-      currentDialogue.a = trimmedLine.split('Personne A:')[1]?.trim()
-    } else if (trimmedLine.includes('Personne B:')) {
-      currentDialogue.b = trimmedLine.split('Personne B:')[1]?.trim()
+    if (trimmedLine.includes('Personne A :')) {
+      currentDialogue.a = trimmedLine.split('Personne A :')[1]?.trim()
+    } else if (trimmedLine.includes('Personne B :')) {
+      currentDialogue.b = trimmedLine.split('Personne B :')[1]?.trim()
       if (currentDialogue.a || currentDialogue.b) {
         dialogues.push(currentDialogue)
       }
@@ -35,8 +35,8 @@ const StoryViewer = () => {
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [voiceA, setVoiceA] = useState('Lucia')
-  const [voiceB, setVoiceB] = useState('Enrique')
+  const [voiceA, setVoiceA] = useState('Celine')
+  const [voiceB, setVoiceB] = useState('Mathieu')
   const [availableVoices, setAvailableVoices] = useState([])
   const [dialogues, setDialogues] = useState([])
 
@@ -98,7 +98,8 @@ const StoryViewer = () => {
         body: JSON.stringify({
           text,
           voice,
-          language: 'es-ES',
+          language: 'fr-FR',
+  
         }),
       })
 
@@ -136,7 +137,7 @@ const StoryViewer = () => {
           <Card className="mb-4">
             <Card.Body>
               <h4 className="mb-2">
-                <strong>ES</strong> {story?.title}
+                <strong>FR</strong> {story?.title}
               </h4>
               <p className="mb-1 text-muted">Rating: {story?.rating || 'No rating'}</p>
               <p className="mb-1 text-muted">

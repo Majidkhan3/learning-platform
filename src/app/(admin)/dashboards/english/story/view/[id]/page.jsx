@@ -15,17 +15,16 @@ const preprocessDialogues = (dialogueString) => {
 
   lines.forEach((line) => {
     const trimmedLine = line.trim()
-    if (trimmedLine.includes('Personne A:')) {
-      currentDialogue.a = trimmedLine.split('Personne A:')[1]?.trim()
-    } else if (trimmedLine.includes('Personne B:')) {
-      currentDialogue.b = trimmedLine.split('Personne B:')[1]?.trim()
+    if (trimmedLine.startsWith('Person A:')) {
+      currentDialogue.a = trimmedLine.split('Person A:')[1]?.trim()
+    } else if (trimmedLine.startsWith('Person B:')) {
+      currentDialogue.b = trimmedLine.split('Person B:')[1]?.trim()
       if (currentDialogue.a || currentDialogue.b) {
         dialogues.push(currentDialogue)
+        currentDialogue = {}
       }
-      currentDialogue = {}
     }
   })
-
   return dialogues
 }
 
@@ -35,8 +34,8 @@ const StoryViewer = () => {
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [voiceA, setVoiceA] = useState('Lucia')
-  const [voiceB, setVoiceB] = useState('Enrique')
+  const [voiceA, setVoiceA] = useState('Joanna')
+  const [voiceB, setVoiceB] = useState('Emma')
   const [availableVoices, setAvailableVoices] = useState([])
   const [dialogues, setDialogues] = useState([])
 
@@ -98,7 +97,7 @@ const StoryViewer = () => {
         body: JSON.stringify({
           text,
           voice,
-          language: 'es-ES',
+          language: 'en-US', // Adjust language as needed
         }),
       })
 

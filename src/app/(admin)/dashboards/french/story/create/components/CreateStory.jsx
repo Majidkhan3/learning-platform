@@ -102,7 +102,7 @@ const CreateStory = () => {
       <Card>
         <Card.Body>
           <h4 className="mb-3">Story Settings</h4>
-          <p className="text-muted mb-4">Define the criteria to generate a story with 2 dialogues in Spanish</p>
+          <p className="text-muted mb-4">Define the criteria to generate a story with 2 dialogues in French</p>
 
           <Form onSubmit={handleSubmit}>
             {/* <Form.Group className="mb-3">
@@ -176,7 +176,7 @@ const CreateStory = () => {
 
             <Alert variant="info">
               <Icon icon="mdi:information" className="me-2" />
-              The story will contain two dialogues in Spanish using words from your vocabulary. The system will attempt to use up to 75 words while
+              The story will contain two dialogues in french using words from your vocabulary. The system will attempt to use up to 75 words while
               creating a coherent story.
             </Alert>
 
