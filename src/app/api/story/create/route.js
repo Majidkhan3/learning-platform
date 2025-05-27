@@ -3,7 +3,13 @@ import Story from '@/model/Story' // Import the Story schema
 import Word from '@/model/Word' // Import the Word schema (for filtered words)
 import axios from 'axios' // For making HTTP requests
 import connectToDatabase from '@/lib/db'
+import { verifyToken } from '../../../../lib/verifyToken'
 export async function GET(req) {
+  const auth = await verifyToken(req)
+  
+    if (!auth.valid) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    }
   await connectToDatabase() // Ensure the database connection is established
 
   const { searchParams } = new URL(req.url)
@@ -119,6 +125,11 @@ async function generateStoryWithClaude(words, theme) {
 }
 
 export async function POST(req, res) {
+  const auth = await verifyToken(req)
+  
+    if (!auth.valid) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    }
   await connectToDatabase() // Ensure you have a function to connect to your database
   const { theme, selectedTags, rating, userId, words } = await req.json()
 

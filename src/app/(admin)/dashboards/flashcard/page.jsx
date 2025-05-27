@@ -8,7 +8,7 @@ import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 import { Icon } from '@iconify/react/dist/iconify.js'
 
 const FlashCard = () => {
-  const { user } = useAuth()
+  const { user,token } = useAuth()
   const userId = user?._id
   const [isFlipped, setIsFlipped] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -36,7 +36,12 @@ const FlashCard = () => {
         apiUrl += `&rating=${encodeURIComponent(rating)}`
       }
 
-      const res = await fetch(apiUrl) // Use the updated API URL
+      const res = await fetch(apiUrl,{
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    }) // Use the updated API URL
       const data = await res.json()
       if (data.success) {
         // Map API response to the card structure
@@ -84,6 +89,7 @@ const FlashCard = () => {
         const response = await fetch('/api/polly', {
           method: 'POST',
           headers: {
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -155,7 +161,7 @@ const FlashCard = () => {
       // Update the rating in the database
       const response = await fetch(`/api/words/${currentCard.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           word: currentCard.word, // Include the required 'word' field
           tags: currentCard.tags,

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const Page = () => {
-  const { user } = useAuth()
+  const { user,token } = useAuth()
   const userId = user?._id
   const router = useRouter()
   const [stories, setStories] = useState([])
@@ -17,9 +17,13 @@ const Page = () => {
 const handleDelete = async (storyId) => {
   if (window.confirm('Are you sure you want to delete this story?')) {
     try {
-      const response = await fetch(`/api/story/create/${storyId}`, {
-        method: 'DELETE',
-      });
+     const response = await fetch(`/api/story/create/${storyId}`, {
+  method: 'DELETE',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
+});
 
       if (response.ok) {
         // Remove the deleted story from the state
@@ -38,7 +42,12 @@ const handleDelete = async (storyId) => {
       if (!userId) return
       try {
         setLoading(true)
-        const res = await fetch(`/api/story/create?userId=${userId}`)
+        const res = await fetch(`/api/story/create?userId=${userId}`,{
+          headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,         
+        },
+        })
         const data = await res.json()
         if (res.ok) {
           setStories(data.stories)

@@ -1,7 +1,14 @@
 import connectToDatabase from '@/lib/db'
 import Story from '@/model/Story' // Import the Story schema
+import { verifyToken } from '../../../../lib/verifyToken'
 
 export async function GET(req, { params }) {
+  const auth = await verifyToken(req)
+    
+      if (!auth.valid) {
+        return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+      }
+  
   await connectToDatabase() // Ensure the database connection is established
 
   const { id: storyId } = params // Extract storyId from the dynamic route
@@ -25,6 +32,11 @@ export async function GET(req, { params }) {
   }
 }
 export async function DELETE(req, { params }) {
+  const auth = await verifyToken(req)
+    
+      if (!auth.valid) {
+        return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+      }
   await connectToDatabase()
 
   const { id: storyId } = params
