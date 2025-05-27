@@ -1,90 +1,98 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
-import { Badge, Button, Card, Col, Form, ListGroup, Row } from 'react-bootstrap';
-import { Icon } from '@iconify/react';
-import Link from 'next/link';
-import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
+import React, { useEffect, useState } from 'react'
+import { Badge, Button, Card, Col, Form, ListGroup, Row } from 'react-bootstrap'
+import { Icon } from '@iconify/react'
+import Link from 'next/link'
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const AddTags = () => {
-  const { user } = useAuth();
-  const userId = user?._id || ''; 
-  const [tags, setTags] = useState([]);
-  const [newTagName, setNewTagName] = useState('');
-  const [error, setError] = useState('');
+  const { user, token } = useAuth()
+  console.log('token', token)
+  const userId = user?._id || ''
+  const [tags, setTags] = useState([])
+  const [newTagName, setNewTagName] = useState('')
+  const [error, setError] = useState('')
 
   const fetchTags = async () => {
     try {
-      const res = await fetch(`/api/tags?userId=${userId}`);
-      const data = await res.json();
+      const res = await fetch(`/api/tags?userId=${userId}`)
+      const data = await res.json()
       if (data.success) {
         // Fetch words to calculate the count for each tag
-        const wordsRes = await fetch(`/api/words?userId=${userId}`);
-        const wordsData = await wordsRes.json();
+        const wordsRes = await fetch(`/api/words?userId=${userId}`)
+        const wordsData = await wordsRes.json()
 
         if (wordsData.success) {
-          const words = wordsData.words;
+          const words = wordsData.words
 
           // Map tags with their associated word counts
           const tagsWithCounts = data.tags.map((tag) => {
-            const wordCount = words.filter((word) => word.tags.includes(tag.name)).length;
-            return { ...tag, count: wordCount };
-          });
+            const wordCount = words.filter((word) => word.tags.includes(tag.name)).length
+            return { ...tag, count: wordCount }
+          })
 
-          setTags(tagsWithCounts);
+          setTags(tagsWithCounts)
         }
       }
     } catch (err) {
-      console.error('Error fetching tags or words:', err);
+      console.error('Error fetching tags or words:', err)
     }
-  };
+  }
   useEffect(() => {
     if (userId) {
-      fetchTags();
+      fetchTags()
     }
-  }, [userId]);
+  }, [userId])
 
   const handleAddTag = async () => {
-    if (!newTagName.trim()) return;
+    if (!newTagName.trim()) return
 
     try {
       const res = await fetch('/api/tags', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ name: newTagName.trim(), userId }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
       if (data.success) {
-        setTags([...tags, { ...data.tag, count: 0 }]); // Add the new tag with a count of 0
-        setNewTagName('');
-        setError('');
+        setTags([...tags, { ...data.tag, count: 0 }]) // Add the new tag with a count of 0
+        setNewTagName('')
+        setError('')
       } else {
-        setError(data.error || 'Failed to add tag');
+        setError(data.error || 'Failed to add tag')
       }
     } catch (err) {
-      console.error('Error adding tag:', err);
-      setError('Failed to add tag');
+      console.error('Error adding tag:', err)
+      setError('Failed to add tag')
     }
-  };
+  }
 
   const handleDeleteTag = async (tagName) => {
     try {
       const res = await fetch(`/api/tags?name=${tagName}&userId=${userId}`, {
         method: 'DELETE',
-      });
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
 
-      const data = await res.json();
+      const data = await res.json()
       if (data.success) {
-        setTags(tags.filter((tag) => tag.name !== tagName));
+        setTags(tags.filter((tag) => tag.name !== tagName))
       } else {
-        setError(data.error || 'Failed to delete tag');
+        setError(data.error || 'Failed to delete tag')
       }
     } catch (err) {
-      console.error('Error deleting tag:', err);
-      setError('Failed to delete tag');
+      console.error('Error deleting tag:', err)
+      setError('Failed to delete tag')
     }
-  };
+  }
 
   return (
     <Row className="mb-4">
@@ -104,12 +112,7 @@ const AddTags = () => {
               <Form.Group className="mb-3">
                 <Form.Label>Name of the new tag</Form.Label>
                 <div className="d-flex">
-                  <Form.Control
-                    type="text"
-                    value={newTagName}
-                    onChange={(e) => setNewTagName(e.target.value)}
-                    placeholder="Enter tag name"
-                  />
+                  <Form.Control type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} placeholder="Enter tag name" />
                   <Button variant="primary" style={{ width: '20%' }} className="ms-2" onClick={handleAddTag}>
                     + Add
                   </Button>
@@ -129,12 +132,7 @@ const AddTags = () => {
                       <Badge bg="light" text="dark" className="me-2">
                         {tag.count} word{tag.count !== 1 ? 's' : ''}
                       </Badge>
-                      <Button
-                        variant="link"
-                        className="text-danger p-0"
-                        onClick={() => handleDeleteTag(tag.name)}
-                        aria-label="Delete tag"
-                      >
+                      <Button variant="link" className="text-danger p-0" onClick={() => handleDeleteTag(tag.name)} aria-label="Delete tag">
                         <Icon icon="mdi:trash-outline" width={20} />
                       </Button>
                     </div>
@@ -146,7 +144,7 @@ const AddTags = () => {
         </Card>
       </Col>
     </Row>
-  );
-};
+  )
+}
 
-export default AddTags;
+export default AddTags

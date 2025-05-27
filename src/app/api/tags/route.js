@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server'
 import connectToDatabase from '@/lib/db'
 import Tag from '../../../model/Tag'
+import { verifyToken } from '../../../lib/verifyToken'
 export async function POST(req) {
+  const auth = await verifyToken(req)
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
 
@@ -48,6 +54,11 @@ export async function GET(req) {
   }
 }
 export async function DELETE(req) {
+  const auth = await verifyToken(req)
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
 

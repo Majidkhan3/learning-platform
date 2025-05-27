@@ -22,6 +22,6 @@
     },
     "target": "ES2017",
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/lib/YoutubeTranscript.js", "src/app/(admin)/dashboards/dialogues/components/dialogues/CardText.tsx", "src/app/api/dialogues/youtube/route.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/lib/YoutubeTranscript.js", "src/app/(admin)/dashboards/dialogues/components/dialogues/CardText.tsx", "src/app/api/dialogues/youtube/route.js", "src/lib/verifyToken.js"],
   "exclude": ["node_modules"]
 }
