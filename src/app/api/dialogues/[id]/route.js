@@ -1,7 +1,14 @@
 // pages/api/dialogues/[id].js
 import Dialogue from '@/model/Dialogue'
 import { NextResponse } from 'next/server'
+import { verifyToken } from '../../../../lib/verifyToken'
+
 export async function GET(req, { params }) {
+  const auth = await verifyToken(req)
+  
+    if (!auth.valid) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    }
   try {
     const { id } = params
     console.log('Fetching dialogue with ID:', id)
@@ -16,6 +23,11 @@ export async function GET(req, { params }) {
   }
 }
 export async function DELETE(req, { params }) {
+  const auth = await verifyToken(req)
+  
+    if (!auth.valid) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    }
   try {
     const { id } = params
     console.log('Deleting dialogue with ID:', id)

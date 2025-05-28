@@ -16,11 +16,17 @@ const AddTags = () => {
 
   const fetchTags = async () => {
     try {
-      const res = await fetch(`/api/tags?userId=${userId}`)
+      const res = await fetch(`/api/tags?userId=${userId}`,{ headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },})
       const data = await res.json()
       if (data.success) {
         // Fetch words to calculate the count for each tag
-        const wordsRes = await fetch(`/api/words?userId=${userId}`)
+        const wordsRes = await fetch(`/api/words?userId=${userId}`,{ headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },})
         const wordsData = await wordsRes.json()
 
         if (wordsData.success) {

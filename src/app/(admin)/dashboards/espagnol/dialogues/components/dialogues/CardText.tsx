@@ -22,7 +22,7 @@ interface DialogueEntry {
 }
 
 const CardText = () => {
-  const { user }: any = useAuth() // Typed user
+  const { user,token}: any = useAuth() // Typed user
   const [file, setFile] = useState<File | null>(null) // Typed file state
   const [loading, setLoading] = useState(false)
   const [generatedDialogues, setGeneratedDialogues] = useState<string>('') // API returns a single string
@@ -43,7 +43,9 @@ const CardText = () => {
         const res = await fetch('/api/dialogues/create', {
           method: 'POST',
           headers: {
+            
             'Content-Type': 'application/json',
+         
           },
           body: JSON.stringify({
             text: text,
@@ -129,7 +131,10 @@ const CardText = () => {
       }
       try {
         setFetching(true)
-        const res = await fetch(`/api/dialogues?userId=${user._id}`)
+        const res = await fetch(`/api/dialogues?userId=${user._id}`,{ headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },})
         if (!res.ok) {
           throw new Error(`Failed to fetch dialogues: ${res.status}`)
         }
@@ -155,6 +160,10 @@ const CardText = () => {
       try {
         const res = await fetch(`/api/dialogues/${dialogueId}`, {
           method: 'DELETE',
+          headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                  },
         })
 
         if (res.ok) {

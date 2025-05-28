@@ -36,6 +36,11 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  const auth = await verifyToken(req)
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
 

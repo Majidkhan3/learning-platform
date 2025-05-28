@@ -6,7 +6,7 @@ import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 
 const Youtube = () => {
-  const { user } = useAuth();
+  const { user,token } = useAuth();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,7 +33,9 @@ const Youtube = () => {
     try {
       const res = await fetch('/api/dialogues/youtube', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+         },
         body: JSON.stringify({ url, userId: user?._id }),
       });
 

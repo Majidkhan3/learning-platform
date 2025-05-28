@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 
 const AddTags = () => {
-  const { user } = useAuth();
+  const { user ,token } = useAuth();
   const userId = user?._id || ''; 
   const [tags, setTags] = useState([]);
   const [newTagName, setNewTagName] = useState('');
@@ -15,11 +15,23 @@ const AddTags = () => {
 
   const fetchTags = async () => {
     try {
-      const res = await fetch(`/api/portugal/portags?userId=${userId}`);
+      const res = await fetch(`/api/portugal/portags?userId=${userId}`,
+        {
+           headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                  }
+        }
+      );
       const data = await res.json();
       if (data.success) {
         // Fetch words to calculate the count for each tag
-        const wordsRes = await fetch(`/api/portugal/porword?userId=${userId}`);
+        const wordsRes = await fetch(`/api/portugal/porword?userId=${userId}`,{
+           headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+        });
         const wordsData = await wordsRes.json();
 
         if (wordsData.success) {
@@ -50,7 +62,10 @@ const AddTags = () => {
     try {
       const res = await fetch('/api/portugal/portags', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Assuming you have a token in user object
+
+        },
         body: JSON.stringify({ name: newTagName.trim(), userId }),
       });
 
@@ -72,6 +87,10 @@ const AddTags = () => {
     try {
       const res = await fetch(`/api/portugal/portags?name=${tagName}&userId=${userId}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       const data = await res.json();

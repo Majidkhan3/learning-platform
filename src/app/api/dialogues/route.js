@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
+import { verifyToken } from '../../../lib/verifyToken'
+
 
 export async function GET(req) {
+   const auth = await verifyToken(req)
+      
+        if (!auth.valid) {
+          return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+        }
   try {
     // Connect to the database
     await connectToDatabase()

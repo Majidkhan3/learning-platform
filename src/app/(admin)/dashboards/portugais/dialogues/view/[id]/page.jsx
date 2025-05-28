@@ -5,7 +5,9 @@ import { useParams } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { Button, Card, Form, Row, Col } from 'react-bootstrap'
 import AudioPlayer from '../../../../../../../ui/AudioPlayer'
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 const DialogueViewer = () => {
+    const { user ,token } = useAuth();
   const { id } = useParams()
   const [dialogue, setDialogue] = useState(null)
   const [parsedDialogues, setParsedDialogues] = useState([]) // Store parsed dialogues
@@ -17,7 +19,12 @@ const DialogueViewer = () => {
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/portugal/pordialogues/${id}`)
+      fetch(`/api/portugal/pordialogues/${id}`,{
+        headers: {
+          'Content-Type': 'application/json',
+         Authorization: `Bearer ${token}`,        
+        },
+      })
         .then((res) => res.json())
         .then((data) => {
           if (data.dialogue) {
@@ -74,6 +81,7 @@ const DialogueViewer = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           text,
