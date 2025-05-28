@@ -1,6 +1,6 @@
 import connectToDatabase from '@/lib/db'
 import Story from '@/model/Story' // Import the Story schema
-import { verifyToken } from '../../../../lib/verifyToken'
+import { verifyToken } from '../../../../../lib/verifyToken'
 
 export async function GET(req, { params }) {
   const auth = await verifyToken(req)

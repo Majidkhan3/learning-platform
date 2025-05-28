@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectToDatabase from '../../../../../lib/db'
 import axios from 'axios' // Added this line
 import Pordialogue from '../../../../../model/Pordialogue'
+import { verifyToken } from '../../../../../lib/verifyToken'
 
 // Added TranscriptAPI class definition
 class TranscriptAPI {
@@ -78,6 +79,11 @@ class TranscriptAPI {
 }
 // ...existing code...
 export async function POST(req) {
+  const auth = await verifyToken(req)
+    
+      if (!auth.valid) {
+        return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+      }
   try {
     await connectToDatabase()
     const { url: youtubeUrl, userId } = await req.json()

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 // import pdfParse from 'pdf-parse'
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
-import { verifyToken } from '../../../lib/verifyToken'
+import { verifyToken } from '../../../../lib/verifyToken'
 
 
 export async function POST(req) {

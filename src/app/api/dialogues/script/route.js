@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Innertube } from 'youtubei.js' // Import youtubei.js
-import { verifyToken } from '../../../lib/verifyToken'
+import { verifyToken } from '../../../../../lib/verifyToken'
 
 
 export async function POST(req) {

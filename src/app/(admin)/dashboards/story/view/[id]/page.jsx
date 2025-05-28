@@ -31,7 +31,7 @@ const preprocessDialogues = (dialogueString) => {
 
 const StoryViewer = () => {
   const { id } = useParams()
-
+  
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -66,7 +66,12 @@ const StoryViewer = () => {
     const fetchStory = async () => {
       try {
         setLoading(true)
-        const res = await fetch(`/api/story/create/${id}`)
+        const res = await fetch(`/api/story/create/${id}`,{
+          headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,         
+        },
+        })
         const data = await res.json()
         if (res.ok) {
           setStory(data.story)

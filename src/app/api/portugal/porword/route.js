@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import connectToDatabase from '../../../../lib/db'
 import Porword from '../../../../model/Porword'
 import { v2 as cloudinary } from 'cloudinary'
+import { verifyToken } from '../../../../lib/verifyToken'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -11,6 +12,11 @@ cloudinary.config({
 })
 
 export async function POST(req) {
+  const auth = await verifyToken(req)
+  
+    if (!auth.valid) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    }
   try {
     await connectToDatabase()
 
@@ -191,6 +197,11 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
 }
 
 export async function GET(req) {
+  const auth = await verifyToken(req)
+  
+    if (!auth.valid) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    }
   try {
     await connectToDatabase()
 

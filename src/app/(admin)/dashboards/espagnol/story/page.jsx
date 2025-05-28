@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const Page = () => {
-  const { user,token } = useAuth()
+  const { user ,token } = useAuth()
   const userId = user?._id
   const router = useRouter()
   const [stories, setStories] = useState([])

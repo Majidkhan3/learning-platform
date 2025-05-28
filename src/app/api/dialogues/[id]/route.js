@@ -1,7 +1,7 @@
 // pages/api/dialogues/[id].js
 import Dialogue from '@/model/Dialogue'
 import { NextResponse } from 'next/server'
-import { verifyToken } from '../../../lib/verifyToken'
+import { verifyToken } from '../../../../lib/verifyToken'
 
 export async function GET(req, { params }) {
   const auth = await verifyToken(req)

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
 import axios from 'axios' // Added this line
-import { verifyToken } from '../../../lib/verifyToken'
+import { verifyToken } from '../../../../lib/verifyToken'
 
 
 // Added TranscriptAPI class definition

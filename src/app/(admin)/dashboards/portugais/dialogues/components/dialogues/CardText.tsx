@@ -22,7 +22,7 @@ interface DialogueEntry {
 }
 
 const CardText = () => {
-  const { user }: any = useAuth() // Typed user
+  const { user ,token }: any = useAuth() // Typed user
   const [file, setFile] = useState<File | null>(null) // Typed file state
   const [loading, setLoading] = useState(false)
   const [generatedDialogues, setGeneratedDialogues] = useState<string>('') // API returns a single string
@@ -44,6 +44,7 @@ const CardText = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`, // Assuming you need to pass the token for authentication
           },
           body: JSON.stringify({
             text: text,
@@ -129,7 +130,14 @@ const CardText = () => {
       }
       try {
         setFetching(true)
-        const res = await fetch(`/api/portugal/pordialogues?userId=${user._id}`)
+        const res = await fetch(`/api/portugal/pordialogues?userId=${user._id}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`, // Assuming you need to pass the token for authentication
+            },
+          },
+        )
         if (!res.ok) {
           throw new Error(`Failed to fetch dialogues: ${res.status}`)
         }
@@ -155,6 +163,11 @@ const CardText = () => {
       try {
         const res = await fetch(`/api/portugal/pordialogues/${dialogueId}`, {
           method: 'DELETE',
+           headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          
+        }
         })
 
         if (res.ok) {
