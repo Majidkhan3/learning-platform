@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server'
 // import pdfParse from 'pdf-parse'
 import Endialogue from '../../../../../model/Endialogue'
 import connectToDatabase from '../../../../../lib/db'
+import { verifyToken } from '../../../../../lib/verifyToken'
+
 
 export async function POST(req) {
+    const auth = await verifyToken(req)
+        
+          if (!auth.valid) {
+            return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+          }
   try {
     await connectToDatabase()
 

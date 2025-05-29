@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { Button, Card, Form, Row, Col } from 'react-bootstrap'
 import AudioPlayer from '../../../../../../../ui/AudioPlayer'
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 const DialogueViewer = () => {
   const { id } = useParams()
   const [dialogue, setDialogue] = useState(null)
@@ -14,10 +15,16 @@ const DialogueViewer = () => {
   const [availableVoices, setAvailableVoices] = useState([]) // Store voices fetched from API
   const [isReading, setIsReading] = useState(false) // To track if reading is in progress
   const audioRef = useRef(null) // To track the currently playing audio
+  const { user ,token} = useAuth()
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/english/endialogues/${id}`)
+      fetch(`/api/english/endialogues/${id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      })
         .then((res) => res.json())
         .then((data) => {
           if (data.dialogue) {
@@ -74,6 +81,7 @@ const DialogueViewer = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Include token for authentication
         },
         body: JSON.stringify({
           text,

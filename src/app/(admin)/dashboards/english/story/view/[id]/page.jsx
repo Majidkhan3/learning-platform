@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { Card, Form, Row, Col } from 'react-bootstrap'// Import the new AudioPlayer component
 import { Icon } from '@iconify/react/dist/iconify.js'
 import AudioPlayer from '../../../../../../../ui/AudioPlayer'
-
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 const preprocessDialogues = (dialogueString) => {
   if (!dialogueString) return []
   const lines = dialogueString.split('\n')
@@ -30,7 +30,7 @@ const preprocessDialogues = (dialogueString) => {
 
 const StoryViewer = () => {
   const { id } = useParams()
-
+  const { user, token } = useAuth()
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -65,7 +65,12 @@ const StoryViewer = () => {
     const fetchStory = async () => {
       try {
         setLoading(true)
-        const res = await fetch(`/api/english/enstories/create/${id}`)
+        const res = await fetch(`/api/english/enstories/create/${id}`,{
+          headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+        })
         const data = await res.json()
         if (res.ok) {
           setStory(data.story)
@@ -93,6 +98,7 @@ const StoryViewer = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Ensure you have the token available
         },
         body: JSON.stringify({
           text,

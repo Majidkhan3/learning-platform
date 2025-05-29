@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Innertube } from 'youtubei.js' // Import youtubei.js
+import { verifyToken } from '../../../../../lib/verifyToken'
+
 
 export async function POST(req) {
+  const auth = await verifyToken(req)
+      
+        if (!auth.valid) {
+          return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+        }
   try {
     const { videoUrl, lang } = await req.json()
 
