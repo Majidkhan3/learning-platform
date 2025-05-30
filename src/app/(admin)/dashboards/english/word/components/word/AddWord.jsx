@@ -8,7 +8,7 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 
 const AddWord = () => {
-  const { user } = useAuth();
+  const { user ,token } = useAuth();
   const userId = user?._id || ''; // Assuming you have a way to get the user ID
 
   // Consolidated state for all form data
@@ -30,7 +30,14 @@ const AddWord = () => {
   const fetchTags = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/english/entags?userId=${userId}`); // Replace with your API endpoint
+      const res = await fetch(`/api/english/entags?userId=${userId}`,
+        {
+          headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+        }
+      ); // Replace with your API endpoint
       const data = await res.json();
       if (data.success) {
         setAvailableTags(data.tags); // Assuming the API returns tags in this format
@@ -127,7 +134,9 @@ const AddWord = () => {
 
       const res = await fetch('/api/english/enword', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+         },
         body: JSON.stringify(payload),
       });
 

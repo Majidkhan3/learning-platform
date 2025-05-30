@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const Page = () => {
-  const { user } = useAuth()
+  const { user,token } = useAuth()
   const userId = user?._id
   const router = useRouter()
   const [stories, setStories] = useState([])
@@ -19,6 +19,10 @@ const handleDelete = async (storyId) => {
     try {
       const response = await fetch(`/api/english/enstories/create/${storyId}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
       });
 
       if (response.ok) {
@@ -38,7 +42,12 @@ const handleDelete = async (storyId) => {
       if (!userId) return
       try {
         setLoading(true)
-        const res = await fetch(`/api/english/enstories/create?userId=${userId}`)
+        const res = await fetch(`/api/english/enstories/create?userId=${userId}`,{
+          headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+        })
         const data = await res.json()
         if (res.ok) {
           setStories(data.stories)

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 
 const AddTags = () => {
-  const { user } = useAuth();
+  const { user ,token } = useAuth();
   const userId = user?._id || ''; 
   const [tags, setTags] = useState([]);
   const [newTagName, setNewTagName] = useState('');
@@ -15,11 +15,21 @@ const AddTags = () => {
 
   const fetchTags = async () => {
     try {
-      const res = await fetch(`/api/english/entags?userId=${userId}`);
+      const res = await fetch(`/api/english/entags?userId=${userId}`,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
       const data = await res.json();
       if (data.success) {
         // Fetch words to calculate the count for each tag
-        const wordsRes = await fetch(`/api/english/enword?userId=${userId}`);
+        const wordsRes = await fetch(`/api/english/enword?userId=${userId}`,{
+          headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+        });
         const wordsData = await wordsRes.json();
 
         if (wordsData.success) {
@@ -50,7 +60,9 @@ const AddTags = () => {
     try {
       const res = await fetch('/api/english/entags', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ name: newTagName.trim(), userId }),
       });
 
@@ -72,6 +84,10 @@ const AddTags = () => {
     try {
       const res = await fetch(`/api/english/entags?name=${tagName}&userId=${userId}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
       });
 
       const data = await res.json();

@@ -16,14 +16,19 @@ export default function AddWordsPage() {
   const [fetchingTags, setFetchingTags] = useState(true)
   const [existingWords, setExistingWords] = useState([]) // Store existing words from the database
   const [wordRatings, setWordRatings] = useState({})
-  const { user } = useAuth()
+  const { user ,token} = useAuth()
   const userId = user._id
 
   // Fetch existing words from the database
   const fetchWords = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/english/enword?userId=${userId}`)
+      const res = await fetch(`/api/english/enword?userId=${userId}`,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      })
       const data = await res.json()
       if (data.success) {
         setExistingWords(data.words.map((wordObj) => wordObj.word.toLowerCase())) // Store existing words in lowercase
@@ -50,7 +55,12 @@ export default function AddWordsPage() {
       try {
         if (!user?._id) return
 
-        const response = await fetch(`/api/english/entags?userId=${user._id}`)
+        const response = await fetch(`/api/english/entags?userId=${user._id}`,{
+          headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+        })
         const data = await response.json()
 
         if (!response.ok) {
@@ -116,6 +126,7 @@ export default function AddWordsPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             word, // Send one word at a time

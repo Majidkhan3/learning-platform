@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const CreateStory = () => {
-  const { user } = useAuth()
+  const { user ,token } = useAuth()
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [tags, setTags] = useState([])
@@ -24,7 +24,12 @@ const CreateStory = () => {
       try {
         if (!user?._id) return
 
-        const response = await fetch(`/api/french/frtags?userId=${user._id}`)
+        const response = await fetch(`/api/french/frtags?userId=${user._id}`,{
+          headers: {
+            'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        }
+        })
         const data = await response.json()
 
         if (!response.ok) {
@@ -58,6 +63,7 @@ const CreateStory = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`, // Ensure you have the token available
         },
         body: JSON.stringify({
           // title,
