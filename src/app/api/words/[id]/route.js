@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import Word from '../../../../model/Word'
 import connectToDatabase from '../../../../lib/db'
 import { v2 as cloudinary } from 'cloudinary'
-import { verifyToken } from '../../../lib/verifyToken'
+import { verifyToken } from '../../../../lib/verifyToken'
 
 // Configure Cloudinary
 cloudinary.config({
@@ -116,10 +116,10 @@ export async function PUT(req, { params }) {
 
 export async function GET(req, { params }) {
   const auth = await verifyToken(req)
-  
-    if (!auth.valid) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
 
@@ -140,10 +140,10 @@ export async function GET(req, { params }) {
 }
 export async function DELETE(req, { params }) {
   const auth = await verifyToken(req)
-  
-    if (!auth.valid) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
 
