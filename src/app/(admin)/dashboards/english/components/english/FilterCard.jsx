@@ -68,8 +68,8 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
         // For example, if your route is dynamic like '/flashcards/[id]',
         // you'll need to determine the 'id' value.
         // This example uses a generic '/flashcards' path.
-        const flashcardPath = '/flashcard'
-        router.push(`/dashboards/portugais/${flashcardPath}?${params.toString()}`)
+        const flashcardPath = '/flashcards'
+        router.push(`/dashboards/english/${flashcardPath}?${params.toString()}`)
       }
     }
     // No explicit navigation is handled here for turning the switch OFF.
