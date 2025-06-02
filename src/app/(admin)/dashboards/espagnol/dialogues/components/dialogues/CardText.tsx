@@ -22,7 +22,7 @@ interface DialogueEntry {
 }
 
 const CardText = () => {
-  const { user,token}: any = useAuth() // Typed user
+  const { user ,token}: any = useAuth() // Typed user
   const [file, setFile] = useState<File | null>(null) // Typed file state
   const [loading, setLoading] = useState(false)
   const [generatedDialogues, setGeneratedDialogues] = useState<string>('') // API returns a single string
@@ -38,12 +38,13 @@ const CardText = () => {
         if (!user?._id) console.error('User ID is missing, cannot generate dialogues.')
         return
       }
+       console.log('Sending token:', token)
       setLoading(true)
       try {
         const res = await fetch('/api/dialogues/create', {
           method: 'POST',
           headers: {
-            
+             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
          
           },
@@ -58,7 +59,7 @@ const CardText = () => {
           throw new Error(errorData.message || `API error! status: ${res.status}`)
         }
         const data = await res.json()
-        router.push(`/dashboards/dialogues/view/${data.dialogueId}`)
+        router.push(`/dashboards/espagnol/dialogues/view/${data.dialogueId}`)
 
         setGeneratedDialogues(data.dialogues || '') // API returns a string
       } catch (err) {
@@ -182,7 +183,7 @@ const CardText = () => {
     <>
       {/* <PageTitle title="Gestionnaire de Dialogues" /> */}
       <div className="mb-4">
-        <Link href="/dashboards/dialogues/youtube">
+        <Link href="/dashboards/espagnol/dialogues/youtube">
           <Button variant="primary">Utiliser une vidéo YouTube</Button>
         </Link>
       </div>
