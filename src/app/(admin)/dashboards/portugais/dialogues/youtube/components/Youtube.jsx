@@ -57,14 +57,14 @@ const Youtube = () => {
 
   return (
     <>
-      <h2 className="mb-4">Generate dialogues from YouTube</h2>
+      <h2 className="mb-4">Gerar diálogos a partir do YouTube</h2>
 
       <Card className="mb-4">
-        <Card.Header className="bg-light fw-bold">Enter a YouTube URL</Card.Header>
+        <Card.Header className="bg-light fw-bold">Insira uma URL do YouTube</Card.Header>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>YouTube video URL (in Spanish)</Form.Label>
+              <Form.Label>URL do vídeo do YouTube (em português)</Form.Label>
               <Form.Control
                 type="url"
                 placeholder="https://www.youtube.com/watch?v=..."
@@ -72,7 +72,7 @@ const Youtube = () => {
                 onChange={(e) => setUrl(e.target.value)}
               />
               <small className="text-muted">
-                Dialogues will be generated using Claude (Anthropic)
+                Os diálogos serão gerados usando o Claude (Anthropic)
               </small>
             </Form.Group>
 
@@ -85,7 +85,7 @@ const Youtube = () => {
                   {' '}Generating...
                 </>
               ) : (
-                'Extract and generate dialogs'
+                'Extrair e gerar diálogos'
               )}
             </Button>
           </Form>
@@ -104,7 +104,7 @@ const Youtube = () => {
       )}
 
       <Button variant="secondary" onClick={() => router.push('/dashboards/portugais/dialogues')}>
-        ⬅ Return to the list of dialogues
+        ⬅ Voltar à lista de diálogos
       </Button>
     </>
   );
