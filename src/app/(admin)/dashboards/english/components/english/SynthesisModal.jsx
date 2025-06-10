@@ -56,7 +56,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
   }
 
   const handleEditClick = (id) => {
-    router.push(`/dashboards/espagnol/edit/${id}`) // Navigate to the edit page with the item's ID
+    router.push(`/dashboards/english/edit/${id}`) // Navigate to the edit page with the item's ID
   }
   console.log('selected ', selectedDescription)
   return (
@@ -117,7 +117,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                   <Button
                     variant="soft-primary"
                     size="sm"
-                    onClick={() => window.open(`https://youglish.com/pronounce/${item.word}/spanish`, '_blank')}>
+                    onClick={() => window.open(`https://youglish.com/pronounce/${item.word}/english`, '_blank')}>
                     <IconifyIcon icon="ri:youtube-line" className="align-middle fs-18" />
                   </Button>
                 </td>

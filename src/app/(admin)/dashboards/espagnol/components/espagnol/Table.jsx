@@ -19,8 +19,10 @@ import {
 } from 'react-bootstrap'
 import { useEffect, useState } from 'react'
 import SynthesisModal from './SynthesisModal'
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const Table = ({ loading, words, selectedVoice }) => {
+  const { token } = useAuth()
   const searchParams = useSearchParams()
   const [filteredData, setFilteredData] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -40,8 +42,10 @@ const Table = ({ loading, words, selectedVoice }) => {
         word.translation?.toLowerCase().includes(searchTerm.toLowerCase())
       return matchesTag && matchesRating && matchesSearch
     })
-
-    setFilteredData(filtered)
+        const sorted = [...filtered].sort((a, b) => {
+      return new Date(b.createdAt || b.dateAdded || 0) - new Date(a.createdAt || a.dateAdded || 0)
+    })
+    setFilteredData(sorted)
   }, [searchParams, words, searchTerm])
 
   // Pagination logic
@@ -59,7 +63,7 @@ const Table = ({ loading, words, selectedVoice }) => {
     setCurrentPage(1)
   }
 
-  const handleSort = (order) => {
+ const handleSort = (order) => {
     const sortedData = [...filteredData].sort((a, b) => {
       if (order === 'asc') {
         return a.word.localeCompare(b.word) // Sort A to Z
@@ -69,10 +73,16 @@ const Table = ({ loading, words, selectedVoice }) => {
     })
     setFilteredData(sortedData)
   }
+
   const handleDelete = async (id) => {
     try {
       const response = await fetch(`/api/words/${id}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+
       })
 
       if (response.ok) {

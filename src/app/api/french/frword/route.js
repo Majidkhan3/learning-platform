@@ -31,26 +31,25 @@ export async function POST(req) {
     if (autoGenerateSummary) {
       // Generate summary using Claude API
       const prompt = `
-      Generate a detailed synthesis for the word ${word} in the following structured format:
+      Générez une synthèse détaillée pour le mot ${word} dans le format structuré suivant :
+1. **Utilisation et Fréquence**:
+   - Expliquez à quelle fréquence le mot est utilisé dans la langue et dans quels contextes il est couramment employé. Fournissez une brève description.
 
-1. **Use and Frequency**:
-   - Explain how frequently the word is used in the language and in which contexts it is commonly used. Provide a brief description.
+2. **Mnémoniques **:
+   - Fournissez deux mnémoniques créatifs pour aider à mémoriser le mot. Ceux-ci peuvent inclure des associations phonétiques, des histoires visuelles ou d'autres aides-mémoire.
 
-2. **Mnemonics**:
-   - Provide two creative mnemonics to help remember the word. These can include phonetic associations, visual stories, or other memory aids.
+3. **Utilisations Principales**:
+   - Listez les principaux contextes ou scénarios où le mot est utilisé. Pour chaque contexte :
+     - Donnez un titre au contexte.
+     - Incluez 2-3 phrases d'exemple dans la langue (sans traduction).
 
-3. **Main Uses**:
-   - List the main contexts or scenarios where the word is used. For each context:
-     - Provide a title for the context.
-     - Include 2-3 example sentences in the language (without translation).
+4. **Synonymes**:
+   - Fournissez une liste de synonymes du mot.
 
-4. **Synonyms**:
-   - Provide a list of synonyms for the word.
+5. *Antonymes**:
+   - Fournissez une liste d'antonymes du mot.
 
-5. **Antonyms**:
-   - Provide a list of antonyms for the word.
-
-Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
+Assurez-vous que la réponse est bien structurée, claire et formatée de manière à être facile à lire.
     `
 
       const claudeApiKey = process.env.CLAUDE_API_KEY

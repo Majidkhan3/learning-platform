@@ -56,7 +56,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
   }
 
   const handleEditClick = (id) => {
-    router.push(`/dashboards/espagnol/edit/${id}`) // Navigate to the edit page with the item's ID
+    router.push(`/dashboards/french/edit/${id}`) // Navigate to the edit page with the item's ID
   }
   console.log('selected ', selectedDescription)
   return (
@@ -117,7 +117,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                   <Button
                     variant="soft-primary"
                     size="sm"
-                    onClick={() => window.open(`https://youglish.com/pronounce/${item.word}/spanish`, '_blank')}>
+                    onClick={() => window.open(`https://youglish.com/pronounce/${item.word}/french`, '_blank')}>
                     <IconifyIcon icon="ri:youtube-line" className="align-middle fs-18" />
                   </Button>
                 </td>
@@ -199,28 +199,28 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                 return sections.map((section, index) => (
                   <div key={index} className="mb-4">
                     <h5 className="fw-bold">{section.title}</h5>
-                    {section.title === 'Main Uses:' && section.content.length > 1 && (
+                    {section.title === 'Utilisations Principales:' && section.content.length > 1 && (
                       <ul>
                         {section.content.map((item, idx) => (
                           <li key={idx}>{item}</li>
                         ))}
                       </ul>
                     )}
-                    {section.title === 'Mnemonics:' && section.content.length > 1 && (
+                    {section.title === 'Mnémoniques:' && section.content.length > 1 && (
                       <ul>
                         {section.content.map((item, idx) => (
                           <li key={idx}>{item}</li>
                         ))}
                       </ul>
                     )}
-                    {section.title === 'Use and Frequency:' && (
+                    {section.title === 'Utilisation et Fréquence:' && (
                       <ul>
                         {section.content.map((item, idx) => (
                           <li key={idx}>{item}</li>
                         ))}
                       </ul>
                     )}
-                    {section.title === 'Synonyms:' && (
+                    {section.title === 'Synonymes:' && (
                       <div className="d-flex flex-wrap gap-2 mb-3">
                         {section.content.map((item, idx) => (
                           <span
@@ -241,7 +241,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                       </div>
                     )}
 
-                    {section.title === 'Antonyms:' && (
+                    {section.title === 'Antonymes:' && (
                       <div className="d-flex flex-wrap gap-2 mb-3">
                         {section.content.map((item, idx) => (
                           <span
