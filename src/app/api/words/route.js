@@ -33,26 +33,26 @@ export async function POST(req) {
     if (autoGenerateSummary) {
       // Generate summary using Claude API
       const prompt = `
-      Generate a detailed synthesis for the word ${word} in the following structured format:
+      Genera una síntesis detallada para la palabra ${word} en el siguiente formato estructurado:
 
-1. **Use and Frequency**:
-   - Explain how frequently the word is used in the language and in which contexts it is commonly used. Provide a brief description.
+1. **Uso y Frecuencia**:
+   - Explica con qué frecuencia se utiliza la palabra en el idioma y en qué contextos es comúnmente usada. Proporciona una breve descripción.
 
-2. **Mnemonics**:
-   - Provide two creative mnemonics to help remember the word. These can include phonetic associations, visual stories, or other memory aids.
+2. **Mnemotecnias**:
+   - Proporciona dos mnemotecnias creativas para ayudar a recordar la palabra. Estas pueden incluir asociaciones fonéticas, historias visuales u otras ayudas de memoria.
 
-3. **Main Uses**:
-   - List the main contexts or scenarios where the word is used. For each context:
-     - Provide a title for the context.
-     - Include 2-3 example sentences in the language (without translation).
+3. **Usos Principales**:
+   - Enumera los principales contextos o escenarios en los que se utiliza la palabra. Para cada contexto:
+     - Proporciona un título para el contexto.
+     - Incluye de 2 a 3 frases de ejemplo en el idioma (sin traducción).
 
-4. **Synonyms**:
-   - Provide a list of synonyms for the word.
+4. **Sinónimos**:
+   - Proporciona una lista de sinónimos de la palabra.
 
-5. **Antonyms**:
-   - Provide a list of antonyms for the word.
-
-Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
+5. **Antónimos**:
+   - Proporciona una lista de antónimos de la palabra.
+    
+   Asegúrate de que la respuesta esté bien estructurada, sea clara y esté formateada de manera que sea fácil de leer.
     `
 
       const claudeApiKey = process.env.CLAUDE_API_KEY
