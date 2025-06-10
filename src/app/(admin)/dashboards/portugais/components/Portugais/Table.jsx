@@ -19,15 +19,17 @@ import {
 } from 'react-bootstrap'
 import { useEffect, useState } from 'react'
 import SynthesisModal from './SynthesisModal'
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 
 const Table = ({ loading, words, selectedVoice }) => {
+  const { user, token } = useAuth();
   const searchParams = useSearchParams()
   const [filteredData, setFilteredData] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [resultsPerPage, setResultsPerPage] = useState(10) // Default results per page
-  const [searchTerm, setSearchTerm] = useState('')
+  const [resultsPerPage, setResultsPerPage] = useState(10)
+  const [searchTerm, setSearchTerm] = useState('');
 
- useEffect(() => {
+  useEffect(() => {
     const tag = searchParams.get('tag')
     const rating = searchParams.get('rating')
 
@@ -41,7 +43,12 @@ const Table = ({ loading, words, selectedVoice }) => {
       return matchesTag && matchesRating && matchesSearch
     })
 
-    setFilteredData(filtered)
+    // Sort by creation date (newest first) by default
+    const sorted = [...filtered].sort((a, b) => {
+      return new Date(b.createdAt || b.dateAdded || 0) - new Date(a.createdAt || a.dateAdded || 0)
+    })
+
+    setFilteredData(sorted)
   }, [searchParams, words, searchTerm])
 
   // Pagination logic
@@ -59,7 +66,7 @@ const Table = ({ loading, words, selectedVoice }) => {
     setCurrentPage(1)
   }
 
-  const handleSort = (order) => {
+   const handleSort = (order) => {
     const sortedData = [...filteredData].sort((a, b) => {
       if (order === 'asc') {
         return a.word.localeCompare(b.word) // Sort A to Z
@@ -69,14 +76,18 @@ const Table = ({ loading, words, selectedVoice }) => {
     })
     setFilteredData(sortedData)
   }
+
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`/api/portugal/Porword/${id}`, {
+      const response = await fetch(`/api/portugal/porword/${id}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       })
 
       if (response.ok) {
-        // Remove the deleted row from the state
         setFilteredData((prevData) => prevData.filter((word) => word._id !== id))
         alert('Word deleted successfully!')
       } else {
@@ -98,7 +109,7 @@ const Table = ({ loading, words, selectedVoice }) => {
               <CardTitle as={'h4'}>Lista de vocabulário</CardTitle>
             </div>
             <div className="d-flex align-items-center">
-               <InputGroup size="sm" className="me-2" style={{ width: '200px' }}>
+              <InputGroup size="sm" className="me-2" style={{ width: '200px' }}>
                 <Form.Control
                   placeholder="Search words..."
                   value={searchTerm}
@@ -129,14 +140,14 @@ const Table = ({ loading, words, selectedVoice }) => {
                 </DropdownToggle>
                 <DropdownMenu className="dropdown-menu-end">
                   <DropdownItem onClick={() => handleSort('asc')}>A to Z</DropdownItem>
-                  <DropdownItem onClick={() => handleSort('desc')}>Z to A</DropdownItem>
+                  <DropdownItem onClick={() => handleSort('desc')}>Z to A</DropdownItem>                 
                 </DropdownMenu>
               </Dropdown>
             </div>
           </CardHeader>
           <CardBody className="p-0">
             <div className="table-responsive">
-              <SynthesisModal reviewData={paginatedData} loading={loading} onDelete={handleDelete} selectedVoice={selectedVoice} />{' '}
+              <SynthesisModal reviewData={paginatedData} loading={loading} onDelete={handleDelete} selectedVoice={selectedVoice} />
             </div>
           </CardBody>
           <CardFooter>

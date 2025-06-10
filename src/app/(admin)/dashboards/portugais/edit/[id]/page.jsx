@@ -25,7 +25,7 @@ const EditEspagnol = ({ params }) => {
   // Fetch word data by ID
   useEffect(() => {
     if (id) {
-      fetch(`/api/words/${id}`,{
+      fetch(`/api/portugal/porword/${id}`,{
           headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ const EditEspagnol = ({ params }) => {
 
   // Fetch available tags
   useEffect(() => {
-    fetch(`/api/tags?userId=${userId}`,{
+    fetch(`/api/portugal/portags?userId=${userId}`,{
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -141,11 +141,12 @@ const EditEspagnol = ({ params }) => {
         summary: formData.summary,
       };
 
-      const response = await fetch(`/api/words/${id}`, {
+      const response = await fetch(`/api/portugal/porword/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`  // Include token for authentication
-         },
+        headers: { 
+           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+                  },
         body: JSON.stringify(payload),
       });
 

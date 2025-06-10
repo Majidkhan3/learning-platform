@@ -32,26 +32,26 @@ export async function POST(req) {
     if (autoGenerateSummary) {
       // Generate summary using Claude API
       const prompt = `
-      Generate a detailed synthesis for the word ${word} in the following structured format:
+     Gere uma síntese detalhada para a palavra ${word} no seguinte formato estruturado e responda inteiramente em português:
 
-1. **Use and Frequency**:
-   - Explain how frequently the word is used in the language and in which contexts it is commonly used. Provide a brief description.
+1. **Uso e Frequência:**:
+   - Explique com que frequência a palavra é usada na língua portuguesa e em quais contextos ela é mais comum. Forneça uma breve descrição.
 
-2. **Mnemonics**:
-   - Provide two creative mnemonics to help remember the word. These can include phonetic associations, visual stories, or other memory aids.
+2. **Mnemônicos:**:
+   - Forneça dois mnemônicos criativos para ajudar a lembrar a palavra. Estes podem incluir associações fonéticas, histórias visuais ou outros recursos de memória.
 
-3. **Main Uses**:
-   - List the main contexts or scenarios where the word is used. For each context:
-     - Provide a title for the context.
-     - Include 2-3 example sentences in the language (without translation).
+3. **Principais Usos:**:
+   - Liste os principais contextos ou cenários em que a palavra é usada. Para cada contexto:
+     - Dê um título para o contexto.
+     - Inclua 2 a 3 frases de exemplo (em português, sem tradução).
 
-4. **Synonyms**:
-   - Provide a list of synonyms for the word.
+4. **Sinônimos:**:
+   - Forneça uma lista de sinônimos da palavra.
 
-5. **Antonyms**:
-   - Provide a list of antonyms for the word.
-
-Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
+5. **Antônimos:**:
+   - Forneça uma lista de antônimos da palavra.
+   
+Toda a resposta deve ser redigida em português claro e bem estruturado, com boa formatação para facilitar a leitura.
     `
 
       const claudeApiKey = process.env.CLAUDE_API_KEY
