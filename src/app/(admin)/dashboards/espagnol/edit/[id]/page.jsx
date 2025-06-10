@@ -21,7 +21,7 @@ const EditEspagnol = ({ params }) => {
   const [availableTags, setAvailableTags] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-
+console.log("toke",token)
   // Fetch word data by ID
   useEffect(() => {
     if (id) {
