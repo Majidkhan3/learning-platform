@@ -199,28 +199,28 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                 return sections.map((section, index) => (
                   <div key={index} className="mb-4">
                     <h5 className="fw-bold">{section.title}</h5>
-                    {section.title === 'Main Uses:' && section.content.length > 1 && (
+                    {section.title === 'Usos Principales:' && section.content.length > 1 && (
                       <ul>
                         {section.content.map((item, idx) => (
                           <li key={idx}>{item}</li>
                         ))}
                       </ul>
                     )}
-                    {section.title === 'Mnemonics:' && section.content.length > 1 && (
+                    {section.title === 'Mnemotecnias:' && section.content.length > 1 && (
                       <ul>
                         {section.content.map((item, idx) => (
                           <li key={idx}>{item}</li>
                         ))}
                       </ul>
                     )}
-                    {section.title === 'Use and Frequency:' && (
+                    {section.title === 'Uso y Frecuencia:' && (
                       <ul>
                         {section.content.map((item, idx) => (
                           <li key={idx}>{item}</li>
                         ))}
                       </ul>
                     )}
-                    {section.title === 'Synonyms:' && (
+                    {section.title === 'Sinónimos:' && (
                       <div className="d-flex flex-wrap gap-2 mb-3">
                         {section.content.map((item, idx) => (
                           <span
@@ -241,7 +241,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                       </div>
                     )}
 
-                    {section.title === 'Antonyms:' && (
+                    {section.title === 'Antónimos:' && (
                       <div className="d-flex flex-wrap gap-2 mb-3">
                         {section.content.map((item, idx) => (
                           <span
