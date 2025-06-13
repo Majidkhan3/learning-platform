@@ -33,8 +33,9 @@ export async function POST(req) {
     if (autoGenerateSummary) {
       // Generate summary using Claude API
       const prompt = `
+       Responde exclusivamente en español. No incluyas texto en inglés, ni en los ejemplos ni en los sinónimos o antónimos.
       Genera una síntesis detallada para la palabra ${word} en el siguiente formato estructurado:
-
+     
 1. **Uso y Frecuencia**:
    - Explica con qué frecuencia se utiliza la palabra en el idioma y en qué contextos es comúnmente usada. Proporciona una breve descripción.
 

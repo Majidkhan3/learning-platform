@@ -49,7 +49,8 @@ export async function POST(req) {
 5. *Antonymes**:
    - Fournissez une liste d'antonymes du mot.
 
-Assurez-vous que la réponse est bien structurée, claire et formatée de manière à être facile à lire.
+Assurez-vous que la réponse est bien structurée, claire et formatée de manière à être facile à lire.Toute la réponse doit être rédigée en français, y compris les mnémoniques, les exemples, les synonymes et les antonymes.
+Fournissez uniquement du contenu en français, y compris les phrases d'exemple, les synonymes et les antonymes.
     `
 
       const claudeApiKey = process.env.CLAUDE_API_KEY
