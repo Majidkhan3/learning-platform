@@ -1,52 +1,53 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Container, Row, Col, Button, Card, Stack } from 'react-bootstrap'
+import { Container, Row, Col, Button, Card, Stack, Form } from 'react-bootstrap'
 import { Icon } from '@iconify/react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const Page = () => {
-  const { user ,token } = useAuth()
+  const { user, token } = useAuth()
   const userId = user?._id
   const router = useRouter()
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-// Add after the existing state declarations
-const handleDelete = async (storyId) => {
-  if (window.confirm('Are you sure you want to delete this story?')) {
-    try {
-     const response = await fetch(`/api/story/create/${storyId}`, {
-  method: 'DELETE',
-  headers: {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-});
+  const [sortOrder, setSortOrder] = useState('newest');
+  // Add after the existing state declarations
+  const handleDelete = async (storyId) => {
+    if (window.confirm('Are you sure you want to delete this story?')) {
+      try {
+        const response = await fetch(`/api/story/create/${storyId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (response.ok) {
-        // Remove the deleted story from the state
-        setStories(stories.filter(story => story.storyId !== storyId));
-      } else {
-        throw new Error('Failed to delete story');
+        if (response.ok) {
+          // Remove the deleted story from the state
+          setStories(stories.filter(story => story.storyId !== storyId));
+        } else {
+          throw new Error('Failed to delete story');
+        }
+      } catch (error) {
+        console.error('Error deleting story:', error);
+        alert('Failed to delete story');
       }
-    } catch (error) {
-      console.error('Error deleting story:', error);
-      alert('Failed to delete story');
     }
-  }
-};
+  };
   useEffect(() => {
     const fetchStories = async () => {
       if (!userId) return
       try {
         setLoading(true)
-        const res = await fetch(`/api/story/create?userId=${userId}`,{
+        const res = await fetch(`/api/story/create?userId=${userId}`, {
           headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,         
-        },
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
         })
         const data = await res.json()
         if (res.ok) {
@@ -94,6 +95,20 @@ const handleDelete = async (storyId) => {
           </Button>
         </Col>
       </Row>
+      <Row>
+
+        <Col className="text-end d-flex justify-content-end align-items-end" style={{ gap: '0.75rem' }}>
+          <Form.Select
+            size="sm"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            style={{ width: '230px' }}
+          >
+            <option value="newest">Newest → Oldest</option>
+            <option value="oldest">Oldest → Newest</option>
+          </Form.Select>
+        </Col>
+      </Row>
 
       {/* Stories Grid */}
       <Row xs={1} sm={2} md={3} className="g-4">
@@ -103,8 +118,14 @@ const handleDelete = async (storyId) => {
             <p className="text-muted">Loading stories...</p>
           </Col>
         ) : (
-          <>
-            {stories.map((story) => (
+        <>
+          {[...stories]
+            .sort((a, b) => {
+              const tA = new Date(a.creationDate).getTime();
+              const tB = new Date(b.creationDate).getTime();
+              return sortOrder === 'newest' ? tB - tA : tA - tB;
+            })
+            .map((story) => (
               <Col key={story.storyId}>
                 <Card>
                   <Card.Header className="d-flex justify-content-between align-items-center">
@@ -115,7 +136,7 @@ const handleDelete = async (storyId) => {
                       role="button"
                       style={{ cursor: 'pointer' }}
                       onClick={() => handleDelete(story.storyId)}
-                    />{' '}
+                    />
                   </Card.Header>
                   <Card.Body>
                     <Card.Text className="mb-2">{story.rating || 'No rating'}</Card.Text>
@@ -127,14 +148,18 @@ const handleDelete = async (storyId) => {
                     <Card.Text>
                       <strong>Theme:</strong> {story.theme}
                     </Card.Text>
-                    <Button variant="primary" className="w-100 mt-3" onClick={() => router.push(`/dashboards/espagnol/story/view/${story.storyId}`)}>
+                    <Button
+                      variant="primary"
+                      className="w-100 mt-3"
+                      onClick={() => router.push(`/dashboards/espagnol/story/view/${story.storyId}`)}
+                    >
                       See the dialogues
                     </Button>
                   </Card.Body>
                 </Card>
               </Col>
             ))}
-          </>
+        </>
         )}
       </Row>
     </Container>

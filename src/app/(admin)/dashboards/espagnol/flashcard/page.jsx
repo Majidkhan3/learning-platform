@@ -146,11 +146,22 @@ const FlashCard = () => {
     }
   }
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleTap() // Trigger the same behavior as tapping
-    }
+ const handleKeyPress = (e) => {
+  switch (e.key) {
+    case 'Enter':
+      handleTap();              // flip / next
+      break;
+    case 'ArrowRight':          // next
+      goToCard(currentIndex + 1);
+      break;
+    case 'ArrowLeft':           // previous
+      goToCard(currentIndex - 1);
+      break;
+    default:
+      break;
   }
+};
+
 
   const handleRating = async (star) => {
     if (!currentCard) return

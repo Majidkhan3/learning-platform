@@ -22,7 +22,7 @@ interface DialogueEntry {
 }
 
 const CardText = () => {
-  const { user ,token }: any = useAuth() // Typed user
+  const { user, token }: any = useAuth() // Typed user
   const [file, setFile] = useState<File | null>(null) // Typed file state
   const [loading, setLoading] = useState(false)
   const [generatedDialogues, setGeneratedDialogues] = useState<string>('') // API returns a single string
@@ -32,6 +32,7 @@ const CardText = () => {
   const [fileName, setFileName] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const router = useRouter()
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
   const generateDialoguesFromApi = useCallback(
     async (text: string) => {
       if (!text.trim() || !user?._id) {
@@ -130,11 +131,11 @@ const CardText = () => {
       }
       try {
         setFetching(true)
-        const res = await fetch(`/api/french/frdialogues?userId=${user._id}`,{
+        const res = await fetch(`/api/french/frdialogues?userId=${user._id}`, {
           headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
         })
         if (!res.ok) {
           throw new Error(`Failed to fetch dialogues: ${res.status}`)
@@ -162,9 +163,9 @@ const CardText = () => {
         const res = await fetch(`/api/french/frdialogues/${dialogueId}`, {
           method: 'DELETE',
           headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
         })
 
         if (res.ok) {
@@ -236,38 +237,58 @@ const CardText = () => {
       )}
 
       <h5 className="fw-bold mb-3">Fichiers traités</h5>
-
+      <div className="d-flex justify-content-end mb-3">
+        <Form.Select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+          className="mb-3 w-auto"
+          aria-label="Trèves les dialogues"
+        >
+          <option value="newest">Du plus récent au plus ancien</option>
+          <option value="oldest">Du plus ancien au plus récent</option>
+        </Form.Select>
+      </div>
       {fetching ? (
         <Spinner animation="border" />
       ) : dialogues.length > 0 ? (
-        dialogues.map(
-          (
-            dialogue: DialogueEntry, // Explicitly type dialogue here
-          ) => (
-            <Card className="mb-3" key={dialogue._id}>
-              <Card.Body>
-                <p className="mb-1">
-                  <strong>{dialogue.url || 'Source inconnue'}</strong>
-                </p>
-                <p className="text-muted small">Ajouté le: {new Date(dialogue.createdAt).toLocaleString()}</p>
-                <div className="d-flex gap-2">
-                  <Link href={`/dashboards/french/dialogues/view/${dialogue._id}`}>
-                    <Button variant="outline-primary" size="sm">
-                    Voir les dialogues
+        (
+          [...dialogues]
+            .sort((a, b) => {
+              const dateA = new Date(a.createdAt).getTime()
+              const dateB = new Date(b.createdAt).getTime()
+              return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
+            })
+            .map((dialogue: DialogueEntry) => (
+              <Card className="mb-3" key={dialogue._id}>
+                <Card.Body>
+                  <p className="mb-1">
+                    <strong>{dialogue.url || 'Source inconnue'}</strong>
+                  </p>
+                  <p className="text-muted small">
+                   Je l'ai ajouté : {new Date(dialogue.createdAt).toLocaleString()}
+                  </p>
+                  <div className="d-flex gap-2">
+                    <Link href={`/dashboards/english/dialogues/view/${dialogue._id}`}>
+                      <Button variant="outline-primary" size="sm">
+                        Voir les dialogues
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={(e) => handleDelete(dialogue._id, e)}
+                    >
+                     BORRAR
                     </Button>
-                  </Link>
-                  <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(dialogue._id, e)}>
-                Supprimer
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          ),
+                  </div>
+                </Card.Body>
+              </Card>
+            ))
         )
       ) : (
         <p>Aucun dialogue trouvé.</p>
-      )}
-    </>
+      )} 
+         </>
   )
 }
 

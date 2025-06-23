@@ -153,7 +153,7 @@ const EditEspagnol = ({ params }) => {
       const data = await response.json();
       if (response.ok) {
         alert('Word updated successfully!');
-         // Redirect back to the main page
+         router.push('/dashboards/portugais');
       } else {
         setError(data.error || 'Failed to update word');
       }

@@ -1,6 +1,7 @@
 "use client";
 import PageTitle from '@/components/PageTitle';
 import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Editor } from 'react-draft-wysiwyg';
 import { EditorState, convertToRaw } from 'draft-js';
@@ -10,6 +11,7 @@ import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 const AddWord = () => {
   const { user,token } = useAuth();
   const userId = user?._id || ''; // Assuming you have a way to get the user ID
+  const router = useRouter();
 
   // Consolidated state for all form data
   const [formData, setFormData] = useState({
@@ -151,6 +153,8 @@ const AddWord = () => {
           autoGenerateSummary: false,
         });
         setError('');
+        router.push('/dashboards/espagnol');
+
       } else {
         setError(data.error || 'Failed to save word');
       }

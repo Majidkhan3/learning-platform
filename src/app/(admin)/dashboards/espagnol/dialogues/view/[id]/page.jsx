@@ -17,6 +17,7 @@ const DialogueViewer = () => {
   const [availableVoices, setAvailableVoices] = useState([]) // Store voices fetched from API
   const [isReading, setIsReading] = useState(false) // To track if reading is in progress
   const audioRef = useRef(null) // To track the currently playing audio
+  
 
   useEffect(() => {
     if (id) {
@@ -76,39 +77,85 @@ const DialogueViewer = () => {
     setParsedDialogues(dialogues)
   }
 
-  const speak = async (text, voiceLabel) => {
-    try {
-      const response = await fetch('/api/polly', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // Include token for authentication
-        },
-        body: JSON.stringify({
-          text,
-          voice: voiceLabel,
-          language: 'es-ES', // Adjust language as needed
-        }),
-      })
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch Polly API')
-      }
-
-      const audioBlob = await response.blob()
-      const audioUrl = URL.createObjectURL(audioBlob)
-
-      const audio = new Audio(audioUrl)
-      audioRef.current = audio // Track the current audio instance
-      await new Promise((resolve, reject) => {
-        audio.onended = resolve // Resolve when the audio finishes
-        audio.onerror = reject // Reject if there's an error
-        audio.play()
-      })
-    } catch (error) {
-      console.error('Error fetching Polly API:', error)
+const speak = async (text, voiceLabel) => {
+  try {
+    // Stop any audio currently playing (main player or speaker)
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      URL.revokeObjectURL(audioRef.current.src); // Clean up memory
+      audioRef.current = null;
     }
+
+    // Fetch audio from API
+    const response = await fetch('/api/polly', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text, voice: voiceLabel, language: 'es-ES' }),
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch audio');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+
+    audioRef.current = audio;
+
+    audio.onended = () => {
+      URL.revokeObjectURL(url);
+      audioRef.current = null;
+    };
+
+    audio.onerror = () => {
+      URL.revokeObjectURL(url);
+      audioRef.current = null;
+    };
+
+    await audio.play();
+  } catch (err) {
+    console.error('Audio error:', err);
   }
+};
+
+
+  // const speak = async (text, voiceLabel) => {
+  //   try {
+  //     const response = await fetch('/api/polly', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         Authorization: `Bearer ${token}`, // Include token for authentication
+  //       },
+  //       body: JSON.stringify({
+  //         text,
+  //         voice: voiceLabel,
+  //         language: 'es-ES', // Adjust language as needed
+  //       }),
+  //     })
+
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch Polly API')
+  //     }
+
+  //     const audioBlob = await response.blob()
+  //     const audioUrl = URL.createObjectURL(audioBlob)
+
+  //     const audio = new Audio(audioUrl)
+  //     audioRef.current = audio // Track the current audio instance
+  //     await new Promise((resolve, reject) => {
+  //       audio.onended = resolve // Resolve when the audio finishes
+  //       audio.onerror = reject // Reject if there's an error
+  //       audio.play()
+  //     })
+  //   } catch (error) {
+  //     console.error('Error fetching Polly API:', error)
+  //   }
+  // }
 
   const readDialoguesSequentially = async (dialogues, index = 0) => {
     if (!isReading || index >= dialogues.length) {
@@ -182,7 +229,7 @@ const DialogueViewer = () => {
       </Card>
 
       
-      {parsedDialogues.length > 0 && <AudioPlayer dialogues={parsedDialogues} voiceA={voiceA} voiceB={voiceB} />}
+      {parsedDialogues.length > 0 && <AudioPlayer dialogues={parsedDialogues} voiceA={voiceA} voiceB={voiceB}  audioRef={audioRef}/>}
 
       {parsedDialogues.map((conv, idx) => (
         <Card className="mb-3" key={idx}>

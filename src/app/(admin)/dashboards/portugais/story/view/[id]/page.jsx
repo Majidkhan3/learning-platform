@@ -7,6 +7,7 @@ import { Card, Form, Row, Col } from 'react-bootstrap'// Import the new AudioPla
 import { Icon } from '@iconify/react/dist/iconify.js'
 import AudioPlayer from '../../../../../../../ui/AudioPlayer'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
+import { useRef } from 'react'
 const preprocessDialogues = (dialogueString) => {
   if (!dialogueString) return []
   const lines = dialogueString.split('\n')
@@ -36,6 +37,7 @@ const StoryViewer = () => {
   const [voiceB, setVoiceB] = useState('Enrique')
   const [availableVoices, setAvailableVoices] = useState([])
   const [dialogues, setDialogues] = useState([])
+  const audioRef = useRef(null)
 
   // Fetch available voices from the Polly API
   useEffect(() => {
@@ -90,37 +92,75 @@ const StoryViewer = () => {
   }, [id])
 
   // Function to speak individual dialogue - for the individual play buttons
-  const speakSingle = async (text, voice) => {
-    try {
-      const response = await fetch('/api/polly', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          voice,
-          language: 'pt-PT',
-        }),
-      })
+  // const speakSingle = async (text, voice) => {
+  //   try {
+  //     const response = await fetch('/api/polly', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         text,
+  //         voice,
+  //         language: 'pt-PT',
+  //       }),
+  //     })
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch Polly API')
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch Polly API')
+  //     }
 
-      const audioBlob = await response.blob()
-      const audioUrl = URL.createObjectURL(audioBlob)
+  //     const audioBlob = await response.blob()
+  //     const audioUrl = URL.createObjectURL(audioBlob)
 
-      const audio = new Audio(audioUrl)
-      audio.onended = () => {
-        URL.revokeObjectURL(audioUrl)
-      }
+  //     const audio = new Audio(audioUrl)
+  //     audio.onended = () => {
+  //       URL.revokeObjectURL(audioUrl)
+  //     }
 
-      await audio.play()
-    } catch (error) {
-      console.error('Error playing single dialogue:', error)
+  //     await audio.play()
+  //   } catch (error) {
+  //     console.error('Error playing single dialogue:', error)
+  //   }
+  // }
+    const speakSingle = async (text, voice) => {
+  try {
+    // ⛔ Stop and clean up existing audio if playing
+    if (audioRef.current) {
+      audioRef.current.pause()
+      URL.revokeObjectURL(audioRef.current.src)
     }
+
+    const response = await fetch('/api/polly', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text,
+        voice,
+        language: 'es-ES',
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch Polly API')
+    }
+
+    const audioBlob = await response.blob()
+    const audioUrl = URL.createObjectURL(audioBlob)
+
+    // ✅ Set and use shared ref
+    audioRef.current = new Audio(audioUrl)
+    audioRef.current.onended = () => {
+      URL.revokeObjectURL(audioUrl)
+    }
+
+    await audioRef.current.play()
+  } catch (error) {
+    console.error('Error playing single dialogue:', error)
   }
+}
 
   return (
     <div>
@@ -184,7 +224,7 @@ const StoryViewer = () => {
           </Card>
 
           {/* Media Player Controls - Now using the AudioPlayer component */}
-          {dialogues.length > 0 && <AudioPlayer dialogues={dialogues} voiceA={voiceA} voiceB={voiceB} />}
+          {dialogues.length > 0 && <AudioPlayer dialogues={dialogues} voiceA={voiceA} voiceB={voiceB} audioRef={audioRef} />}
 
           {/* Display Dialogues */}
           {dialogues.map((dialogue, idx) => (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
 
-const AudioPlayer = ({ dialogues, voiceA, voiceB }) => {
+const AudioPlayer = ({ dialogues, voiceA, voiceB ,audioRef}) => {
   const [playbackState, setPlaybackState] = useState('stopped'); // 'playing', 'paused', 'stopped'
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -10,7 +10,7 @@ const AudioPlayer = ({ dialogues, voiceA, voiceB }) => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  const audioRef = useRef(null);
+  // const audioRef = useRef(null);
   const progressInterval = useRef(null);
   const playQueue = useRef([]);
   const playbackStateRef = useRef('stopped'); // Ref to track playback state for async operations
