@@ -6,9 +6,11 @@ import { Editor } from 'react-draft-wysiwyg';
 import { EditorState, convertToRaw } from 'draft-js';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
+import { useRouter } from 'next/navigation';
 
 const AddWord = () => {
   const { user ,token } = useAuth();
+  const router = useRouter();
   const userId = user?._id || ''; // Assuming you have a way to get the user ID
 
   // Consolidated state for all form data
@@ -151,6 +153,7 @@ const AddWord = () => {
           autoGenerateSummary: false,
         });
         setError('');
+        router.push('/dashboards/french'); // Redirect after successful save
       } else {
         setError(data.error || 'Failed to save word');
       }

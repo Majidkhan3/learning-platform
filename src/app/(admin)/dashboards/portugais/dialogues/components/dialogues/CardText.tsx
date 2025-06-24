@@ -32,6 +32,7 @@ const CardText = () => {
   const [fileName, setFileName] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const router = useRouter()
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
   const generateDialoguesFromApi = useCallback(
     async (text: string) => {
       if (!text.trim() || !user?._id) {
@@ -240,36 +241,76 @@ const CardText = () => {
 
       <h5 className="fw-bold mb-3">Arquivos processados</h5>
 
-      {fetching ? (
-        <Spinner animation="border" />
-      ) : dialogues.length > 0 ? (
-        dialogues.map(
-          (
-            dialogue: DialogueEntry, // Explicitly type dialogue here
-          ) => (
-            <Card className="mb-3" key={dialogue._id}>
-              <Card.Body>
-                <p className="mb-1">
-                  <strong>{dialogue.url || 'Source inconnue'}</strong>
-                </p>
-                <p className="text-muted small">Ajouté le: {new Date(dialogue.createdAt).toLocaleString()}</p>
-                <div className="d-flex gap-2">
-                  <Link href={`/dashboards/portugais/dialogues/view/${dialogue._id}`}>
-                    <Button variant="outline-primary" size="sm">
-                     Ver os diálogos
-                    </Button>
-                  </Link>
-                  <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(dialogue._id, e)}>
-                   Excluir
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          ),
-        )
-      ) : (
-        <p>Aucun dialogue trouvé.</p>
-      )}
+{fetching ? (
+  <Spinner animation="border" />
+) : dialogues.length > 0 ? (
+  <>
+    {/* ─────── Sort dropdown (left-aligned) ─────── */}
+    <div className="d-flex justify-content-end mb-3">
+      <Form.Select
+        value={sortOrder}
+        onChange={(e) =>
+          setSortOrder(e.target.value as 'newest' | 'oldest')
+        }
+        className="w-auto"
+        aria-label="Trier les dialogues"
+      >
+        <option value="newest">
+         Do mais novo ao mais antigo
+        </option>
+        <option value="oldest">
+          Do mais antigo ao mais novo
+        </option>
+      </Form.Select>
+    </div>
+
+    {/* ─────── List of dialogues, sorted ─────── */}
+    {[...dialogues]
+      .sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime()
+        const dateB = new Date(b.createdAt).getTime()
+        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
+      })
+      .map((dialogue: DialogueEntry) => (
+        <Card className="mb-3" key={dialogue._id}>
+          <Card.Body>
+            <p className="mb-1">
+              <strong>
+                {/* show title if you stored one, otherwise URL */}
+              <strong>{dialogue.url || 'Source inconnue'}</strong>
+              </strong>
+            </p>
+
+            <p className="text-muted small">
+              Ajouté le&nbsp;
+              {new Date(dialogue.createdAt).toLocaleString()}
+            </p>
+
+            <div className="d-flex gap-2">
+              <Link
+                href={`/dashboards/portugais/dialogues/view/${dialogue._id}`}
+              >
+                <Button variant="outline-primary" size="sm">
+                  Ver os diálogos
+                </Button>
+              </Link>
+
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={(e) => handleDelete(dialogue._id, e)}
+              >
+                Excluir
+              </Button>
+            </div>
+          </Card.Body>
+        </Card>
+      ))}
+  </>
+) : (
+  <p>Aucun dialogue trouvé.</p>
+)}
+
     </>
   )
 }

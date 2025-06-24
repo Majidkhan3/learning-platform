@@ -6,11 +6,12 @@ import { Editor } from 'react-draft-wysiwyg';
 import { EditorState, convertToRaw } from 'draft-js';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
+import { useRouter } from 'next/navigation';
 
 const AddWord = () => {
   const { user ,token } = useAuth();
   const userId = user?._id || ''; // Assuming you have a way to get the user ID
-
+  const router = useRouter();
   // Consolidated state for all form data
   const [formData, setFormData] = useState({
     word: '',
@@ -153,6 +154,7 @@ const AddWord = () => {
           autoGenerateSummary: false,
         });
         setError('');
+        router.push('/dashboards/english');
       } else {
         setError(data.error || 'Failed to save word');
       }

@@ -152,8 +152,8 @@ const EditEspagnol = ({ params }) => {
       const data = await response.json();
       if (response.ok) {
         alert('Word updated successfully!');
-         // Redirect back to the main page
-      } else {
+        router.push('/dashboards/english');
+       } else {
         setError(data.error || 'Failed to update word');
       }
     } catch (err) {

@@ -10,6 +10,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
   const [selectedDescription, setSelectedDescription] = useState('')
   const [selectedImage, setSelectedImage] = useState('')
   const router = useRouter()
+  let currentAudio = null;
 
   const handleSynthesisClick = (description) => {
     setSelectedDescription(description)
@@ -27,33 +28,71 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
     setSelectedImage('')
   }
 
+  // const speakWord = async (word) => {
+  //   try {
+  //     const response = await fetch('/api/polly', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         text: word,
+  //         voice: selectedVoice,
+  //         language: 'es-ES', // Adjust language as needed
+  //       }),
+  //     })
+
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch Polly API')
+  //     }
+
+  //     const audioBlob = await response.blob()
+  //     const audioUrl = URL.createObjectURL(audioBlob)
+
+  //     const audio = new Audio(audioUrl)
+  //     audio.play()
+  //   } catch (error) {
+  //     console.error('Error fetching Polly API:', error)
+  //   }
+  // }
   const speakWord = async (word) => {
-    try {
-      const response = await fetch('/api/polly', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: word,
-          voice: selectedVoice,
-          language: 'es-ES', // Adjust language as needed
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch Polly API')
-      }
-
-      const audioBlob = await response.blob()
-      const audioUrl = URL.createObjectURL(audioBlob)
-
-      const audio = new Audio(audioUrl)
-      audio.play()
-    } catch (error) {
-      console.error('Error fetching Polly API:', error)
+  try {
+    // Stop previous audio if playing
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
     }
+
+    const response = await fetch('/api/polly', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: word,
+        voice: selectedVoice,
+        language: 'es-ES',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch Polly API');
+    }
+
+    const audioBlob = await response.blob();
+    const audioUrl = URL.createObjectURL(audioBlob);
+
+    currentAudio = new Audio(audioUrl);
+    currentAudio.play();
+
+    // Reset currentAudio when done
+    currentAudio.onended = () => {
+      currentAudio = null;
+    };
+  } catch (error) {
+    console.error('Error fetching Polly API:', error);
   }
+};
 
   const handleEditClick = (id) => {
     router.push(`/dashboards/portugais/edit/${id}`) // Navigate to the edit page with the item's ID

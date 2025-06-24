@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 
+
 const EditEspagnol = ({ params }) => {
+  
   const { user ,token} = useAuth();
   const userId = user?._id || ''; 
   const id = params.id;
@@ -152,6 +154,7 @@ console.log("toke",token)
       const data = await response.json();
       if (response.ok) {
         alert('Word updated successfully!');
+        router.push('/dashboards/espagnol');
          // Redirect back to the main page
       } else {
         setError(data.error || 'Failed to update word');
