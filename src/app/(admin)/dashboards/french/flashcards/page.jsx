@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState ,useCallback} from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, Button, ListGroup, Accordion, Stack, Modal, Col } from 'react-bootstrap'
 import { useSwipeable } from 'react-swipeable' // Import react-swipeable
@@ -118,37 +118,51 @@ const FlashCard = () => {
     }
   }, [currentCard?.word])
 
-  const toggleFlip = () => {
-    setIsFlipped(!isFlipped)
-  }
+  const toggleFlip = useCallback(() => {
+  setIsFlipped(prev => !prev);
+}, []);
 
-  const goToCard = (index) => {
-    if (index >= 1 && index <= cards.length) {
-      if (tag && rating) {
-        router.push(`/dashboards/french/flashcards?tag=${tag}&rating=${rating}&index=${index}`)
-      } else if (tag) {
-        router.push(`/dashboards/french/flashcards?tag=${tag}&index=${index}`)
-      } else if (rating) {
-        router.push(`/dashboards/french/flashcards?rating=${rating}&index=${index}`)
-      } else {
-        router.push(`/dashboards/french/flashcards?index=${index}`)
-      }
-      // router.push(`/dashboards/flashcard?tag=${tag}&rating=${rating}&index=${index}`)
-      setIsFlipped(false)
-    }
-  }
-  const handleTap = () => {
-    if (!isFlipped) {
-      toggleFlip() // Flip the card on the first tap
+
+const goToCard = useCallback((index) => {
+  if (index >= 1 && index <= cards.length) {
+    if (tag && rating) {
+      router.push(`/dashboards/french/flashcards?tag=${tag}&rating=${rating}&index=${index}`)
+    } else if (tag) {
+      router.push(`/dashboards/french/flashcards?tag=${tag}&index=${index}`)
+    } else if (rating) {
+      router.push(`/dashboards/french/flashcards?rating=${rating}&index=${index}`)
     } else {
-      goToCard(currentIndex + 1) // Go to the next card on the second tap
+      router.push(`/dashboards/french/flashcards?index=${index}`)
     }
+    setIsFlipped(false)
+  }
+}, [cards.length, tag, rating, router]);
+
+
+const handleTap = useCallback(() => {
+  if (!isFlipped) {
+    toggleFlip() // Flip the card on the first tap
+  } else {
+    goToCard(currentIndex + 1) // Go to the next card on the second tap
+  }
+}, [isFlipped, goToCard, currentIndex, toggleFlip]);
+
+const handleKeyPress = useCallback((e) => {
+  if (!cards.length) return; // Do nothing if cards aren't loaded yet
+  console.log('Key pressed:', e.key, 'currentIndex:', currentIndex)
+
+  // Prevent default behavior for the keys we're handling
+  if (['Enter', 'ArrowRight', 'ArrowLeft'].includes(e.key)) {
+    e.preventDefault();
   }
 
- const handleKeyPress = (e) => {
   switch (e.key) {
     case 'Enter':
-      handleTap();              // flip / next
+      if (!isFlipped) {
+        toggleFlip(); // Only flip the card on Enter if it's not flipped
+      } else {
+        goToCard(currentIndex + 1); // Only go to next card if already flipped
+      }
       break;
     case 'ArrowRight':          // next
       goToCard(currentIndex + 1);
@@ -159,7 +173,7 @@ const FlashCard = () => {
     default:
       break;
   }
-};
+}, [cards.length, currentIndex, isFlipped, toggleFlip, goToCard]);
 
   const handleRating = async (star) => {
     if (!currentCard) return
@@ -208,7 +222,7 @@ const FlashCard = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyPress)
     }
-  }, [isFlipped, currentIndex])
+  }, [handleKeyPress])
 
   // Swipe handlers for touch gestures
   const swipeHandlers = useSwipeable({

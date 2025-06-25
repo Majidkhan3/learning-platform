@@ -268,7 +268,7 @@ const CardText = () => {
                    Je l'ai ajouté : {new Date(dialogue.createdAt).toLocaleString()}
                   </p>
                   <div className="d-flex gap-2">
-                    <Link href={`/dashboards/english/dialogues/view/${dialogue._id}`}>
+                    <Link href={`/dashboards/french/dialogues/view/${dialogue._id}`}>
                       <Button variant="outline-primary" size="sm">
                         Voir les dialogues
                       </Button>
