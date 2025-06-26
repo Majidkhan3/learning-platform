@@ -19,10 +19,11 @@ interface DialogueEntry {
   url?: string // Assuming 'url' might be optional
   createdAt: string // Or Date, if you parse it into a Date object
   // Add other properties from your dialogue model if needed for display
+  title?: string // Assuming dialogues might have a title
 }
 
 const CardText = () => {
-  const { user ,token}: any = useAuth() // Typed user
+  const { user, token }: any = useAuth() // Typed user
   const [file, setFile] = useState<File | null>(null) // Typed file state
   const [loading, setLoading] = useState(false)
   const [generatedDialogues, setGeneratedDialogues] = useState<string>('') // API returns a single string
@@ -33,21 +34,23 @@ const CardText = () => {
   const [isProcessing, setIsProcessing] = useState(false)
   const router = useRouter()
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
+  const [savingTitle, setSavingTitle] = useState(false)
   const generateDialoguesFromApi = useCallback(
     async (text: string) => {
       if (!text.trim() || !user?._id) {
         if (!user?._id) console.error('User ID is missing, cannot generate dialogues.')
         return
       }
-       console.log('Sending token:', token)
+      console.log('Sending token:', token)
       setLoading(true)
       try {
         const res = await fetch('/api/dialogues/create', {
           method: 'POST',
           headers: {
-             Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
-         
           },
           body: JSON.stringify({
             text: text,
@@ -133,10 +136,12 @@ const CardText = () => {
       }
       try {
         setFetching(true)
-        const res = await fetch(`/api/dialogues?userId=${user._id}`,{ headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },})
+        const res = await fetch(`/api/dialogues?userId=${user._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
         if (!res.ok) {
           throw new Error(`Failed to fetch dialogues: ${res.status}`)
         }
@@ -163,9 +168,9 @@ const CardText = () => {
         const res = await fetch(`/api/dialogues/${dialogueId}`, {
           method: 'DELETE',
           headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                  },
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         })
 
         if (res.ok) {
@@ -180,6 +185,54 @@ const CardText = () => {
       }
     }
   }
+
+  const handleTitleDoubleClick = (dialogueId: string, currentTitle: string) => {
+    setEditingTitleId(dialogueId)
+    setEditingTitle(currentTitle || '')
+  }
+
+  const handleTitleSave = async (dialogueId: string) => {
+    if (!editingTitle.trim()) {
+      alert('Le titre ne peut pas être vide')
+      return
+    }
+
+    setSavingTitle(true)
+    try {
+      const res = await fetch(`/api/dialogues/${dialogueId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title: editingTitle.trim() }),
+      })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Failed to parse error response' }))
+        throw new Error(errorData.message || `Error updating title: ${res.status}`)
+      }
+
+      const data = await res.json()
+
+      // Update the local state
+      setDialogues((prev) => prev.map((dialogue) => (dialogue._id === dialogueId ? { ...dialogue, title: data.dialogue.title } : dialogue)))
+
+      setEditingTitleId(null)
+      setEditingTitle('')
+    } catch (err) {
+      console.error('Error updating title:', err)
+      alert('Erreur lors de la mise à jour du titre')
+    } finally {
+      setSavingTitle(false)
+    }
+  }
+
+  const handleTitleCancel = () => {
+    setEditingTitleId(null)
+    setEditingTitle('')
+  }
+
   return (
     <>
       {/* <PageTitle title="Gestionnaire de Dialogues" /> */}
@@ -238,57 +291,91 @@ const CardText = () => {
 
       <h5 className="fw-bold mb-3">Archivos procesados</h5>
       <div className="d-flex justify-content-end mb-3">
-      <Form.Select
-  value={sortOrder}
-  onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
-  className="mb-3 w-auto"
-  aria-label="Trier les dialogues"
->
-  <option value="newest">Del más nuevo al más antiguo</option>
-  <option value="oldest">Del más antiguo al más nuevo</option>
-</Form.Select>
-</div>
-   {fetching ? (
-  <Spinner animation="border" />
-) : dialogues.length > 0 ? (
-  (
-    [...dialogues]
-      .sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime()
-        const dateB = new Date(b.createdAt).getTime()
-        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
-      })
-      .map((dialogue: DialogueEntry) => (
-        <Card className="mb-3" key={dialogue._id}>
-          <Card.Body>
-            <p className="mb-1">
-              <strong>{dialogue.url || 'Source inconnue'}</strong>
-            </p>
-            <p className="text-muted small">
-              Ajouté le: {new Date(dialogue.createdAt).toLocaleString()}
-            </p>
-            <div className="d-flex gap-2">
-              <Link href={`/dashboards/espagnol/dialogues/view/${dialogue._id}`}>
-                <Button variant="outline-primary" size="sm">
-                 Ver los diálogos
-                </Button>
-              </Link>
-              <Button
-                variant="outline-danger"
-                size="sm"
-                onClick={(e) => handleDelete(dialogue._id, e)}
-              >
-                Supprimer
-              </Button>
-            </div>
-          </Card.Body>
-        </Card>
-      ))
-  )
-) : (
-  <p>Aucun dialogue trouvé.</p>
-)}
-
+        <Form.Select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
+          className="mb-3 w-auto"
+          aria-label="Trier les dialogues">
+          <option value="newest">Del más nuevo al más antiguo</option>
+          <option value="oldest">Del más antiguo al más nuevo</option>
+        </Form.Select>
+      </div>
+      {fetching ? (
+        <Spinner animation="border" />
+      ) : dialogues.length > 0 ? (
+        [...dialogues]
+          .sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime()
+            const dateB = new Date(b.createdAt).getTime()
+            return sortOrder === 'newest' ? dateB - dateA : dateA - dateB
+          })
+          .map((dialogue: DialogueEntry) => (
+            <Card className="mb-3" key={dialogue._id}>
+              <Card.Body>
+                <div className="mb-1">
+                  {editingTitleId === dialogue._id ? (
+                    <div className="d-flex align-items-center gap-2">
+                      <Form.Control
+                        type="text"
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleTitleSave(dialogue._id)
+                          } else if (e.key === 'Escape') {
+                            handleTitleCancel()
+                          }
+                        }}
+                        autoFocus
+                        size="sm"
+                        maxLength={50}
+                        placeholder="Titre du dialogue"
+                      />
+                      <Button variant="success" size="sm" onClick={() => handleTitleSave(dialogue._id)} disabled={savingTitle}>
+                        {savingTitle ? <Spinner size="sm" animation="border" /> : 'Sauver'}
+                      </Button>
+                      <Button variant="secondary" size="sm" onClick={handleTitleCancel} disabled={savingTitle}>
+                        Annuler
+                      </Button>
+                    </div>
+                  ) : (
+                    <p
+                      className="mb-0"
+                      onDoubleClick={() => handleTitleDoubleClick(dialogue._id, dialogue.title || '')}
+                      style={{
+                        cursor: 'pointer',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        transition: 'background-color 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8f9fa'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }}
+                      title="Double-cliquez pour modifier le titre">
+                      <strong>{dialogue.title || 'Source inconnue'}</strong>
+                    </p>
+                  )}
+                </div>
+                <p className="text-muted small">Ajouté le: {new Date(dialogue.createdAt).toLocaleString()}</p>
+                <div className="d-flex gap-2">
+                  <Link href={`/dashboards/espagnol/dialogues/view/${dialogue._id}`}>
+                    <Button variant="outline-primary" size="sm">
+                      Ver los diálogos
+                    </Button>
+                  </Link>
+                  <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(dialogue._id, e)}>
+                    Supprimer
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          ))
+      ) : (
+        <p>Aucun dialogue trouvé.</p>
+      )}
     </>
   )
 }

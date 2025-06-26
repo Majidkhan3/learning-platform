@@ -17,8 +17,7 @@ const DialogueViewer = () => {
   const [availableVoices, setAvailableVoices] = useState([]) // Store voices fetched from API
   const [isReading, setIsReading] = useState(false) // To track if reading is in progress
   const audioRef = useRef(null) // To track the currently playing audio
-  
-
+  const [title, setTitle] = useState('') // Default title
   useEffect(() => {
     if (id) {
       fetch(`/api/dialogues/${id}`,
@@ -30,6 +29,7 @@ const DialogueViewer = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data.dialogue) {
+            setTitle(data.title || 'Dialogue') // Set title if available, otherwise default to 'Dialogue'
             setDialogue(data.dialogue)
             parseDialogues(data.dialogue)
           } else {
@@ -190,9 +190,8 @@ const speak = async (text, voiceLabel) => {
   return (
     <div>
       <h3>
-        📢 Dialogues générés pour YouTube -{' '}
-        <a href={dialogue.url} target="_blank" rel="noopener noreferrer">
-          {dialogue.url}
+        📢 <a href={title} target="_blank" rel="noopener noreferrer">
+          {title}
         </a>
       </h3>
 

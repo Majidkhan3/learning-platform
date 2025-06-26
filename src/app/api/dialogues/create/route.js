@@ -4,13 +4,12 @@ import Dialogue from '@/model/Dialogue'
 import connectToDatabase from '@/lib/db'
 import { verifyToken } from '../../../../lib/verifyToken'
 
-
 export async function POST(req) {
   const auth = await verifyToken(req)
-  
-    if (!auth.valid) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
 
@@ -51,7 +50,6 @@ export async function POST(req) {
       console.error('Claude API Error:', errorData)
       throw new Error(errorData.error?.message || errorData.message || `Claude API error! status: ${claudeResponse.status}`)
     }
-
     const data = await claudeResponse.json()
     const dialogues = data?.content?.[0]?.text || ''
     console.log('dialogues', dialogues)
@@ -61,9 +59,49 @@ export async function POST(req) {
       // return NextResponse.json({ error: 'Failed to generate dialogues from Claude API' }, { status: 500 });
     }
 
+    // Generate title using Claude API
+    let title = 'Dialogue'
+    try {
+      const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.CLAUDE_API_KEY || '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20240620',
+          max_tokens: 50,
+          system: 'Tu es un assistant expert en création de titres courts et pertinents.',
+          messages: [
+            {
+              role: 'user',
+              content: generateTitlePrompt(extractedText, dialogues),
+            },
+          ],
+        }),
+      })
+
+      if (titleResponse.ok) {
+        const titleData = await titleResponse.json()
+        const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
+        // Clean the title - remove quotes, periods, and limit to 3-4 words
+        title = generatedTitle
+          .replace(/["""'.]/g, '') // Remove quotes and periods
+          .split(' ')
+          .slice(0, 4) // Take only first 4 words
+          .join(' ')
+          .substring(0, 50) // Ensure it doesn't exceed maxlength
+      }
+    } catch (titleError) {
+      console.warn('Failed to generate title:', titleError.message)
+      // Continue with default title if title generation fails
+    }
+
     // Save dialogues to MongoDB
     const dialogue = new Dialogue({
       userId: userId,
+      title: title,
       source: 'PDF', // Indicates the original source type
       dialogue: dialogues,
       originalText: extractedText, // Optionally store the original text
@@ -72,7 +110,7 @@ export async function POST(req) {
 
     await dialogue.save()
     const dialogueId = dialogue?._id.toString()
-    return NextResponse.json({ status: 'success', dialogues, dialogueId }, { status: 200 })
+    return NextResponse.json({ status: 'success', dialogues, title, dialogueId }, { status: 200 })
   } catch (error) {
     console.error('Error in /api/dialogues/create:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
@@ -94,5 +132,19 @@ Dialogue 1:
 Personne A: ...
 Personne B: ...
 ... jusqu'à Dialogue 8.
+`
+}
+
+function generateTitlePrompt(originalText, dialogues) {
+  return `
+En te basant sur le texte original et les dialogues générés, créé un titre court de 3 à 4 mots maximum qui résume le thème principal du contenu.
+
+Texte original :
+${originalText.substring(0, 500)}...
+
+Dialogues générés :
+${dialogues.substring(0, 300)}...
+
+Réponds uniquement avec le titre, sans guillemets ni points. Le titre doit être en espagnol et capturer l'essence du contenu.
 `
 }
