@@ -59,10 +59,48 @@ export async function POST(req) {
       // Decide if this is an error or if empty dialogues are acceptable
       // return NextResponse.json({ error: 'Failed to generate dialogues from Claude API' }, { status: 500 });
     }
+     // Generate title using Claude API
+    let title = 'Dialogue'
+    try {
+      const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.CLAUDE_API_KEY || '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20240620',
+          max_tokens: 50,
+          system: 'You are an expert assistant at creating short and relevant titles.',
+          messages: [
+            {
+              role: 'user',
+              content: generateTitlePrompt(extractedText, dialogues),
+            },
+          ],
+        }),
+      })
+
+      if (titleResponse.ok) {
+        const titleData = await titleResponse.json()
+        const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
+        title = generatedTitle
+          .replace(/["'.]/g, '') // Remove quotes and punctuation
+          .split(' ')
+          .slice(0, 4)
+          .join(' ')
+          .substring(0, 50)
+      }
+    } catch (titleError) {
+      console.warn('Failed to generate title:', titleError.message)
+      // Continue with default title
+    }
 
     // Save dialogues to MongoDB
     const dialogue = new Pordialogue({
       userId: userId,
+      title: title,
       source: 'PDF', // Indicates the original source type
       dialogue: dialogues,
       originalText: extractedText, // Optionally store the original text
@@ -71,7 +109,7 @@ export async function POST(req) {
 
     await dialogue.save()
     const dialogueId = dialogue?._id.toString()
-    return NextResponse.json({ status: 'success', dialogues, dialogueId }, { status: 200 })
+    return NextResponse.json({ status: 'success', dialogues,title, dialogueId }, { status: 200 })
   } catch (error) {
     console.error('Error in /api/portugal/pordialogues/create:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
@@ -90,5 +128,18 @@ Diálogo 1:
 Pessoa A: ...
 Pessoa B: ...
 ... até ao Diálogo 8.
+`
+}
+function generateTitlePrompt(originalText, dialogues) {
+  return `
+Com base no texto original e nos diálogos gerados, crie um título curto (máximo de 3 a 4 palavras) resumindo o tema principal do conteúdo.
+
+Texto original:
+${originalText.substring(0, 500)}...
+
+Diálogos gerados:
+${dialogues.substring(0, 300)}...
+
+Responda apenas com o título, sem pontuação ou aspas. O título deve ser em inglês e refletir a essência do conteúdo.
 `
 }

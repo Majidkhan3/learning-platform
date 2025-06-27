@@ -64,7 +64,7 @@ const Youtube = () => {
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>YouTube video URL (in Spanish)</Form.Label>
+              <Form.Label>YouTube video URL (in French)</Form.Label>
               <Form.Control
                 type="url"
                 placeholder="https://www.youtube.com/watch?v=..."

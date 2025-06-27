@@ -151,11 +151,49 @@ export async function POST(req) {
     const { content } = await claudeResponse.json()
     const dialogueText = content?.[0]?.text || ''
 
+    // Generate title using Claude API
+let title = 'Dialogue'
+try {
+  const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.CLAUDE_API_KEY || '',
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-sonnet-20240620',
+      max_tokens: 50,
+      system: 'You are an expert assistant at creating short and relevant titles.',
+      messages: [
+        {
+          role: 'user',
+          content: generateTitlePrompt(transcript, dialogueText),
+        },
+      ],
+    }),
+  })
+
+  if (titleResponse.ok) {
+    const titleData = await titleResponse.json()
+    const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
+    title = generatedTitle
+      .replace(/["'.]/g, '')
+      .split(' ')
+      .slice(0, 4)
+      .join(' ')
+      .substring(0, 50)
+  }
+} catch (titleError) {
+  console.warn('Failed to generate title:', titleError.message)
+}
+
+
     // Save to MongoDB
-    const dialogue = new Pordialogue({ userId, url: youtubeUrl, dialogue: dialogueText })
+    const dialogue = new Pordialogue({ userId, url: youtubeUrl, dialogue: dialogueText, title: title, })
     await dialogue.save()
 
-    return NextResponse.json({ status: 'success', dialogueId: dialogue._id.toString(), dialogue: dialogueText }, { status: 200 })
+    return NextResponse.json({ status: 'success', dialogueId: dialogue._id.toString(), dialogue: dialogueText,title }, { status: 200 })
   } catch (err) {
     console.error('Unexpected Error:', err.stack || err.message)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -184,5 +222,18 @@ Pessoa B: ...
 ... até o Diálogo 8.
 
 
+`
+}
+function generateTitlePrompt(originalText, dialogues) {
+  return `
+Com base no texto original e nos diálogos gerados, crie um título curto (máximo de 3 a 4 palavras) resumindo o tema principal do conteúdo.
+
+Texto original:
+${originalText.substring(0, 500)}...
+
+Diálogos gerados:
+${dialogues.substring(0, 300)}...
+
+Responda apenas com o título, sem pontuação ou aspas. O título deve ser em inglês e refletir a essência do conteúdo.
 `
 }
