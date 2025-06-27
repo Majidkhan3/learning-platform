@@ -15,6 +15,7 @@ const DialogueViewer = () => {
   const [availableVoices, setAvailableVoices] = useState([]) // Store voices fetched from API
   const [isReading, setIsReading] = useState(false) // To track if reading is in progress
   const audioRef = useRef(null) // To track the currently playing audio
+  const [title, setTitle] = useState('')
   const { user ,token} = useAuth()
 
   useEffect(() => {
@@ -29,6 +30,7 @@ const DialogueViewer = () => {
         .then((data) => {
           if (data.dialogue) {
             setDialogue(data.dialogue)
+            setTitle(data.title || 'Dialogue')
             parseDialogues(data.dialogue)
           } else {
             console.error('Error: No dialogue data found.')
@@ -184,10 +186,9 @@ const DialogueViewer = () => {
 
   return (
     <div>
-      <h3>
-        📢 Dialogues generated from YouTube -{' '}
-        <a href={dialogue.url} target="_blank" rel="noopener noreferrer">
-          {dialogue.url}
+    <h3>
+        📢 <a href={title} target="_blank" rel="noopener noreferrer">
+          {title}
         </a>
       </h3>
 

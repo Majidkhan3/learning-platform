@@ -10,6 +10,11 @@ const dialogueSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+   title: {
+    type: String,
+    required: false,
+    maxlength: 50, // Limit title length
+  },
   dialogue: {
     // Single dialogue string
     type: String,

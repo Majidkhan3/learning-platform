@@ -6,11 +6,11 @@ import { verifyToken } from '../../../../../lib/verifyToken'
 
 
 export async function POST(req) {
-   const auth = await verifyToken(req)
-      
-        if (!auth.valid) {
-          return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-        }
+  const auth = await verifyToken(req)
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
 
@@ -60,11 +60,50 @@ export async function POST(req) {
       // Decide if this is an error or if empty dialogues are acceptable
       // return NextResponse.json({ error: 'Failed to generate dialogues from Claude API' }, { status: 500 });
     }
+    // Generate title using Claude API
+    let title = 'Dialogue'
+    try {
+      const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.CLAUDE_API_KEY || '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20240620',
+          max_tokens: 50,
+          system: 'You are an expert assistant at creating short and relevant titles.',
+          messages: [
+            {
+              role: 'user',
+              content: generateTitlePrompt(extractedText, dialogues),
+            },
+          ],
+        }),
+      })
+
+      if (titleResponse.ok) {
+        const titleData = await titleResponse.json()
+        const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
+        title = generatedTitle
+          .replace(/["'.]/g, '') // Remove quotes and punctuation
+          .split(' ')
+          .slice(0, 4)
+          .join(' ')
+          .substring(0, 50)
+      }
+    } catch (titleError) {
+      console.warn('Failed to generate title:', titleError.message)
+      // Continue with default title
+    }
+
 
     // Save dialogues to MongoDB
     const dialogue = new Frdialogue({
       userId: userId,
       source: 'PDF', // Indicates the original source type
+      title: title,
       dialogue: dialogues,
       originalText: extractedText, // Optionally store the original text
       fileName: body.fileName || 'N/A', // Optionally store the file name if sent from client
@@ -72,7 +111,7 @@ export async function POST(req) {
 
     await dialogue.save()
     const dialogueId = dialogue?._id.toString()
-    return NextResponse.json({ status: 'success', dialogues, dialogueId }, { status: 200 })
+    return NextResponse.json({ status: 'success', dialogues, title, dialogueId }, { status: 200 })
   } catch (error) {
     console.error('Error in /api/french/frdialogues/create:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
@@ -94,5 +133,18 @@ Dialogue 1:
 Personne A: ...
 Personne B: ...
 ... jusqu'à Dialogue 8.
+`
+}
+function generateTitlePrompt(originalText, dialogues) {
+  return `
+À partir du texte original et des dialogues générés, créez un titre court (3 à 4 mots maximum) résumant le thème principal du contenu.
+
+Texte original :
+${originalText.substring(0, 500)}...
+
+Dialogues générés :
+${dialogues.substring(0, 300)}...
+
+Répondez uniquement avec le titre, sans ponctuation ni guillemets. Le titre doit être en anglais et refléter l'essence du contenu.
 `
 }

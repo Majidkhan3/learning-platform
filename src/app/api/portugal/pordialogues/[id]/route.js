@@ -44,3 +44,47 @@ export async function DELETE(req, { params }) {
     return new NextResponse(JSON.stringify({ error: 'Error deleting dialogue' }), { status: 500 })
   }
 }
+export async function PUT(req, { params }) {
+  const auth = await verifyToken(req)
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { id } = params
+    const body = await req.json()
+    const { title } = body
+
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return NextResponse.json({ error: 'Title is required and must be a non-empty string' }, { status: 400 })
+    }
+
+    // Limit title length to 50 characters and 4 words
+    const cleanedTitle = title
+      .trim()
+      .split(' ')
+      .slice(0, 4)
+      .join(' ')
+      .substring(0, 50)
+
+    const updatedDialogue = await Pordialgues.findByIdAndUpdate(
+      id,
+      { title: cleanedTitle },
+      { new: true, runValidators: true }
+    )
+
+    if (!updatedDialogue) {
+      return NextResponse.json({ error: 'Dialogue not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      message: 'Title updated successfully',
+      dialogue: updatedDialogue
+    }, { status: 200 })
+  } catch (error) {
+    console.error('Error updating dialogue title:', error)
+    return NextResponse.json({ error: 'Error updating dialogue title' }, { status: 500 })
+  }
+}
+
