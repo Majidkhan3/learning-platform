@@ -3,6 +3,7 @@ import axios from 'axios' // For making HTTP requests
 import connectToDatabase from '@/lib/db'
 import Enstories from '../../../../../model/Enstories'
 import { verifyToken } from '../../../../../lib/verifyToken';
+import { NextResponse } from 'next/server'
 export async function GET(req) {
   const auth = await verifyToken(req)
         
@@ -139,6 +140,45 @@ export async function POST(req, res) {
   try {
     // Generate the story using Claude API
     const { storyText, wordsUsed } = await generateStoryWithClaude(words, theme)
+        // Generate title using Claude
+ let title = 'Stories'
+
+try {
+  const titleRes = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.CLAUDE_API_KEY || '',
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-sonnet-20240620',
+      max_tokens: 50,
+      temperature: 0.7,
+      messages: [
+        {
+          role: 'user',
+          content: generateStoryTitlePrompt(storyText),
+        },
+      ],
+    }),
+  })
+
+  const titleData = await titleRes.json()
+
+  if (titleRes.ok && titleData.content) {
+    const raw = Array.isArray(titleData.content)
+      ? titleData.content[0]?.text
+      : titleData.completion
+
+    title = raw?.trim().replace(/["'.]/g, '').split(' ').slice(0, 4).join(' ')
+  } else {
+    console.error('Claude title generation failed:', titleData)
+  }
+} catch (error) {
+  console.error('Error calling Claude:', error)
+}
+
 
     // Create a new story document
     const storyId = randomUUID()
@@ -147,7 +187,7 @@ export async function POST(req, res) {
     const newStory = new Enstories({
       storyId,
       userId,
-      // title,
+      title,
       theme,
       tags: selectedTags,
       rating,
@@ -164,4 +204,14 @@ export async function POST(req, res) {
     console.error('Error creating story:', error)
     return new Response(JSON.stringify({ error: 'Internal server error.' }), { status: 500 })
   }
+}
+function generateStoryTitlePrompt(storyText) {
+  return `
+Based on the following story (which contains exactly two dialogues in English), generate a short title of 3 to 4 words maximum that summarizes the main topic of the content.
+
+Stories:
+${storyText.substring(0, 800)}...
+
+Please respond with only the title, without quotation marks or periods. The title must be in English and capture the narrative essence of the story.
+`
 }

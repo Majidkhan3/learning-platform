@@ -1,6 +1,7 @@
 import connectToDatabase from '@/lib/db'
 import Story from '@/model/Story' // Import the Story schema
 import { verifyToken } from '../../../../../lib/verifyToken'
+import { NextResponse } from 'next/server'
 
 export async function GET(req, { params }) {
   const auth = await verifyToken(req)
@@ -56,5 +57,43 @@ export async function DELETE(req, { params }) {
   } catch (error) {
     console.error('Error deleting story:', error)
     return new Response(JSON.stringify({ error: 'Internal server error.' }), { status: 500 })
+  }
+}
+
+export async function PUT(req, { params }) {
+  const auth = await verifyToken(req)
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { id: storyId } = params // ✅ Correct param name
+    const body = await req.json()
+    const { title } = body
+
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return NextResponse.json({ error: 'Title is required and must be a non-empty string' }, { status: 400 })
+    }
+
+    const cleanedTitle = title.trim().split(' ').slice(0, 4).join(' ').substring(0, 50)
+
+    const updatedStory = await Story.findOneAndUpdate(
+      { storyId },
+      { title: cleanedTitle },
+      { new: true, runValidators: true }
+    )
+
+    if (!updatedStory) {
+      return NextResponse.json({ error: 'Story not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({
+      message: 'Title updated successfully',
+      story: updatedStory,
+    }, { status: 200 })
+  } catch (error) {
+    console.error('Error updating story title:', error)
+    return NextResponse.json({ error: 'Error updating story title' }, { status: 500 })
   }
 }

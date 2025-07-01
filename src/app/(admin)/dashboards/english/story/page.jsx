@@ -14,6 +14,9 @@ const Page = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [sortOrder, setSortOrder] = useState('newest');
+   const [editingStoryId, setEditingStoryId] = useState(null)
+    const [editingTitle, setEditingTitle] = useState('')
+    const [savingTitle, setSavingTitle] = useState(false)
   // Add after the existing state declarations
   const handleDelete = async (storyId) => {
     if (window.confirm('Are you sure you want to delete this story?')) {
@@ -38,6 +41,52 @@ const Page = () => {
       }
     }
   };
+    const handleStoryTitleDoubleClick = (storyId, currentTitle) => {
+  setEditingStoryId(storyId)
+  setEditingTitle(currentTitle || '')
+}
+
+const handleStoryTitleSave = async (storyId) => {
+  if (!editingTitle.trim()) {
+    alert('Title cannot be empty')
+    return
+  }
+
+  setSavingTitle(true)
+  try {
+    const res = await fetch(`/api/english/enstories/create/${storyId}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: editingTitle.trim() }),
+    })
+
+    if (!res.ok) throw new Error('Failed to update title')
+
+    const data = await res.json()
+    setStories((prev) =>
+      prev.map((story) =>
+        story.storyId === storyId ? { ...story, title: data.story.title } : story
+      )
+    )
+
+    setEditingStoryId(null)
+    setEditingTitle('')
+  } catch (err) {
+    console.error('Error updating title:', err)
+    alert('Failed to update title')
+  } finally {
+    setSavingTitle(false)
+  }
+}
+
+const handleStoryTitleCancel = () => {
+  setEditingStoryId(null)
+  setEditingTitle('')
+}
+
   useEffect(() => {
     const fetchStories = async () => {
       if (!userId) return
@@ -72,7 +121,7 @@ const Page = () => {
       <Row className="align-items-center mb-4">
         <Col>
           <h2>
-            <strong>ES</strong> Stories in English
+            <strong>EN</strong> Stories in English
           </h2>
         </Col>
         <Col className="text-end">
@@ -128,7 +177,42 @@ const Page = () => {
               <Col key={story.storyId}>
                 <Card>
                   <Card.Header className="d-flex justify-content-between align-items-center">
-                    <strong>{story.title}</strong>
+                    {editingStoryId === story.storyId ? (
+                     <div className="d-flex align-items-center gap-2 w-100">
+                       <Form.Control
+                         type="text"
+                         value={editingTitle}
+                         onChange={(e) => setEditingTitle(e.target.value)}
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter') handleStoryTitleSave(story.storyId)
+                           else if (e.key === 'Escape') handleStoryTitleCancel()
+                         }}
+                         autoFocus
+                         size="sm"
+                         maxLength={50}
+                       />
+                       <Button
+                         variant="success"
+                         size="sm"
+                         onClick={() => handleStoryTitleSave(story.storyId)}
+                         disabled={savingTitle}
+                       >
+                         {savingTitle ? <Icon icon="eos-icons:loading" width={16} height={16} /> : 'Save'}
+                       </Button>
+                       <Button variant="secondary" size="sm" onClick={handleStoryTitleCancel} disabled={savingTitle}>
+                         Cancel
+                       </Button>
+                     </div>
+                   ) : (
+                     <strong
+                       role="button"
+                       title="Double-click to edit title"
+                       onDoubleClick={() => handleStoryTitleDoubleClick(story.storyId, story.title)}
+                       style={{ cursor: 'pointer' }}
+                     >
+                       {story.title || 'Untitled'}
+                     </strong>
+                   )}
                     <Icon
                       icon="mdi:trash"
                       className="text-danger"

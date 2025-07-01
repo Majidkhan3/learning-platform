@@ -13,7 +13,7 @@ const PageWithFilters = () => {
   const [loading, setLoading] = useState(false); // Loading state for API calls
   const [error, setError] = useState("");
   const [availableVoices, setAvailableVoices] = useState([]); // State for fetched voices
-  const [selectedVoice, setSelectedVoice] = useState("Lucia"); // State for selected voice
+  const [selectedVoice, setSelectedVoice] = useState(); // State for selected voice
 
   // Fetch tags from the backend
   const fetchTags = async () => {
@@ -65,10 +65,13 @@ const PageWithFilters = () => {
 
   const fetchVoices = async () => {
     try {
-      const res = await fetch("/api/polly"); // Replace with your API endpoint
+      const res = await fetch("/api/polly?language=pt-BR"); // Replace with your API endpoint
       const data = await res.json();
       if (res.ok) {
         setAvailableVoices(data); // Assuming the API returns voices in this format
+        if (!selectedVoice && data.length > 0) {
+        setSelectedVoice(data[0].id); // set default voice to the first pt-BR voice
+      }
       } else {
         setError(data.error || "Failed to fetch voices");
       }

@@ -64,7 +64,6 @@ const CreateStory = () => {
           Authorization: `Bearer ${token}`,         
         },
         body: JSON.stringify({
-          // title,
           theme,
           selectedTags,
           rating: difficulty,
@@ -76,6 +75,7 @@ const CreateStory = () => {
       const data = await response.json()
 
       if (!response.ok) {
+         console.error('Server response error:', data)
         throw new Error(data.error || 'Failed to generate the story.')
       }
 

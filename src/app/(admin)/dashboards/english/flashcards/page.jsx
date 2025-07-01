@@ -85,7 +85,7 @@ const FlashCard = () => {
   useEffect(() => {
     const speakWithPolly = async (text) => {
       try {
-        const response = await fetch('/api/polly', {
+        const response = await fetch('/api/polly?language=en-US', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -93,8 +93,8 @@ const FlashCard = () => {
           },
           body: JSON.stringify({
             text,
-            voice: 'Lucia', // Use the "Lucia" voice
-            language: 'es-ES', // Adjust language as needed
+            voice:'Joanna',
+            language: 'en-US', // Adjust language as needed
           }),
         })
 

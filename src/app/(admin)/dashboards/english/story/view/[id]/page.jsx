@@ -35,20 +35,31 @@ const StoryViewer = () => {
   const [story, setStory] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [voiceA, setVoiceA] = useState('Joanna')
-  const [voiceB, setVoiceB] = useState('Emma')
+  const [voiceA, setVoiceA] = useState()
+  const [voiceB, setVoiceB] = useState()
   const [availableVoices, setAvailableVoices] = useState([])
   const [dialogues, setDialogues] = useState([])
   const audioRef = useRef(null)
+   const [isSpeaking, setIsSpeaking] = useState(false)
+   const path = typeof window !== 'undefined' ? window.location.pathname : ''
+   let language = 'es-ES' // Default
+   
+   if (path.includes('/portugais')) language = 'pt-PT'
+   else if (path.includes('/french')) language = 'fr-FR'
+   else if (path.includes('/english')) language = 'en-US'
 
   // Fetch available voices from the Polly API
   useEffect(() => {
     const fetchVoices = async () => {
       try {
-        const res = await fetch('/api/polly')
+        const res = await fetch(`/api/polly?language=${language}`)
         const data = await res.json()
         if (res.ok) {
           setAvailableVoices(data)
+          if (data.length > 0) {
+            setVoiceA(data[0].id) // Default to the first voice
+            setVoiceB(data[1]?.id || data[0].id) // Default to the second voice or the first if only one voice is available
+          }
           console.log('Available voices:', data)
         } else {
           setError(data.error || 'Failed to fetch voices')
@@ -126,7 +137,7 @@ const StoryViewer = () => {
   //     console.error('Error playing single dialogue:', error)
   //   }
   // }
-      const speakSingle = async (text, voice) => {
+const speakSingle = async (text, voice) => {
   try {
     // ⛔ Stop and clean up existing audio if playing
     if (audioRef.current) {
@@ -134,7 +145,9 @@ const StoryViewer = () => {
       URL.revokeObjectURL(audioRef.current.src)
     }
 
-    const response = await fetch('/api/polly', {
+    setIsSpeaking(true); // ✅ Disable other controls
+
+    const response = await fetch(`/api/polly?language=${language}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -142,7 +155,7 @@ const StoryViewer = () => {
       body: JSON.stringify({
         text,
         voice,
-        language: 'es-ES',
+        language,
       }),
     })
 
@@ -153,15 +166,22 @@ const StoryViewer = () => {
     const audioBlob = await response.blob()
     const audioUrl = URL.createObjectURL(audioBlob)
 
-    // ✅ Set and use shared ref
     audioRef.current = new Audio(audioUrl)
+
+    // ✅ Reset isSpeaking on end/error
     audioRef.current.onended = () => {
+      setIsSpeaking(false)
       URL.revokeObjectURL(audioUrl)
+    }
+
+    audioRef.current.onerror = () => {
+      setIsSpeaking(false)
     }
 
     await audioRef.current.play()
   } catch (error) {
     console.error('Error playing single dialogue:', error)
+    setIsSpeaking(false)
   }
 }
 
@@ -227,7 +247,9 @@ const StoryViewer = () => {
           </Card>
 
           {/* Media Player Controls - Now using the AudioPlayer component */}
-          {dialogues.length > 0 && <AudioPlayer dialogues={dialogues} voiceA={voiceA} voiceB={voiceB} audioRef={audioRef}/>}
+          {dialogues.length > 0 && <AudioPlayer dialogues={dialogues} voiceA={voiceA} voiceB={voiceB} audioRef={audioRef} isSpeaking={isSpeaking}
+  setIsSpeaking={setIsSpeaking} language={language}
+/>}
 
           {/* Display Dialogues */}
           {dialogues.map((dialogue, idx) => (
@@ -238,7 +260,7 @@ const StoryViewer = () => {
                     <Col md={6}>
                       <div className="d-flex align-items-center justify-content-between">
                         <strong>🧍 Person A</strong>
-                        <button className="btn btn-link" onClick={() => speakSingle(dialogue.a, voiceA)} title="Read this text">
+                        <button className="btn btn-link" onClick={() => speakSingle(dialogue.a, voiceA)} disabled={isSpeaking} title="Read this text">
                           <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                         </button>
                       </div>
@@ -249,7 +271,7 @@ const StoryViewer = () => {
                     <Col md={6}>
                       <div className="d-flex align-items-center justify-content-between">
                         <strong>🧑 Person B</strong>
-                        <button className="btn btn-link" onClick={() => speakSingle(dialogue.b, voiceB)} title="Read this text">
+                        <button className="btn btn-link" onClick={() => speakSingle(dialogue.b, voiceB)} disabled={isSpeaking} title="Read this text">
                           <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                         </button>
                       </div>

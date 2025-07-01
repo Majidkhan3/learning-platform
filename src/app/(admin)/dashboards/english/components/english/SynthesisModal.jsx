@@ -63,7 +63,7 @@ const speakWord = async (word) => {
       currentAudio.currentTime = 0;
     }
 
-    const response = await fetch('/api/polly', {
+    const response = await fetch('/api/polly?language=en-US', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ const speakWord = async (word) => {
       body: JSON.stringify({
         text: word,
         voice: selectedVoice,
-        language: 'es-ES',
+        language: 'en-US',
       }),
     });
 

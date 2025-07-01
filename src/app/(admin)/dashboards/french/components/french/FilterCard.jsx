@@ -9,7 +9,7 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
   const searchParams = useSearchParams()
   const [selectedTag, setSelectedTag] = useState('All')
   const [selectedRating, setSelectedRating] = useState('All')
-  const [voice, setVoice] = useState(voices[0]?.id || 'Lucia')
+  const [voice, setVoice] = useState(voices[0]?.id)
   const [flashCardMode, setFlashCardMode] = useState(false)
 
   const ratings = ['All', '1', '2', '3', '4']
@@ -49,33 +49,23 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
     onVoiceChange(selectedVoice) // Notify the parent component
   }
   const handleFlashCardModeChange = (e) => {
-    const isChecked = e.target.checked
-    setFlashCardMode(isChecked)
+  const isChecked = e.target.checked
+  setFlashCardMode(isChecked)
 
-    if (isChecked) {
-      const params = new URLSearchParams()
-      if (selectedTag !== 'All') {
-        params.set('tag', selectedTag)
-      }
-      if (selectedRating !== 'All') {
-        params.set('rating', selectedRating)
-      }
-
-      if (params.toString()) {
-        // Only navigate if there's at least one filter
-        // The user mentioned "/id?" for the path.
-        // Please replace '/flashcards' with your specific flashcard route.
-        // For example, if your route is dynamic like '/flashcards/[id]',
-        // you'll need to determine the 'id' value.
-        // This example uses a generic '/flashcards' path.
-        const flashcardPath = '/flashcards'
-        router.push(`/dashboards/french/${flashcardPath}?${params.toString()}`)
-      }
+  if (isChecked) {
+    const params = new URLSearchParams()
+    if (selectedTag !== 'All') {
+      params.set('tag', selectedTag)
     }
-    // No explicit navigation is handled here for turning the switch OFF.
-    // It's assumed that returning from the flashcard page or managing the "OFF" state
-    // is handled elsewhere or by user navigation (e.g., browser back button).
+    if (selectedRating !== 'All') {
+      params.set('rating', selectedRating)
+    }
+
+    const flashcardPath = '/flashcards'
+    const query = params.toString()
+    router.push(`/dashboards/french/${flashcardPath}${query ? `?${query}` : ''}`)
   }
+}
 
   return (
     <Card className="mb-4">

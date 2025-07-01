@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
 
-const AudioPlayer = ({ dialogues, voiceA, voiceB ,audioRef}) => {
+const AudioPlayer = ({ dialogues, voiceA, voiceB ,audioRef, isSpeaking, setIsSpeaking ,language}) => {
   const [playbackState, setPlaybackState] = useState('stopped'); // 'playing', 'paused', 'stopped'
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -96,7 +96,7 @@ const AudioPlayer = ({ dialogues, voiceA, voiceB ,audioRef}) => {
         body: JSON.stringify({
           text,
           voice,
-          language: 'es-ES',
+          language,
         }),
       });
 
@@ -240,6 +240,7 @@ const AudioPlayer = ({ dialogues, voiceA, voiceB ,audioRef}) => {
         setError('Failed to resume playback');
       });
       setPlaybackState('playing');
+      setIsSpeaking(true);
       
       // Restart progress tracking
       progressInterval.current = setInterval(() => {
@@ -272,6 +273,8 @@ const AudioPlayer = ({ dialogues, voiceA, voiceB ,audioRef}) => {
   // Handle pause button click
   const handlePause = () => {
     setPlaybackState('paused');
+    setIsSpeaking(false); // ✅ Re-enable speaker buttons when paused
+
     if (audioRef.current) {
       audioRef.current.pause();
     }
@@ -283,6 +286,8 @@ const AudioPlayer = ({ dialogues, voiceA, voiceB ,audioRef}) => {
   // Handle stop button click
   const handleStop = () => {
     setPlaybackState('stopped');
+    setIsSpeaking(false); // ✅ Re-enable speaker buttons when stopped
+
     setCurrentDialogueIndex(0);
     setCurrentTime(0);
     setProgress(0);

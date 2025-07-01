@@ -3,13 +3,14 @@ import Story from '@/model/Story' // Import the Story schema
 import Word from '@/model/Word' // Import the Word schema (for filtered words)
 import axios from 'axios' // For making HTTP requests
 import connectToDatabase from '@/lib/db'
+import { NextResponse } from 'next/server'
 import { verifyToken } from '../../../../lib/verifyToken'
 export async function GET(req) {
   const auth = await verifyToken(req)
-  
-    if (!auth.valid) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   await connectToDatabase() // Ensure the database connection is established
 
   const { searchParams } = new URL(req.url)
@@ -106,7 +107,7 @@ async function generateStoryWithClaude(words, theme) {
     )
 
     // Log the full response for debugging
-    console.log('Claude API Response:', response.data)
+    // console.log('Claude API Response:', response.data)
 
     // Check and parse the response structure
     if (response.status === 200 && response.data.content && Array.isArray(response.data.content)) {
@@ -126,10 +127,10 @@ async function generateStoryWithClaude(words, theme) {
 
 export async function POST(req, res) {
   const auth = await verifyToken(req)
-  
-    if (!auth.valid) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   await connectToDatabase() // Ensure you have a function to connect to your database
   const { theme, selectedTags, rating, userId, words } = await req.json()
 
@@ -140,6 +141,47 @@ export async function POST(req, res) {
   try {
     // Generate the story using Claude API
     const { storyText, wordsUsed } = await generateStoryWithClaude(words, theme)
+    // Generate title using Claude
+ let title = 'Historia'
+
+try {
+  const titleRes = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.CLAUDE_API_KEY || '',
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-sonnet-20240620',
+      max_tokens: 50,
+      temperature: 0.7,
+      messages: [
+        {
+          role: 'user',
+          content: generateStoryTitlePrompt(storyText),
+        },
+      ],
+    }),
+  })
+
+  const titleData = await titleRes.json()
+
+  if (titleRes.ok && titleData.content) {
+    const raw = Array.isArray(titleData.content)
+      ? titleData.content[0]?.text
+      : titleData.completion
+
+    title = raw?.trim().replace(/["'.]/g, '').split(' ').slice(0, 4).join(' ')
+  } else {
+    console.error('Claude title generation failed:', titleData)
+  }
+} catch (error) {
+  console.error('Error calling Claude:', error)
+}
+
+
+
 
     // Create a new story document
     const storyId = randomUUID()
@@ -148,7 +190,7 @@ export async function POST(req, res) {
     const newStory = new Story({
       storyId,
       userId,
-      // title,
+      title,
       theme,
       tags: selectedTags,
       rating,
@@ -166,3 +208,14 @@ export async function POST(req, res) {
     return new Response(JSON.stringify({ error: 'Internal server error.' }), { status: 500 })
   }
 }
+function generateStoryTitlePrompt(storyText) {
+  return `
+Basándote en la historia siguiente (que contiene exactamente dos diálogos en español), genera un título corto de 3 a 4 palabras máximo que resuma el tema principal del contenido.
+
+Historia:
+${storyText.substring(0, 800)}...
+
+Responde únicamente con el título, sin comillas ni puntos. El título debe estar en español y debe capturar la esencia narrativa de la historia.
+`
+}
+
