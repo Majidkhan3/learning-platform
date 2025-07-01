@@ -11,13 +11,20 @@ const DialogueViewer = () => {
   const { id } = useParams()
   const [dialogue, setDialogue] = useState(null)
   const [parsedDialogues, setParsedDialogues] = useState([]) // Store parsed dialogues
-  const [voiceA, setVoiceA] = useState('Mathieu')
-  const [voiceB, setVoiceB] = useState('Céline')
+  const [voiceA, setVoiceA] = useState()
+  const [voiceB, setVoiceB] = useState()
   const [availableVoices, setAvailableVoices] = useState([]) // Store voices fetched from API
   const [isReading, setIsReading] = useState(false) // To track if reading is in progress
   const audioRef = useRef(null) // To track the currently playing audio
   const [title, setTitle] = useState('')
+  const [isSpeaking, setIsSpeaking] = useState(false)
  const { user ,token } = useAuth()
+ const path = typeof window !== 'undefined' ? window.location.pathname : ''
+   let language = 'es-ES' // Default
+   
+   if (path.includes('/portugais')) language = 'pt-PT'
+   else if (path.includes('/french')) language = 'fr-FR'
+   else if (path.includes('/english')) language = 'en-US'
   useEffect(() => {
     if (id) {
       fetch(`/api/french/frdialogues/${id}`,{
@@ -42,7 +49,7 @@ const DialogueViewer = () => {
 
   useEffect(() => {
     // Fetch available voices from the Polly API
-    fetch('/api/polly')
+    fetch(`/api/polly?language=${language}` )
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -76,49 +83,53 @@ const DialogueViewer = () => {
     setParsedDialogues(dialogues)
   }
 
-    const speak = async (text, voiceLabel) => {
+const speak = async (text, voiceLabel) => {
   try {
-    // Stop any audio currently playing (main player or speaker)
+    setIsSpeaking(true) // Disable buttons
+
+    // Stop any currently playing audio
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      URL.revokeObjectURL(audioRef.current.src); // Clean up memory
-      audioRef.current = null;
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      URL.revokeObjectURL(audioRef.current.src)
+      audioRef.current = null
     }
 
-    // Fetch audio from API
-    const response = await fetch('/api/polly', {
+    const response = await fetch(`/api/polly?language=${language}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ text, voice: voiceLabel, language: 'fr-FR' }),
-    });
+      body: JSON.stringify({ text, voice: voiceLabel, language}),
+    })
 
-    if (!response.ok) throw new Error('Failed to fetch audio');
+    if (!response.ok) throw new Error('Failed to fetch audio')
 
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const audio = new Audio(url)
 
-    audioRef.current = audio;
+    audioRef.current = audio
 
     audio.onended = () => {
-      URL.revokeObjectURL(url);
-      audioRef.current = null;
-    };
+      URL.revokeObjectURL(url)
+      audioRef.current = null
+      setIsSpeaking(false) // ✅ Re-enable buttons
+    }
 
     audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      audioRef.current = null;
-    };
+      URL.revokeObjectURL(url)
+      audioRef.current = null
+      setIsSpeaking(false) // ✅ Re-enable buttons
+    }
 
-    await audio.play();
+    await audio.play()
   } catch (err) {
-    console.error('Audio error:', err);
+    console.error('Audio error:', err)
+    setIsSpeaking(false) // ✅ Re-enable buttons on error
   }
-};
+}
   // const speak = async (text, voiceLabel) => {
   //   try {
   //     const response = await fetch('/api/polly', {
@@ -224,7 +235,7 @@ const DialogueViewer = () => {
       </Card>
 
       
-      {parsedDialogues.length > 0 && <AudioPlayer dialogues={parsedDialogues} voiceA={voiceA} voiceB={voiceB} audioRef={audioRef} />}
+      {parsedDialogues.length > 0 && <AudioPlayer dialogues={parsedDialogues} voiceA={voiceA} voiceB={voiceB} audioRef={audioRef} isSpeaking={isSpeaking}  setIsSpeaking={setIsSpeaking} language={language}/>}
 
       {parsedDialogues.map((conv, idx) => (
         <Card className="mb-3" key={idx}>
@@ -233,7 +244,7 @@ const DialogueViewer = () => {
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
                   <strong>🧍 Personne A</strong>
-                  <Button variant="link" onClick={() => speak(conv.a, voiceA)} title="Lire ce texte">
+                  <Button variant="link" onClick={() => speak(conv.a, voiceA)} disabled={isSpeaking} title="Lire ce texte">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
                 </div>
@@ -242,7 +253,7 @@ const DialogueViewer = () => {
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
                   <strong>🧑 Personne B</strong>
-                  <Button variant="link" onClick={() => speak(conv.b, voiceB)} title="Lire ce texte">
+                  <Button variant="link" onClick={() => speak(conv.b, voiceB)} disabled={isSpeaking} title="Lire ce texte">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
                 </div>

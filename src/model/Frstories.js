@@ -11,6 +11,11 @@ const storySchema = new mongoose.Schema({
     ref: 'User', // Name of the referenced model
     required: true,
   },
+   title: {
+    type: String,
+    required: false,
+    maxlength: 50, // Limit title length
+  },
   theme: {
     type: String,
     required: true,

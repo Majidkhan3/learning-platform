@@ -18,6 +18,14 @@ const DialogueViewer = () => {
   const [isReading, setIsReading] = useState(false) // To track if reading is in progress
   const audioRef = useRef(null) // To track the currently playing audio
   const [title, setTitle] = useState('') // Default title
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const path = typeof window !== 'undefined' ? window.location.pathname : ''
+let language = 'es-ES' // Default
+
+if (path.includes('/portugais')) language = 'pt-PT'
+else if (path.includes('/french')) language = 'fr-FR'
+else if (path.includes('/english')) language = 'en-US'
+
   useEffect(() => {
     if (id) {
       fetch(`/api/dialogues/${id}`,
@@ -41,23 +49,23 @@ const DialogueViewer = () => {
   }, [id])
 
   useEffect(() => {
-    // Fetch available voices from the Polly API
-    fetch('/api/polly')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setAvailableVoices(data)
-          // Set default voices for Person A and Person B
-          if (data.length > 0) {
-            setVoiceA(data[0].id) // Default to the first voice
-            setVoiceB(data[1]?.id || data[0].id) // Default to the second voice or the first if only one voice is available
-          }
-        } else {
-          console.error('Error: Invalid voices data from API.')
+  fetch(`/api/polly?language=${language}`)
+    .then((res) => res.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        setAvailableVoices(data)
+
+        if (data.length > 0) {
+          setVoiceA(data[0].id)
+          setVoiceB(data[1]?.id || data[0].id)
         }
-      })
-      .catch((error) => console.error('Error fetching voices:', error))
-  }, [])
+      } else {
+        console.error('Invalid voices data from API.')
+      }
+    })
+    .catch((error) => console.error('Error fetching voices:', error))
+}, [])
+
 
   const parseDialogues = (dialogueString) => {
     const lines = dialogueString.split('\n')
@@ -79,49 +87,60 @@ const DialogueViewer = () => {
 
 
 const speak = async (text, voiceLabel) => {
+  if (!voiceLabel) {
+    console.error('No voice selected')
+    setIsSpeaking(false)
+    return
+  }
+
   try {
-    // Stop any audio currently playing (main player or speaker)
+    setIsSpeaking(true)
+
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      URL.revokeObjectURL(audioRef.current.src); // Clean up memory
-      audioRef.current = null;
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      URL.revokeObjectURL(audioRef.current.src)
+      audioRef.current = null
     }
 
-    // Fetch audio from API
     const response = await fetch('/api/polly', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ text, voice: voiceLabel, language: 'es-ES' }),
-    });
+      body: JSON.stringify({ text, voice: voiceLabel, language }),
+    })
 
-    if (!response.ok) throw new Error('Failed to fetch audio');
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Polly API error:', response.status, errorText)
+      throw new Error(`Failed to fetch Polly API: ${response.status} ${errorText}`)
+    }
 
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-
-    audioRef.current = audio;
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const audio = new Audio(url)
+    audioRef.current = audio
 
     audio.onended = () => {
-      URL.revokeObjectURL(url);
-      audioRef.current = null;
-    };
+      URL.revokeObjectURL(url)
+      audioRef.current = null
+      setIsSpeaking(false)
+    }
 
     audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      audioRef.current = null;
-    };
+      URL.revokeObjectURL(url)
+      audioRef.current = null
+      setIsSpeaking(false)
+    }
 
-    await audio.play();
+    await audio.play()
   } catch (err) {
-    console.error('Audio error:', err);
+    console.error('Audio error:', err)
+    setIsSpeaking(false)
   }
-};
-
+}
 
   // const speak = async (text, voiceLabel) => {
   //   try {
@@ -228,7 +247,7 @@ const speak = async (text, voiceLabel) => {
       </Card>
 
       
-      {parsedDialogues.length > 0 && <AudioPlayer dialogues={parsedDialogues} voiceA={voiceA} voiceB={voiceB}  audioRef={audioRef}/>}
+      {parsedDialogues.length > 0 && <AudioPlayer dialogues={parsedDialogues} voiceA={voiceA} voiceB={voiceB}  audioRef={audioRef}  isSpeaking={isSpeaking}  setIsSpeaking={setIsSpeaking} language={language}/>}
 
       {parsedDialogues.map((conv, idx) => (
         <Card className="mb-3" key={idx}>
@@ -237,7 +256,7 @@ const speak = async (text, voiceLabel) => {
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
                   <strong>🧍 Personne A</strong>
-                  <Button variant="link" onClick={() => speak(conv.a, voiceA)} title="Lire ce texte">
+                  <Button variant="link" onClick={() => speak(conv.a, voiceA)} disabled={isSpeaking} title="Lire ce texte">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
                 </div>
@@ -246,7 +265,7 @@ const speak = async (text, voiceLabel) => {
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
                   <strong>🧑 Personne B</strong>
-                  <Button variant="link" onClick={() => speak(conv.b, voiceB)} title="Lire ce texte">
+                  <Button variant="link" onClick={() => speak(conv.b, voiceB)} disabled={isSpeaking} title="Lire ce texte">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
                 </div>

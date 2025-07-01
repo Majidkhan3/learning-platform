@@ -15,9 +15,9 @@ const pollyClient = new PollyClient({
 
 const AVAILABLE_VOICES = {
   'es-ES': ['Lucia', 'Enrique', 'Conchita', 'Sergio'],
-  'fr-FR': ['Léa', 'Mathieu', 'Céline'],
+  'fr-FR': ['Lea', 'Mathieu', 'Celine'],
   'en-US': ['Joanna', 'Matthew', 'Salli', 'Joey'],
-  'pt-BR': ['Camila', 'Ricardo', 'Vitória'],
+  'pt-BR': ['Camila', 'Ricardo', 'Vitoria'],
 }
 
 const VOICE_ENGINE_MAP = {
@@ -25,7 +25,7 @@ const VOICE_ENGINE_MAP = {
   Enrique: 'standard',
   Sergio: 'neural',
   Conchita: 'standard',
-  Léa: 'neural',
+  Lea: 'neural',
   Mathieu: 'standard',
   Céline: 'standard',
   Joanna: 'neural',
@@ -93,7 +93,7 @@ export async function POST(req) {
 // Handle GET requests
 export async function GET(req) {
   const { searchParams } = new URL(req.url)
-  const language = searchParams.get('language') || 'es-ES'
+  const language = searchParams.get('language')
 
   if (AVAILABLE_VOICES[language]) {
     const voices = AVAILABLE_VOICES[language].map((voiceId) => ({
