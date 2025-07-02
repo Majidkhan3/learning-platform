@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import connectToDatabase from '../../../../lib/db'
 import Portag from '../../../../model/Portag'
+import Porword from '../../../../model/Porword'
 import { verifyToken } from '../../../../lib/verifyToken'
 
 export async function POST(req) {
@@ -78,6 +79,11 @@ export async function DELETE(req) {
 
     // Delete the tag
     const deletedTag = await Portag.findOneAndDelete({ name, userId })
+        await Porword.updateMany(
+  { userId, tags: name },
+  { $pull: { tags: name } }
+)
+
     if (!deletedTag) {
       return NextResponse.json({ error: 'Tag not found' }, { status: 404 })
     }

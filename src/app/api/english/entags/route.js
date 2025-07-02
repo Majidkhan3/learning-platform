@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import connectToDatabase from '../../../../lib/db'
 import Entags from '../../../../model/Entags'
+import Enword from '../../../../model/Enword'
 import { verifyToken } from '../../../../lib/verifyToken'
 
 export async function POST(req) {
@@ -75,6 +76,11 @@ export async function DELETE(req) {
 
     // Delete the tag
     const deletedTag = await Entags.findOneAndDelete({ name, userId })
+        await Enword.updateMany(
+      { userId, tags: name },
+      { $pull: { tags: name } }
+    )
+    
     if (!deletedTag) {
       return NextResponse.json({ error: 'Tag not found' }, { status: 404 })
     }

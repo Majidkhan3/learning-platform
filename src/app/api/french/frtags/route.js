@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import connectToDatabase from '../../../../lib/db'
 import Frtags from '../../../../model/Frtags'
+import Frword from '../../../../model/Frword'
 import { verifyToken } from '../../../../lib/verifyToken'
 export async function POST(req) {
   const auth = await verifyToken(req)
@@ -76,6 +77,11 @@ export async function DELETE(req) {
 
     // Delete the tag
     const deletedTag = await Frtags.findOneAndDelete({ name, userId })
+        await Frword.updateMany(
+      { userId, tags: name },
+      { $pull: { tags: name } }
+    )
+    
     if (!deletedTag) {
       return NextResponse.json({ error: 'Tag not found' }, { status: 404 })
     }
