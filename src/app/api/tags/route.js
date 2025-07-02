@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import connectToDatabase from '@/lib/db'
 import Tag from '../../../model/Tag'
 import { verifyToken } from '../../../lib/verifyToken'
+import Word from '../../../model/Word'
+
 export async function POST(req) {
   const auth = await verifyToken(req)
 
@@ -77,6 +79,11 @@ export async function DELETE(req) {
 
     // Delete the tag
     const deletedTag = await Tag.findOneAndDelete({ name, userId })
+    await Word.updateMany(
+  { userId, tags: name },
+  { $pull: { tags: name } }
+)
+
     if (!deletedTag) {
       return NextResponse.json({ error: 'Tag not found' }, { status: 404 })
     }
