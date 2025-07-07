@@ -166,7 +166,7 @@ export default function AddWordsPage() {
       .filter((word) => word !== '')
 
     if (wordList.length === 0) {
-      setError('Please enter at least one word to check for duplicates.')
+      setError('Por favor, ingresa al menos una palabra para buscar duplicados.s')
       return
     }
 
@@ -174,9 +174,9 @@ export default function AddWordsPage() {
     const duplicateWords = wordList.filter((word) => existingWords.includes(word.toLowerCase()))
 
     if (duplicateWords.length > 0) {
-      setError(`The following words already exist: ${duplicateWords.join(', ')}`)
+      setError(` Las siguientes palabras ya existen: ${duplicateWords.join(', ')}`)
     } else {
-      setSuccessMessage('No duplicates found. You can proceed to add the words.')
+      setSuccessMessage(' No se encontraron duplicados. Puedes proceder a agregar las palabras.')
     }
   }
 
@@ -184,11 +184,11 @@ export default function AddWordsPage() {
     <Row>
       <Col lg={12}>
         <Container className="mt-4" fluid>
-          <h2>➕ Add multiple words</h2>
+          <h2>➕ Agregar múltiples palabras</h2>
           <Card className="mt-3">
             <Card.Body>
-              <h5>Bulk Add Form</h5>
-              <p className="text-muted">Add multiple Spanish words at once</p>
+              <h5>Formulario de adición masiva</h5>
+              <p className="text-muted">Agregar múltiples palabras en español a la vez</p>
 
               {error && <Alert variant="danger">{error}</Alert>}
               {successMessage && <Alert variant="success">{successMessage}</Alert>}
@@ -196,11 +196,11 @@ export default function AddWordsPage() {
               <Row>
                 <Col md={8}>
                   <Form.Group controlId="wordList">
-                    <Form.Label>Enter one word per line:</Form.Label>
+                    <Form.Label>Ingresa una palabra por línea:</Form.Label>
                     <Form.Control
                       as="textarea"
                       rows={8}
-                      placeholder="Example: casa&#10;perro&#10;gato&#10;libro"
+                      placeholder="Ejemplo: casa&#10;perro&#10;gato&#10;libro"
                       value={words}
                       onChange={(e) => setWords(e.target.value)}
                     />
@@ -208,7 +208,7 @@ export default function AddWordsPage() {
                 </Col>
                 <Col md={4}>
                   <Form.Group controlId="tags">
-                    <Form.Label>Tags (select one or more):</Form.Label>
+                    <Form.Label>Etiquetas (selecciona una o más):</Form.Label>
                     {fetchingTags ? (
                       <Spinner animation="border" size="sm" />
                     ) : (
@@ -220,24 +220,24 @@ export default function AddWordsPage() {
                         ))}
                       </Form.Control>
                     )}
-                    <Form.Text muted>Hold Ctrl (or Cmd) to select multiple tags</Form.Text>
+                    <Form.Text muted>Mantén presionada Ctrl (o Cmd) para seleccionar varias etiquetas</Form.Text>
 
                     <div className="mt-3">
                       <Form.Check
                         type="checkbox"
-                        label="Automatically generate the image"
+                        label=" Generar la imagen automáticamente"
                         checked={autoGenerateImage}
                         onChange={(e) => setAutoGenerateImage(e.target.checked)}
                       />
                       <Form.Check
                         type="checkbox"
-                        label="Automatically generate the summary"
+                        label="Generar el resumen automáticamente"
                         checked={autoGenerateSummary}
                         onChange={(e) => setAutoGenerateSummary(e.target.checked)}
                       />
                       <Form.Check
                         type="checkbox"
-                        label="Automatically ignore existing words"
+                        label="Ignorar automáticamente las palabras existentes"
                         checked={ignoreExisting}
                         onChange={(e) => setIgnoreExisting(e.target.checked)}
                       />
@@ -248,7 +248,7 @@ export default function AddWordsPage() {
 
               <Row className="mt-4">
                 <Col>
-                  <h5>Set Star Ratings for Words</h5>
+                  <h5>Establecer calificaciones con estrellas para las palabras</h5>
                   {words
                     .split('\n')
                     .map((word) => word.trim())
@@ -272,10 +272,10 @@ export default function AddWordsPage() {
 
               <div className="mt-4 d-flex justify-content-between">
                 <Button variant="primary" onClick={handleCheckDuplicates} disabled={loading}>
-                  🔍 Check for duplicates
+                  🔍 Comprobar duplicados
                 </Button>
                 <Button variant="success" onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Submitting...' : '✅ Add the words'}
+                  {loading ? 'Enviando...' : '✅ Agregar las palabras'}
                 </Button>
               </div>
             </Card.Body>

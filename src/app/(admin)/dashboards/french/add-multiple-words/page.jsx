@@ -188,11 +188,11 @@ export default function AddWordsPage() {
     <Row>
       <Col lg={12}>
         <Container className="mt-4" fluid>
-          <h2>➕ Add multiple words</h2>
+          <h2>➕ Ajouter plusieurs mots</h2>
           <Card className="mt-3">
             <Card.Body>
-              <h5>Bulk Add Form</h5>
-              <p className="text-muted">Add multiple Portugaise words at once</p>
+              <h5> Formulaire d’ajout en masse</h5>
+              <p className="text-muted">Ajouter plusieurs mots portugais à la fois</p>
 
               {error && <Alert variant="danger">{error}</Alert>}
               {successMessage && <Alert variant="success">{successMessage}</Alert>}
@@ -200,7 +200,7 @@ export default function AddWordsPage() {
               <Row>
                 <Col md={8}>
                   <Form.Group controlId="wordList">
-                    <Form.Label>Enter one word per line:</Form.Label>
+                    <Form.Label>Entrez un mot par ligne :</Form.Label>
                     <Form.Control
                       as="textarea"
                       rows={8}
@@ -212,7 +212,7 @@ export default function AddWordsPage() {
                 </Col>
                 <Col md={4}>
                   <Form.Group controlId="tags">
-                    <Form.Label>Tags (select one or more):</Form.Label>
+                    <Form.Label>Étiquettes (sélectionnez-en une ou plusieurs) :</Form.Label>
                     {fetchingTags ? (
                       <Spinner animation="border" size="sm" />
                     ) : (
@@ -224,24 +224,24 @@ export default function AddWordsPage() {
                         ))}
                       </Form.Control>
                     )}
-                    <Form.Text muted>Hold Ctrl (or Cmd) to select multiple tags</Form.Text>
+                    <Form.Text muted> Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs étiquettes</Form.Text>
 
                     <div className="mt-3">
                       <Form.Check
                         type="checkbox"
-                        label="Automatically generate the image"
+                        label="Générer automatiquement l’image"
                         checked={autoGenerateImage}
                         onChange={(e) => setAutoGenerateImage(e.target.checked)}
                       />
                       <Form.Check
                         type="checkbox"
-                        label="Automatically generate the summary"
+                        label="Générer automatiquement le résumé"
                         checked={autoGenerateSummary}
                         onChange={(e) => setAutoGenerateSummary(e.target.checked)}
                       />
                       <Form.Check
                         type="checkbox"
-                        label="Automatically ignore existing words"
+                        label="Ignorer automatiquement les mots existants"
                         checked={ignoreExisting}
                         onChange={(e) => setIgnoreExisting(e.target.checked)}
                       />
@@ -252,7 +252,7 @@ export default function AddWordsPage() {
 
               <Row className="mt-4">
                 <Col>
-                  <h5>Set Star Ratings for Words</h5>
+                  <h5>Définir des notes par étoiles pour les mots</h5>
                   {words
                     .split('\n')
                     .map((word) => word.trim())
@@ -276,10 +276,10 @@ export default function AddWordsPage() {
 
               <div className="mt-4 d-flex justify-content-between">
                 <Button variant="primary" onClick={handleCheckDuplicates} disabled={loading}>
-                  🔍 Check for duplicates
+                  🔍 Vérifier les doublons
                 </Button>
                 <Button variant="success" onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Submitting...' : '✅ Add the words'}
+                  {loading ? 'Envoi en cours...' : '✅ Ajouter les mots'}
                 </Button>
               </div>
             </Card.Body>

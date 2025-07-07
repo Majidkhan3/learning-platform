@@ -122,13 +122,13 @@ const handleStoryTitleCancel = () => {
       <Row className="align-items-center mb-4">
         <Col>
           <h2>
-            <strong>ES</strong> Stories in Spanish
+            <strong>ES</strong> Historias en español
           </h2>
         </Col>
         <Col className="text-end">
           <Stack direction="horizontal" gap={2} className="justify-content-end">
-            <Button variant="outline-primary">Vocabulary</Button>
-            <Button variant="outline-primary">Dialogues</Button>
+            <Button variant="outline-primary">Vocabulario</Button>
+            <Button variant="outline-primary">Diálogos</Button>
           </Stack>
         </Col>
       </Row>
@@ -136,12 +136,12 @@ const handleStoryTitleCancel = () => {
       {/* Sub-header */}
       <Row className="align-items-center mb-3">
         <Col>
-          <h4>All stories</h4>
+          <h4>Todas las historias</h4>
         </Col>
         <Col className="text-end">
           <Button variant="success" onClick={() => router.push('/dashboards/espagnol/story/create')}>
             <Icon icon="ic:round-plus" className="me-2" />
-            Create a new story
+           Crear una nueva historia
           </Button>
         </Col>
       </Row>
@@ -154,8 +154,8 @@ const handleStoryTitleCancel = () => {
             onChange={(e) => setSortOrder(e.target.value)}
             style={{ width: '230px' }}
           >
-            <option value="newest">Newest → Oldest</option>
-            <option value="oldest">Oldest → Newest</option>
+            <option value="newest">Más reciente → Más antiguo</option>
+            <option value="oldest">Más antiguo → Más reciente</option>
           </Form.Select>
         </Col>
       </Row>
@@ -199,10 +199,10 @@ const handleStoryTitleCancel = () => {
       onClick={() => handleStoryTitleSave(story.storyId)}
       disabled={savingTitle}
     >
-      {savingTitle ? <Icon icon="eos-icons:loading" width={16} height={16} /> : 'Save'}
+      {savingTitle ? <Icon icon="eos-icons:loading" width={16} height={16} /> : 'Guardar'}
     </Button>
     <Button variant="secondary" size="sm" onClick={handleStoryTitleCancel} disabled={savingTitle}>
-      Cancel
+      Cancelar
     </Button>
   </div>
 ) : (
@@ -232,14 +232,14 @@ const handleStoryTitleCancel = () => {
                         {new Date(story.creationDate).toLocaleDateString()}
                       </Card.Text>
                       <Card.Text>
-                        <strong>Theme:</strong> {story.theme}
+                        <strong>tema:</strong> {story.theme}
                       </Card.Text>
                       <Button
                         variant="primary"
                         className="w-100 mt-3"
                         onClick={() => router.push(`/dashboards/espagnol/story/view/${story.storyId}`)}
                       >
-                        See the dialogues
+                        Ver los diálogos
                       </Button>
                     </Card.Body>
                   </Card>

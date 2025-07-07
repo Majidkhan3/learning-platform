@@ -122,13 +122,15 @@ const handleStoryTitleCancel = () => {
       <Row className="align-items-center mb-4">
         <Col>
           <h2>
-            <strong>ES</strong> Stories in Portugase
+            <strong>PT</strong> Histórias em português
           </h2>
         </Col>
         <Col className="text-end">
           <Stack direction="horizontal" gap={2} className="justify-content-end">
-            <Button variant="outline-primary">Vocabulary</Button>
-            <Button variant="outline-primary">Dialogues</Button>
+            <Button variant="outline-primary">Vocabulário</Button>
+            <Button variant="outline-primary">Diálogos
+
+</Button>
           </Stack>
         </Col>
       </Row>
@@ -136,12 +138,12 @@ const handleStoryTitleCancel = () => {
       {/* Sub-header */}
       <Row className="align-items-center mb-3">
         <Col>
-          <h4>All stories</h4>
+          <h4>Todas as históriass</h4>
         </Col>
         <Col className="text-end">
           <Button variant="success" onClick={() => router.push('/dashboards/portugais/story/create')}>
             <Icon icon="ic:round-plus" className="me-2" />
-            Create a new story
+            Criar uma nova história
           </Button>
         </Col>
       </Row>
@@ -153,8 +155,8 @@ const handleStoryTitleCancel = () => {
             onChange={(e) => setSortOrder(e.target.value)}
             style={{ width: '230px' }}
           >
-            <option value="newest">Newest → Oldest</option>
-            <option value="oldest">Oldest → Newest</option>
+            <option value="newest">Mais recente → Mais antigo</option>
+            <option value="oldest">Mais antigo → Mais recente</option>
           </Form.Select>
         </Col>
       </Row>
@@ -164,7 +166,7 @@ const handleStoryTitleCancel = () => {
         {loading ? (
           <Col className="text-center w-full justify-center py-5">
             <Icon icon="eos-icons:loading" className="text-primary" width="50" height="50" spin />
-            <p className="text-muted">Loading stories...</p>
+            <p className="text-muted">Carregando histórias...</p>
           </Col>
         ) : (
           <>
@@ -198,10 +200,10 @@ const handleStoryTitleCancel = () => {
                             onClick={() => handleStoryTitleSave(story.storyId)}
                             disabled={savingTitle}
                           >
-                            {savingTitle ? <Icon icon="eos-icons:loading" width={16} height={16} /> : 'Save'}
+                            {savingTitle ? <Icon icon="eos-icons:loading" width={16} height={16} /> : ' Salvar'}
                           </Button>
                           <Button variant="secondary" size="sm" onClick={handleStoryTitleCancel} disabled={savingTitle}>
-                            Cancel
+                            Cancelar
                           </Button>
                         </div>
                       ) : (
@@ -211,7 +213,7 @@ const handleStoryTitleCancel = () => {
                           onDoubleClick={() => handleStoryTitleDoubleClick(story.storyId, story.title)}
                           style={{ cursor: 'pointer' }}
                         >
-                          {story.title || 'Untitled'}
+                          {story.title || 'Sem título'}
                         </strong>
                       )}
                       
@@ -231,7 +233,7 @@ const handleStoryTitleCancel = () => {
                         {new Date(story.creationDate).toLocaleDateString()}
                       </Card.Text>
                       <Card.Text>
-                        <strong>Theme:</strong> {story.theme}
+                        <strong>Tema:</strong> {story.theme}
                       </Card.Text>
                       <Button
                         variant="primary"

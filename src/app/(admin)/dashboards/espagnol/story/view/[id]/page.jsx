@@ -209,24 +209,24 @@ const speakSingle = async (text, voice) => {
               <h4 className="mb-2">
                 <strong>ES</strong> {story?.title}
               </h4>
-              <p className="mb-1 text-muted">Rating: {story?.rating || 'No rating'}</p>
+              <p className="mb-1 text-muted">Calificación: {story?.rating || 'No rating'}</p>
               <p className="mb-1 text-muted">
                 📅 <strong>{new Date(story?.creationDate).toLocaleDateString()}</strong>
               </p>
               <p className="mb-0 text-muted">
-                <strong>Theme:</strong> {story?.theme}
+                <strong>Teme:</strong> {story?.theme}
               </p>
             </Card.Body>
           </Card>
 
           {/* Voice Configuration */}
           <Card className="mb-4">
-            <Card.Header className="bg-primary text-white">Voice Configuration (Amazon Polly)</Card.Header>
+            <Card.Header className="bg-primary text-white"> Configuración de voz (Amazon Polly)</Card.Header>
             <Card.Body>
               <Row>
                 <Col md={6}>
                   <Form.Group>
-                    <Form.Label>Voice for Person A:</Form.Label>
+                    <Form.Label> Voz para la Persona A:</Form.Label>
                     <Form.Select value={voiceA} onChange={(e) => setVoiceA(e.target.value)}>
                       {availableVoices.map((voice) => (
                         <option key={voice.id} value={voice.id}>
@@ -238,7 +238,7 @@ const speakSingle = async (text, voice) => {
                 </Col>
                 <Col md={6}>
                   <Form.Group>
-                    <Form.Label>Voice for Person B:</Form.Label>
+                    <Form.Label> Voz para la Persona B:</Form.Label>
                     <Form.Select value={voiceB} onChange={(e) => setVoiceB(e.target.value)}>
                       {availableVoices.map((voice) => (
                         <option key={voice.id} value={voice.id}>
@@ -264,7 +264,7 @@ const speakSingle = async (text, voice) => {
                   {dialogue.a && (
                     <Col md={6}>
                       <div className="d-flex align-items-center justify-content-between">
-                        <strong>🧍 Person A</strong>
+                        <strong>🧍 Persona A</strong>
                         <button className="btn btn-link" onClick={() => speakSingle(dialogue.a, voiceA)} disabled={isSpeaking} title="Read this text">
                           <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                         </button>
@@ -275,7 +275,7 @@ const speakSingle = async (text, voice) => {
                   {dialogue.b && (
                     <Col md={6}>
                       <div className="d-flex align-items-center justify-content-between">
-                        <strong>🧑 Person B</strong>
+                        <strong>🧑 Persona B</strong>
                         <button className="btn btn-link" onClick={() => speakSingle(dialogue.b, voiceB)} disabled={isSpeaking} title="Read this text">
                           <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                         </button>

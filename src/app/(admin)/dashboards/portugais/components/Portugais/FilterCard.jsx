@@ -70,7 +70,7 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
   return (
     <Card className="mb-4">
       <Card.Body>
-        <h5 className="mb-3">Filter by tag:</h5>
+        <h5 className="mb-3">Filtrar por etiqueta:</h5>
         <div className="d-flex flex-wrap gap-2 mb-4">
           {/* Add 'All' option manually */}
           <Badge
@@ -98,7 +98,7 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
           ))}
         </div>
 
-        <h5 className="mb-3">Filter by rating:</h5>
+        <h5 className="mb-3">Filtrar por avaliação:</h5>
         <div className="d-flex flex-wrap gap-2 mb-4">
           {ratings.map((rating) => (
             <Badge
@@ -127,7 +127,7 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
                 fontSize: '24px',
               }}
             />
-            <span>Flash Card Mode</span>
+            <span>Modo de flashcards</span>
           </div>
           <Form.Select
             size="sm"

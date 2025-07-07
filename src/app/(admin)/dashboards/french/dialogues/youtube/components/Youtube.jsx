@@ -57,14 +57,14 @@ const Youtube = () => {
 
   return (
     <>
-      <h2 className="mb-4">Generate dialogues from YouTube</h2>
+      <h2 className="mb-4">Générer des dialogues à partir de YouTube</h2>
 
       <Card className="mb-4">
-        <Card.Header className="bg-light fw-bold">Enter a YouTube URL</Card.Header>
+        <Card.Header className="bg-light fw-bold">Entrez une URL YouTube</Card.Header>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>YouTube video URL (in French)</Form.Label>
+              <Form.Label> URL de la vidéo YouTube (en français)</Form.Label>
               <Form.Control
                 type="url"
                 placeholder="https://www.youtube.com/watch?v=..."
@@ -72,7 +72,7 @@ const Youtube = () => {
                 onChange={(e) => setUrl(e.target.value)}
               />
               <small className="text-muted">
-                Dialogues will be generated using Claude (Anthropic)
+               Les dialogues seront générés en utilisant Claude (Anthropic)
               </small>
             </Form.Group>
 

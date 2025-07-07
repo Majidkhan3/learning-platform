@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const CreateStory = () => {
-  const { user ,token } = useAuth()
+  const { user, token } = useAuth()
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [tags, setTags] = useState([])
@@ -24,11 +24,11 @@ const CreateStory = () => {
       try {
         if (!user?._id) return
 
-        const response = await fetch(`/api/french/frtags?userId=${user._id}`,{
+        const response = await fetch(`/api/french/frtags?userId=${user._id}`, {
           headers: {
             'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        }
+            Authorization: `Bearer ${token}`,
+          }
         })
         const data = await response.json()
 
@@ -97,18 +97,18 @@ const CreateStory = () => {
     <Container className="py-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>
-          <strong>ES</strong> Create a Story
+          <strong>FR</strong> Créer une histoire
         </h2>
         <Button variant="outline-primary" onClick={() => router.push('/dashboards/french/story')}>
           <Icon icon="mdi:arrow-left" className="me-2" />
-          Back to stories
+          Retour aux histoires
         </Button>
       </div>
 
       <Card>
         <Card.Body>
-          <h4 className="mb-3">Story Settings</h4>
-          <p className="text-muted mb-4">Define the criteria to generate a story with 2 dialogues in French</p>
+          <h4 className="mb-3"> Paramètres de l’histoire</h4>
+          <p className="text-muted mb-4"> Définissez les critères pour générer une histoire avec 2 dialogues en français</p>
 
           <Form onSubmit={handleSubmit}>
             {/* <Form.Group className="mb-3">
@@ -125,7 +125,7 @@ const CreateStory = () => {
             </Form.Group> */}
 
             <Form.Group className="mb-3">
-              <Form.Label>Select tags (optional)</Form.Label>
+              <Form.Label> Sélectionnez des étiquettes (optionnel)</Form.Label>
               <Form.Control as="select" multiple onChange={handleTagChange}>
                 {tags.map((tag) => (
                   <option key={tag._id} value={tag.name}>
@@ -133,11 +133,11 @@ const CreateStory = () => {
                   </option>
                 ))}
               </Form.Control>
-              <Form.Text className="text-muted">Select one or more tags to filter the words to use</Form.Text>
+              <Form.Text className="text-muted"> Sélectionnez une ou plusieurs étiquettes pour filtrer les mots à utiliser</Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Difficulty level (optional)</Form.Label>
+              <Form.Label> Niveau de difficulté (optionnel)</Form.Label>
               <div>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Icon
@@ -149,32 +149,32 @@ const CreateStory = () => {
                   />
                 ))}
               </div>
-              <Form.Text className="text-muted">Select the difficulty level to filter words</Form.Text>
+              <Form.Text className="text-muted">Sélectionnez le niveau de difficulté pour filtrer les mots</Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Theme of the story</Form.Label>
+              <Form.Label>Thème de l’histoire</Form.Label>
               <Form.Control
                 as="textarea"
-                placeholder="Ex: A trip to South America, a conversation in a restaurant, etc."
+                placeholder=" Ex : Un voyage en Amérique du Sud, une conversation dans un restaurant, etc."
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
               />
-              <Form.Text className="text-muted">Provide details on the desired theme for the story</Form.Text>
+              <Form.Text className="text-muted">Fournissez des détails sur le thème souhaité pour l’histoire</Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>
-                Words (comma-separated) <span className="text-danger">*</span>
+                Mots (séparés par des virgules)  <span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 type="text"
-                placeholder="e.g., breakfast, coffee, meeting"
+                placeholder="ex. : petit-déjeuner, café, réunion"
                 value={words}
                 onChange={(e) => setWords(e.target.value)}
                 required
               />
-              <Form.Text className="text-muted">Enter words to be used in the story, separated by commas</Form.Text>
+              <Form.Text className="text-muted"> Entrez les mots à utiliser dans l’histoire, séparés par des virgules</Form.Text>
             </Form.Group>
 
             {error && <Alert variant="danger">{error}</Alert>}
@@ -182,8 +182,7 @@ const CreateStory = () => {
 
             <Alert variant="info">
               <Icon icon="mdi:information" className="me-2" />
-              The story will contain two dialogues in french using words from your vocabulary. The system will attempt to use up to 75 words while
-              creating a coherent story.
+              L’histoire contiendra deux dialogues en français utilisant des mots de votre vocabulaire. Le système tentera d’utiliser jusqu’à 75 mots tout en créant une histoire cohérente..
             </Alert>
 
             <div className="text-end">
@@ -191,12 +190,12 @@ const CreateStory = () => {
                 {loading ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />
-                    Generating...
+                    Générateur...
                   </>
                 ) : (
                   <>
                     <Icon icon="mdi:pencil" className="me-2" />
-                    Generate the story
+                    Générer l'histoire
                   </>
                 )}
               </Button>

@@ -122,12 +122,12 @@ const handleStoryTitleCancel = () => {
       <Row className="align-items-center mb-4">
         <Col>
           <h2>
-            <strong>FR</strong> Stories in French
+            <strong>FR</strong>  Histoires en français
           </h2>
         </Col>
         <Col className="text-end">
           <Stack direction="horizontal" gap={2} className="justify-content-end">
-            <Button variant="outline-primary">Vocabulary</Button>
+            <Button variant="outline-primary">Vocabulaire</Button>
             <Button variant="outline-primary">Dialogues</Button>
           </Stack>
         </Col>
@@ -136,12 +136,12 @@ const handleStoryTitleCancel = () => {
       {/* Sub-header */}
       <Row className="align-items-center mb-3">
         <Col>
-          <h4>All stories</h4>
+          <h4>Toutes les histoires</h4>
         </Col>
         <Col className="text-end">
           <Button variant="success" onClick={() => router.push('/dashboards/french/story/create')}>
             <Icon icon="ic:round-plus" className="me-2" />
-            Create a new story
+            Créer une nouvelle histoire
           </Button>
         </Col>
       </Row>
@@ -153,8 +153,8 @@ const handleStoryTitleCancel = () => {
             onChange={(e) => setSortOrder(e.target.value)}
             style={{ width: '230px' }}
           >
-            <option value="newest">Newest → Oldest</option>
-            <option value="oldest">Oldest → Newest</option>
+            <option value="newest">Du plus récent au plus ancien</option>
+            <option value="oldest">Du plus ancien au plus récent</option>
           </Form.Select>
         </Col>
       </Row>
@@ -198,10 +198,10 @@ const handleStoryTitleCancel = () => {
                             onClick={() => handleStoryTitleSave(story.storyId)}
                             disabled={savingTitle}
                           >
-                            {savingTitle ? <Icon icon="eos-icons:loading" width={16} height={16} /> : 'Save'}
+                            {savingTitle ? <Icon icon="eos-icons:loading" width={16} height={16} /> : 'Enregistrer'}
                           </Button>
                           <Button variant="secondary" size="sm" onClick={handleStoryTitleCancel} disabled={savingTitle}>
-                            Cancel
+                            Annuler
                           </Button>
                         </div>
                       ) : (
@@ -211,7 +211,7 @@ const handleStoryTitleCancel = () => {
                           onDoubleClick={() => handleStoryTitleDoubleClick(story.storyId, story.title)}
                           style={{ cursor: 'pointer' }}
                         >
-                          {story.title || 'Untitled'}
+                          {story.title || 'Sans titre'}
                         </strong>
                       )}
                       <Icon
@@ -223,21 +223,21 @@ const handleStoryTitleCancel = () => {
                       />
                     </Card.Header>
                     <Card.Body>
-                      <Card.Text className="mb-2">{story.rating || 'No rating'}</Card.Text>
+                      <Card.Text className="mb-2">{story.rating || 'Aucune note'}</Card.Text>
                       <Card.Text className="mb-2">{story.tags?.join(', ') || 'No tags'}</Card.Text>
                       <Card.Text className="d-flex align-items-center text-muted mb-2">
                         <Icon icon="mdi:calendar" className="me-2" />
                         {new Date(story.creationDate).toLocaleDateString()}
                       </Card.Text>
                       <Card.Text>
-                        <strong>Theme:</strong> {story.theme}
+                        <strong>thème:</strong> {story.theme}
                       </Card.Text>
                       <Button
                         variant="primary"
                         className="w-100 mt-3"
                         onClick={() => router.push(`/dashboards/french/story/view/${story.storyId}`)}
                       >
-                        See the dialogues
+                       Voir les dialogues
                       </Button>
                     </Card.Body>
                   </Card>

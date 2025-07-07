@@ -153,7 +153,7 @@ console.log("toke",token)
 
       const data = await response.json();
       if (response.ok) {
-        alert('Word updated successfully!');
+        alert('Palabra actualizada con éxito!');
         router.push('/dashboards/espagnol');
          // Redirect back to the main page
       } else {
@@ -177,25 +177,25 @@ console.log("toke",token)
         <Col xl={12}>
           <Card>
             <Card.Body>
-              <h2 className="mb-4">Edit Word</h2>
+              <h2 className="mb-4">Editar palabra</h2>
 
               {/* Word Input Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Word:</h4>
+                  <h4>Palabra:</h4>
                 </Form.Label>
                 <Form.Control
                   type="text"
                   value={formData.word}
                   onChange={handleWordChange}
-                  placeholder="Enter the word"
+                  placeholder=" Ingresa la palabra"
                 />
               </Form.Group>
 
               {/* Tags Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Tags:</h4>
+                  <h4>Etiquetas:</h4>
                 </Form.Label>
                 <div className="d-flex flex-wrap gap-2 mb-2">
                   {availableTags.map((tag) => (
@@ -213,27 +213,27 @@ console.log("toke",token)
                   ))}
                 </div>
                 {error && <p className="text-danger">{error}</p>}
-                <small className="text-muted">Click to select/deselect tags</small>
+                <small className="text-muted"> Haz clic para seleccionar/deseleccionar etiquetas</small>
               </Form.Group>
 
               {/* Summary Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Summary:</h4>
+                  <h4>Resumen:</h4>
                 </Form.Label>
                 <Form.Control
                   as="textarea"
                   rows={5}
                   value={formData.summary}
                   onChange={handleSummaryChange}
-                  placeholder="Enter your summary here..."
+                  placeholder="Ingresa tu resumen aquí..."
                 />
               </Form.Group>
 
               {/* Star Rating Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Rating:</h4>
+                  <h4>Calificación:</h4>
                 </Form.Label>
                 <div className="d-flex align-items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -252,12 +252,12 @@ console.log("toke",token)
               {/* Picture Upload */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h5>Picture:</h5>
+                  <h5>Imagen:</h5>
                 </Form.Label>
                 <div className="d-flex align-items-center gap-3">
                   <Form.Check
                     type="checkbox"
-                    label="Generate image automatically"
+                    label="Generar imagen automáticamente"
                     checked={formData.autoGenerateImage}
                     onChange={handleAutoGenerateImageChange}
                   />
@@ -289,7 +289,7 @@ console.log("toke",token)
                 onClick={saveContent}
                 disabled={loading}
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {loading ? 'Guardando...' : 'Guardar cambios'}
               </Button>
             </Card.Body>
           </Card>

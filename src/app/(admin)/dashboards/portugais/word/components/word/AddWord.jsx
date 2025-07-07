@@ -171,12 +171,12 @@ const AddWord = () => {
         <Col xl={12}>
           <Card>
             <Card.Body>
-              <h2 className="mb-4">Add a new word</h2>
+              <h2 className="mb-4">Adicionar uma nova palavra</h2>
 
               {/* Word Input Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Word:</h4>
+                  <h4>Palavra:</h4>
                 </Form.Label>
                 <Form.Control
                   type="text"
@@ -189,7 +189,7 @@ const AddWord = () => {
               {/* Tags Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Tags:</h4>
+                  <h4>Etiquetas:</h4>
                 </Form.Label>
                 <div className="d-flex flex-wrap gap-2 mb-2">
                   {availableTags.map((tag) => (
@@ -207,13 +207,13 @@ const AddWord = () => {
                   ))}
                 </div>
                 {error && <p className="text-danger">{error}</p>}
-                <small className="text-muted">Click to select/deselect tags</small>
+                <small className="text-muted">Clique para selecionar/deselecionar etiquetas</small>
               </Form.Group>
 
               {/* Rich Text Editor Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Summary:</h4>
+                  <h4>Resumo:</h4>
                 </Form.Label>
                 <div className="border rounded p-2" style={{ minHeight: '200px' }}>
                   <Editor
@@ -238,7 +238,7 @@ const AddWord = () => {
                       link: { inDropdown: true },
                       history: { inDropdown: true },
                     }}
-                    placeholder="Enter your summary here..."
+                    placeholder="Insira seu resumo aqui..."
                   />
                 </div>
               </Form.Group>
@@ -247,7 +247,7 @@ const AddWord = () => {
               <Form.Group className="mb-4">
                 <Form.Check
                   type="checkbox"
-                  label="Generate summary automatically"
+                  label="Gerar resumo automaticamente"
                   checked={formData.autoGenerateSummary}
                   onChange={handleAutoGenerateSummaryChange}
                 />
@@ -256,7 +256,7 @@ const AddWord = () => {
               {/* Star Rating Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Rating:</h4>
+                  <h4> Avaliação:</h4>
                 </Form.Label>
                 <div className="d-flex align-items-center">
                   {[1, 2, 3, 4].map((star) => (
@@ -275,12 +275,12 @@ const AddWord = () => {
               {/* Picture Upload */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h5>Picture:</h5>
+                  <h5>Imagem:</h5>
                 </Form.Label>
                 <div className="d-flex align-items-center gap-3">
                   <Form.Check
                     type="checkbox"
-                    label="Generate image automatically"
+                    label=" Gerar imagem automaticamente"
                     checked={formData.autoGenerateImage}
                     onChange={handleAutoGenerateImageChange}
                   />
@@ -312,7 +312,7 @@ const AddWord = () => {
                 onClick={saveContent}
                 disabled={loading}
               >
-                {loading ? 'Saving...' : 'Save Word'}
+                {loading ? 'Salvando...' : 'Salvar palavra'}
               </Button>
             </Card.Body>
           </Card>

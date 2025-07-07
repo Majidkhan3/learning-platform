@@ -198,24 +198,24 @@ const StoryViewer = () => {
               <h4 className="mb-2">
                 <strong>PT</strong> {story?.title}
               </h4>
-              <p className="mb-1 text-muted">Rating: {story?.rating || 'No rating'}</p>
+              <p className="mb-1 text-muted">Avaliação: {story?.rating || 'Sem Avaliação'}</p>
               <p className="mb-1 text-muted">
                 📅 <strong>{new Date(story?.creationDate).toLocaleDateString()}</strong>
               </p>
               <p className="mb-0 text-muted">
-                <strong>Theme:</strong> {story?.theme}
+                <strong>Tema:</strong> {story?.theme}
               </p>
             </Card.Body>
           </Card>
 
           {/* Voice Configuration */}
           <Card className="mb-4">
-            <Card.Header className="bg-primary text-white">Voice Configuration (Amazon Polly)</Card.Header>
+            <Card.Header className="bg-primary text-white">Configuração de voz (Amazon Polly)</Card.Header>
             <Card.Body>
               <Row>
                 <Col md={6}>
                   <Form.Group>
-                    <Form.Label>Voice for Person A:</Form.Label>
+                    <Form.Label>Voz para a Pessoa A:</Form.Label>
                     <Form.Select value={voiceA} onChange={(e) => setVoiceA(e.target.value)}>
                       {availableVoices.map((voice) => (
                         <option key={voice.id} value={voice.id}>
@@ -227,7 +227,7 @@ const StoryViewer = () => {
                 </Col>
                 <Col md={6}>
                   <Form.Group>
-                    <Form.Label>Voice for Person B:</Form.Label>
+                    <Form.Label>Voz para a Pessoa B:</Form.Label>
                     <Form.Select value={voiceB} onChange={(e) => setVoiceB(e.target.value)}>
                       {availableVoices.map((voice) => (
                         <option key={voice.id} value={voice.id}>
@@ -253,7 +253,7 @@ const StoryViewer = () => {
                   {dialogue.a && (
                     <Col md={6}>
                       <div className="d-flex align-items-center justify-content-between">
-                        <strong>🧍 Person A</strong>
+                        <strong>🧍 Pessoa  A</strong>
                         <button className="btn btn-link" onClick={() => speakSingle(dialogue.a, voiceA)} disabled={isSpeaking} title="Read this text">
                           <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                         </button>
@@ -264,7 +264,7 @@ const StoryViewer = () => {
                   {dialogue.b && (
                     <Col md={6}>
                       <div className="d-flex align-items-center justify-content-between">
-                        <strong>🧑 Person B</strong>
+                        <strong>🧑 Pessoa  B</strong>
                         <button className="btn btn-link" onClick={() => speakSingle(dialogue.b, voiceB)} disabled={isSpeaking} title="Read this text">
                           <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                         </button>

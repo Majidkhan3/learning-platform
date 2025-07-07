@@ -14,7 +14,7 @@ export const metadata = {
 const CustomerPage = () => {
   return (
     <>
-      <PageTitle title="Add a new word" subName="Dashboards" />
+      <PageTitle title="Adicionar uma nova palavra" subName="Dashboards" />
       <Row className="mb-4">
         <Col xs={12}>
           <AddWord />

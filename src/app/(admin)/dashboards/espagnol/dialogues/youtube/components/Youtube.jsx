@@ -57,14 +57,14 @@ const Youtube = () => {
 
   return (
     <>
-      <h2 className="mb-4">Generate dialogues from YouTube</h2>
+      <h2 className="mb-4">Generar diálogos desde YouTube</h2>
 
       <Card className="mb-4">
-        <Card.Header className="bg-light fw-bold">Enter a YouTube URL</Card.Header>
+        <Card.Header className="bg-light fw-bold">Ingresa una URL de YouTube</Card.Header>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>YouTube video URL (in Spanish)</Form.Label>
+              <Form.Label>URL del video de YouTube (en español)</Form.Label>
               <Form.Control
                 type="url"
                 placeholder="https://www.youtube.com/watch?v=..."
@@ -72,7 +72,7 @@ const Youtube = () => {
                 onChange={(e) => setUrl(e.target.value)}
               />
               <small className="text-muted">
-                Dialogues will be generated using Claude (Anthropic)
+                Los diálogos se generarán usando Claude (Anthropic)
               </small>
             </Form.Group>
 
@@ -85,7 +85,7 @@ const Youtube = () => {
                   {' '}Generating...
                 </>
               ) : (
-                'Extract and generate dialogs'
+                'Extraer y generar diálogos'
               )}
             </Button>
           </Form>
@@ -94,17 +94,17 @@ const Youtube = () => {
 
       {dialogues && (
         <Card className="mt-4">
-          <Card.Header className="bg-light fw-bold">Generated Dialogues</Card.Header>
+          <Card.Header className="bg-light fw-bold">Diálogos generados</Card.Header>
           <Card.Body>
             <div className="mb-3">
-              <strong>Dialogue:</strong> <pre>{dialogues}</pre>
+              <strong>Diálogo:</strong> <pre>{dialogues}</pre>
             </div>
           </Card.Body>
         </Card>
       )}
 
       <Button variant="secondary" onClick={() => router.push('/dashboards/espagnol/dialogues')}>
-        ⬅ Return to the list of dialogues
+        ⬅  Volver a la lista de diálogos
       </Button>
     </>
   );

@@ -235,7 +235,7 @@ const handleKeyPress = useCallback((e) => {
     return (
       <Col className="text-center w-full justify-center py-5">
         <Icon icon="eos-icons:loading" className="text-primary" width="50" height="50" spin />
-        <p className="text-muted">Loading FlashCards...</p>
+        <p className="text-muted">Carregando flashcards...</p>
       </Col>
     )
   if (error) return <div className="text-center text-danger">{error}</div>
@@ -250,7 +250,7 @@ const handleKeyPress = useCallback((e) => {
       <div className="flashcard-container" style={{ width: '400px' }}>
         <div className="text-center mb-2">
           <small>
-            Card {currentIndex} of {cards.length}
+            Cartão {currentIndex} of {cards.length}
           </small>
         </div>
 
@@ -262,7 +262,7 @@ const handleKeyPress = useCallback((e) => {
                 <Card.Title className="text-center mb-4">{currentCard?.word}</Card.Title>
                 <div className="mt-auto">
                   <div className="text-center mb-3">
-                    <small>Tap to reveal content</small>
+                    <small>Toque para revelar o conteúdo</small>
                   </div>
                 </div>
               </Card.Body>
@@ -435,7 +435,7 @@ const handleKeyPress = useCallback((e) => {
                 {/* Synonyms Accordion */}
                 <Accordion defaultActiveKey="0" className="mb-3">
                   <Accordion.Item eventKey="0">
-                    <Accordion.Header>Tags</Accordion.Header>
+                    <Accordion.Header>Etiquetas</Accordion.Header>
                     <Accordion.Body>
                       <ListGroup variant="flush">
                         {currentCard?.tags.map((tag, idx) => (
@@ -454,7 +454,7 @@ const handleKeyPress = useCallback((e) => {
                       e.stopPropagation() // Prevent triggering the tap handler
                       toggleFlip()
                     }}>
-                    Flip Card
+                    Virar cartão
                   </Button>
                 </div>
               </Card.Body>
@@ -476,7 +476,7 @@ const handleKeyPress = useCallback((e) => {
               goToCard(currentIndex - 1)
             }}
             disabled={currentIndex <= 1}>
-            ← Previous
+            ← Anterior
           </Button>
           <Button
             variant="outline-secondary"
@@ -485,7 +485,7 @@ const handleKeyPress = useCallback((e) => {
               goToCard(currentIndex + 1)
             }}
             disabled={currentIndex >= cards.length}>
-            Next →
+            Próximo →
           </Button>
         </Stack>
       </div>
