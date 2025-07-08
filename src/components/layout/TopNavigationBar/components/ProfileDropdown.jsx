@@ -10,28 +10,36 @@ import { Dropdown, DropdownHeader, DropdownItem, DropdownMenu, DropdownToggle } 
 
 
 const ProfileDropdown = () => {
-   const router = useRouter(); 
-    const auth = useAuth()
+  const router = useRouter();
+  const auth = useAuth()
   const user = auth?.user
-   if (!user) return null
-   const hasAccess = (language) => {
-  return user?.languages?.includes(language)
-}
-
-   const handleLanguageClick = (route, access) => {
-  if (hasAccess(access)) {
-    router.push(route)
-  } else {
-    alert("You don't have access to this language dashboard.")
+  if (!user) return null
+  const hasAccess = (language) => {
+    return user?.languages?.includes(language)
   }
-}
+
+  const handleLanguageClick = (route, access) => {
+    if (hasAccess(access)) {
+      router.push(route)
+    } else {
+      alert("You don't have access to this language dashboard.")
+    }
+  }
 
   const languageOptions = [
-  { title: 'Espagnol', route: '/dashboards/espagnol', access: 'Espagnol' },
-  { title: 'Portugais', route: '/dashboards/portugais', access: 'Portuguese' },
-  { title: 'French', route: '/dashboards/french', access: 'French' },
-  { title: 'English', route: '/dashboards/english', access: 'English' },
-]
+    { title: 'Espagnol', route: '/dashboards/espagnol', access: 'Espagnol' },
+    { title: 'Portugais', route: '/dashboards/portugais', access: 'Portuguese' },
+    { title: 'French', route: '/dashboards/french', access: 'French' },
+    { title: 'English', route: '/dashboards/english', access: 'English' },
+  ]
+  const languageIcons = {
+    Espagnol: 'mdi:translate',              // Generic translation icon
+    Portugais: 'mdi:alphabet-latin',        // Latin alphabet (used in Portuguese)
+    French: 'mdi:book-open-page-variant',   // Book icon for French (literature, language)
+    English: 'mdi:book-education-outline',
+  }
+
+
 
   return (
     <Dropdown className="topbar-item" drop="down">
@@ -51,23 +59,12 @@ const ProfileDropdown = () => {
         <DropdownHeader as={'h6'} className="dropdown-header">
           Welcome Gaston!
         </DropdownHeader>
-        {/* <DropdownItem as={Link} href="/profile">
-          <IconifyIcon icon="solar:calendar-broken" className="align-middle me-2 fs-18" />
-          <span className="align-middle">My Schedules</span>
-        </DropdownItem>
-        <DropdownItem as={Link} href="/pages/pricing">
-          <IconifyIcon icon="solar:wallet-broken" className="align-middle me-2 fs-18" />
-          <span className="align-middle">Pricing</span>
-        </DropdownItem>
-        <DropdownItem as={Link} href="/support/faqs">
-          <IconifyIcon icon="solar:help-broken" className="align-middle me-2 fs-18" />
-          <span className="align-middle">Help</span>
-        </DropdownItem>
-        <DropdownItem as={Link} href="/auth/lock-screen">
-          <IconifyIcon icon="solar:lock-keyhole-broken" className="align-middle me-2 fs-18" />
-          <span className="align-middle">Lock screen</span>
-        </DropdownItem> */}
         <div className="dropdown-divider my-1" />
+        <DropdownItem onClick={() => router.push('/admin')}>
+          <IconifyIcon icon="mdi:view-dashboard-outline" className="align-middle me-2 fs-18" />
+          <span className="align-middle">Admin</span>
+        </DropdownItem>
+
         <DropdownItem
           className="text-danger"
           onClick={(event) => {
@@ -85,21 +82,23 @@ const ProfileDropdown = () => {
           <IconifyIcon icon="solar:logout-3-broken" className="align-middle me-2 fs-18" />
           <span className="align-middle">Logout</span>
         </DropdownItem>
+        <div className="dropdown-divider my-1" />
         {languageOptions.map(({ title, route, access }) => {
-  const accessGranted = hasAccess(access)
-  return (
-    <DropdownItem
-      key={title}
-      onClick={() => handleLanguageClick(route, access)}
-      style={{
-        opacity: accessGranted ? 1 : 0.5,
-        cursor: accessGranted ? 'pointer' : 'not-allowed'
-      }}
-    >
-      <span className="align-middle">{title}</span>
-    </DropdownItem>
-  )
-})}
+          const accessGranted = hasAccess(access)
+          return (
+            <DropdownItem
+              key={title}
+              onClick={() => handleLanguageClick(route, access)}
+              style={{
+                opacity: accessGranted ? 1 : 0.5,
+                cursor: accessGranted ? 'pointer' : 'not-allowed'
+              }}
+            >
+              <IconifyIcon icon={languageIcons[title]} className="me-2" width={18} />
+              <span className="align-middle">{title}</span>
+            </DropdownItem>
+          )
+        })}
 
       </DropdownMenu>
     </Dropdown>

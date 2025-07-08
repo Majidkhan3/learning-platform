@@ -182,7 +182,7 @@ const CreateStory = () => {
 
             <Alert variant="info">
               <Icon icon="mdi:information" className="me-2" />
-              The story will contain two dialogues in Portugais using words from your vocabulary. The system will attempt to use up to 75 words while
+              The story will contain two dialogues in English using words from your vocabulary. The system will attempt to use up to 75 words while
               creating a coherent story.
             </Alert>
 

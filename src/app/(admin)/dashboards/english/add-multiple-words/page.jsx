@@ -192,7 +192,7 @@ export default function AddWordsPage() {
           <Card className="mt-3">
             <Card.Body>
               <h5>Bulk Add Form</h5>
-              <p className="text-muted">Add multiple Portugaise words at once</p>
+              <p className="text-muted">Add multiple English words at once</p>
 
               {error && <Alert variant="danger">{error}</Alert>}
               {successMessage && <Alert variant="success">{successMessage}</Alert>}
@@ -204,7 +204,7 @@ export default function AddWordsPage() {
                     <Form.Control
                       as="textarea"
                       rows={8}
-                      placeholder="Example: casa&#10;perro&#10;gato&#10;libro"
+                      placeholder="Example: house&#10;dog&#10;cat&#10;book"
                       value={words}
                       onChange={(e) => setWords(e.target.value)}
                     />
