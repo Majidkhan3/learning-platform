@@ -70,14 +70,16 @@ const Table = ({ loading, words, selectedVoice }) => {
     setCurrentPage(1)
   }
 
-  const handleSort = (order) => {
-    const sortedData = [...filteredData].sort((a, b) => {
-      return order === 'asc' 
-        ? a.word.localeCompare(b.word) 
-        : b.word.localeCompare(a.word)
-    })
-    setFilteredData(sortedData)
-  }
+ const handleSort = (order) => {
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (order === 'date-desc') {
+      return new Date(b.createdAt || b.dateAdded || 0) - new Date(a.createdAt || a.dateAdded || 0) // Newest first
+    } else if (order === 'date-asc') {
+      return new Date(a.createdAt || a.dateAdded || 0) - new Date(b.createdAt || b.dateAdded || 0) // Oldest first
+    }
+  })
+  setFilteredData(sortedData)
+}
 
   const handleDelete = async (id) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce mot ?')) return
@@ -149,8 +151,9 @@ const Table = ({ loading, words, selectedVoice }) => {
                   Trier <IconifyIcon className="ms-1" width={16} height={16} icon="ri:arrow-down-s-line" />
                 </DropdownToggle>
                 <DropdownMenu className="dropdown-menu-end">
-                  <DropdownItem onClick={() => handleSort('asc')}>A à Z</DropdownItem>
-                  <DropdownItem onClick={() => handleSort('desc')}>Z à A</DropdownItem>
+                <DropdownItem onClick={() => handleSort('date-desc')}>Le plus récent en premier</DropdownItem>
+                 <DropdownItem onClick={() => handleSort('date-asc')}>Le plus ancien en premier</DropdownItem>
+                 
                 </DropdownMenu>
               </Dropdown>
             </div>
