@@ -189,11 +189,11 @@ export default function AddWordsPage() {
     <Row>
       <Col lg={12}>
         <Container className="mt-4" fluid>
-          <h2>➕ Add multiple words</h2>
+          <h2>➕  Adicionar várias palavras</h2>
           <Card className="mt-3">
             <Card.Body>
-              <h5>Bulk Add Form</h5>
-              <p className="text-muted">Add multiple Portugaise words at once</p>
+              <h5>Formulário de adição em massa</h5>
+              <p className="text-muted">Adicionar várias palavras em português de uma vez</p>
 
               {error && <Alert variant="danger">{error}</Alert>}
               {successMessage && <Alert variant="success">{successMessage}</Alert>}
@@ -201,11 +201,11 @@ export default function AddWordsPage() {
               <Row>
                 <Col md={8}>
                   <Form.Group controlId="wordList">
-                    <Form.Label>Enter one word per line:</Form.Label>
+                    <Form.Label>Insira uma palavra por linha:</Form.Label>
                     <Form.Control
                       as="textarea"
                       rows={8}
-                      placeholder="Example: casa&#10;perro&#10;gato&#10;libro"
+                      placeholder="exemplo: casa&#10;perro&#10;gato&#10;libro"
                       value={words}
                       onChange={(e) => setWords(e.target.value)}
                     />
@@ -213,7 +213,7 @@ export default function AddWordsPage() {
                 </Col>
                 <Col md={4}>
                   <Form.Group controlId="tags">
-                    <Form.Label>Tags (select one or more):</Form.Label>
+                    <Form.Label>Etiquetas (selecione uma ou mais):</Form.Label>
                     {fetchingTags ? (
                       <Spinner animation="border" size="sm" />
                     ) : (
@@ -225,24 +225,24 @@ export default function AddWordsPage() {
                         ))}
                       </Form.Control>
                     )}
-                    <Form.Text muted>Hold Ctrl (or Cmd) to select multiple tags</Form.Text>
+                    <Form.Text muted>Mantenha pressionado Ctrl (ou Cmd) para selecionar várias etiquetas</Form.Text>
 
                     <div className="mt-3">
                       <Form.Check
                         type="checkbox"
-                        label="Automatically generate the image"
+                        label="Gerar a imagem automaticamente"
                         checked={autoGenerateImage}
                         onChange={(e) => setAutoGenerateImage(e.target.checked)}
                       />
                       <Form.Check
                         type="checkbox"
-                        label="Automatically generate the summary"
+                        label=" Gerar o resumo automaticamente"
                         checked={autoGenerateSummary}
                         onChange={(e) => setAutoGenerateSummary(e.target.checked)}
                       />
                       <Form.Check
                         type="checkbox"
-                        label="Automatically ignore existing words"
+                        label="Ignorar automaticamente as palavras existentes"
                         checked={ignoreExisting}
                         onChange={(e) => setIgnoreExisting(e.target.checked)}
                       />
@@ -253,7 +253,7 @@ export default function AddWordsPage() {
 
               <Row className="mt-4">
                 <Col>
-                  <h5>Set Star Ratings for Words</h5>
+                  <h5>Definir classificações por estrelas para as palavras</h5>
                   {words
                     .split('\n')
                     .map((word) => word.trim())
@@ -277,10 +277,10 @@ export default function AddWordsPage() {
 
               <div className="mt-4 d-flex justify-content-between">
                 <Button variant="primary" onClick={handleCheckDuplicates} disabled={loading}>
-                  🔍 Check for duplicates
+                  🔍  Verificar duplicatas
                 </Button>
                 <Button variant="success" onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Submitting...' : '✅ Add the words'}
+                  {loading ? 'Enviando...' : '✅  Adicionar as palavras'}
                 </Button>
               </div>
             </Card.Body>

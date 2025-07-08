@@ -165,7 +165,7 @@ const EditEspagnol = ({ params }) => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Chargement...</div>;
   }
 
   return (
@@ -174,12 +174,12 @@ const EditEspagnol = ({ params }) => {
         <Col xl={12}>
           <Card>
             <Card.Body>
-              <h2 className="mb-4">Edit Word</h2>
+              <h2 className="mb-4"> Modifier le mot</h2>
 
               {/* Word Input Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Word:</h4>
+                  <h4> Mot:</h4>
                 </Form.Label>
                 <Form.Control
                   type="text"
@@ -192,7 +192,7 @@ const EditEspagnol = ({ params }) => {
               {/* Tags Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Tags:</h4>
+                  <h4>Étiquettes:</h4>
                 </Form.Label>
                 <div className="d-flex flex-wrap gap-2 mb-2">
                   {availableTags.map((tag) => (
@@ -210,27 +210,27 @@ const EditEspagnol = ({ params }) => {
                   ))}
                 </div>
                 {error && <p className="text-danger">{error}</p>}
-                <small className="text-muted">Click to select/deselect tags</small>
+                <small className="text-muted">Cliquez pour sélectionner/désélectionner des étiquettes</small>
               </Form.Group>
 
               {/* Summary Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Summary:</h4>
+                  <h4>Résumé:</h4>
                 </Form.Label>
                 <Form.Control
                   as="textarea"
                   rows={5}
                   value={formData.summary}
                   onChange={handleSummaryChange}
-                  placeholder="Enter your summary here..."
+                  placeholder="Entrez votre résumé ici..."
                 />
               </Form.Group>
 
               {/* Star Rating Section */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4>Rating:</h4>
+                  <h4>Note:</h4>
                 </Form.Label>
                 <div className="d-flex align-items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -249,12 +249,12 @@ const EditEspagnol = ({ params }) => {
               {/* Picture Upload */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h5>Picture:</h5>
+                  <h5>Image :</h5>
                 </Form.Label>
                 <div className="d-flex align-items-center gap-3">
                   <Form.Check
                     type="checkbox"
-                    label="Generate image automatically"
+                    label="Générer une image automatiquement"
                     checked={formData.autoGenerateImage}
                     onChange={handleAutoGenerateImageChange}
                   />
@@ -286,7 +286,7 @@ const EditEspagnol = ({ params }) => {
                 onClick={saveContent}
                 disabled={loading}
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {loading ? 'Enregistrement...' : 'Enregistrer les modifications'}
               </Button>
             </Card.Body>
           </Card>

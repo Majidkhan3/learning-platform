@@ -232,6 +232,6 @@ ${originalText.substring(0, 500)}...
 Diálogos generados:
 ${dialogues.substring(0, 300)}...
 
-Por favor, responda únicamente con el título, sin puntuación ni comillas. El título debe estar en inglés y reflejar la esencia del contenido.
+Por favor, responda únicamente con el título, sin puntuación ni comillas. El título debe estar en spanish y reflejar la esencia del contenido.
 `
 }

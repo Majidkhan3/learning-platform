@@ -103,15 +103,15 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
       <table className="table align-middle text-nowrap table-hover table-centered border-bottom mb-0">
         <thead className="bg-light-subtle">
           <tr>
-            <th>Word</th>
-            <th>Sound</th>
-            <th>Tags</th>
-            <th>Rating</th>
-            <th>Synthesis</th>
-            <th>Picture</th>
+            <th>Palavra</th>
+            <th>Som</th>
+            <th>Etiquetas</th>
+            <th>Avaliação</th>
+            <th>Síntese</th>
+            <th>Imagem</th>
             <th>Youglish</th>
-            <th>Edit</th>
-            <th>Actions</th>
+            <th>Editar</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>

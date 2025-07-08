@@ -332,10 +332,10 @@ const CardText = () => {
                           placeholder="Dialogue title"
                         />
                         <Button variant="success" size="sm" onClick={() => handleTitleSave(dialogue._id)} disabled={savingTitle}>
-                          {savingTitle ? <Spinner size="sm" animation="border" /> : 'Save'}
+                          {savingTitle ? <Spinner size="sm" animation="border" /> : ' Enregistrer'}
                         </Button>
                         <Button variant="secondary" size="sm" onClick={handleTitleCancel} disabled={savingTitle}>
-                          Cancel
+                           Annuler
                         </Button>
                       </div>
                     ) : (

@@ -111,7 +111,7 @@ const Table = ({ loading, words, selectedVoice }) => {
             <div className="d-flex align-items-center">
               <InputGroup size="sm" className="me-2" style={{ width: '200px' }}>
                 <Form.Control
-                  placeholder="Search words..."
+                  placeholder="Pesquisar palavras.."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -136,7 +136,7 @@ const Table = ({ loading, words, selectedVoice }) => {
                   className="btn btn-sm btn-outline-light rounded content-none icons-center"
                   data-bs-toggle="dropdown"
                   aria-expanded="false">
-                  Sort <IconifyIcon className="ms-1" width={16} height={16} icon="ri:arrow-down-s-line" />
+                 Ordenar<IconifyIcon className="ms-1" width={16} height={16} icon="ri:arrow-down-s-line" />
                 </DropdownToggle>
                 <DropdownMenu className="dropdown-menu-end">
                   <DropdownItem onClick={() => handleSort('asc')}>A to Z</DropdownItem>
@@ -155,7 +155,7 @@ const Table = ({ loading, words, selectedVoice }) => {
               <ul className="pagination justify-content-end mb-0">
                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                   <Button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                    Previous
+                    Anterior
                   </Button>
                 </li>
                 {Array.from({ length: totalPages }, (_, idx) => (
@@ -167,7 +167,7 @@ const Table = ({ loading, words, selectedVoice }) => {
                 ))}
                 <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
                   <Button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                    Next
+                    Próximo
                   </Button>
                 </li>
               </ul>

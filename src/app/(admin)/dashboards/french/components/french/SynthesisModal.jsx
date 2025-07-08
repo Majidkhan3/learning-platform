@@ -103,14 +103,14 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
       <table className="table align-middle text-nowrap table-hover table-centered border-bottom mb-0">
         <thead className="bg-light-subtle">
           <tr>
-            <th>Word</th>
-            <th>Sound</th>
-            <th>Tags</th>
-            <th>Rating</th>
-            <th>Synthesis</th>
-            <th>Picture</th>
+            <th>Mot</th>
+            <th>Son</th>
+            <th>Étiquettes</th>
+            <th>Note</th>
+            <th>Synthèse</th>
+            <th>Image</th>
             <th>Youglish</th>
-            <th>Edit</th>
+            <th>Modifier</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -118,7 +118,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
           {loading ? (
             <tr>
               <td colSpan="8" className="text-center">
-                Loading...
+                Chargement...
               </td>
             </tr>
           ) : (

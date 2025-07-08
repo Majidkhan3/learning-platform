@@ -109,18 +109,18 @@ const AddTags = () => {
               <Link href="/" className="me-3">
                 <Icon icon="mdi:arrow-left" width={20} />
               </Link>
-              <h4 className="mb-0">Tag Management</h4>
+              <h4 className="mb-0"> Gestión de etiquetas</h4>
             </div>
 
             {/* Add New Tag Section */}
             <div className="mb-4">
-              <h5>Add a new tag</h5>
+              <h5>Agregar una nueva etiqueta</h5>
               <Form.Group className="mb-3">
-                <Form.Label>Name of the new tag</Form.Label>
+                <Form.Label>Nombre de la nueva etiquetas</Form.Label>
                 <div className="d-flex">
-                  <Form.Control type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} placeholder="Enter tag name" />
+                  <Form.Control type="text" value={newTagName} onChange={(e) => setNewTagName(e.target.value)} placeholder=" Ingresa el nombre de la etiqueta" />
                   <Button variant="primary" style={{ width: '20%' }} className="ms-2" onClick={handleAddTag}>
-                    + Add
+                    + Agregar
                   </Button>
                 </div>
                 {error && <p className="text-danger mt-2">{error}</p>}
@@ -129,14 +129,14 @@ const AddTags = () => {
 
             {/* Existing Tags Section */}
             <div>
-              <h5>Existing tags</h5>
+              <h5> Etiquetas existentes</h5>
               <ListGroup>
                 {tags.map((tag, index) => (
                   <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
                     <span>{tag.name}</span>
                     <div className="d-flex align-items-center">
                       <Badge bg="light" text="dark" className="me-2">
-                        {tag.count} word{tag.count !== 1 ? 's' : ''}
+                        {tag.count} palabras{tag.count !== 1 ? 's' : ''}
                       </Badge>
                       <Button variant="link" className="text-danger p-0" onClick={() => handleDeleteTag(tag.name)} aria-label="Delete tag">
                         <Icon icon="mdi:trash-outline" width={20} />

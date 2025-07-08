@@ -97,18 +97,18 @@ const CreateStory = () => {
     <Container className="py-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>
-          <strong>ES</strong> Create a Story
+          <strong>PT</strong> Criar uma história
         </h2>
         <Button variant="outline-primary" onClick={() => router.push('/dashboards/portugais/story')}>
           <Icon icon="mdi:arrow-left" className="me-2" />
-          Back to stories
+          Voltar para as histórias
         </Button>
       </div>
 
       <Card>
         <Card.Body>
-          <h4 className="mb-3">Story Settings</h4>
-          <p className="text-muted mb-4">Define the criteria to generate a story with 2 dialogues in Portugais</p>
+          <h4 className="mb-3">Configurações da história</h4>
+          <p className="text-muted mb-4"> Defina os critérios para gerar uma história com 2 diálogos em português</p>
 
           <Form onSubmit={handleSubmit}>
             {/* <Form.Group className="mb-3">
@@ -125,7 +125,7 @@ const CreateStory = () => {
             </Form.Group> */}
 
             <Form.Group className="mb-3">
-              <Form.Label>Select tags (optional)</Form.Label>
+              <Form.Label> Selecione etiquetas (opcional)</Form.Label>
               <Form.Control as="select" multiple onChange={handleTagChange}>
                 {tags.map((tag) => (
                   <option key={tag._id} value={tag.name}>
@@ -133,11 +133,11 @@ const CreateStory = () => {
                   </option>
                 ))}
               </Form.Control>
-              <Form.Text className="text-muted">Select one or more tags to filter the words to use</Form.Text>
+              <Form.Text className="text-muted"> Selecione uma ou mais etiquetas para filtrar as palavras a serem usadas</Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Difficulty level (optional)</Form.Label>
+              <Form.Label>Nível de dificuldade (opcional)</Form.Label>
               <div>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Icon
@@ -149,32 +149,32 @@ const CreateStory = () => {
                   />
                 ))}
               </div>
-              <Form.Text className="text-muted">Select the difficulty level to filter words</Form.Text>
+              <Form.Text className="text-muted">Selecione o nível de dificuldade para filtrar as palavras</Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Theme of the story</Form.Label>
+              <Form.Label> Tema da história</Form.Label>
               <Form.Control
                 as="textarea"
-                placeholder="Ex: A trip to South America, a conversation in a restaurant, etc."
+                placeholder=" Ex: Uma viagem à América do Sul, uma conversa em um restaurante, etc."
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
               />
-              <Form.Text className="text-muted">Provide details on the desired theme for the story</Form.Text>
+              <Form.Text className="text-muted">Forneça detalhes sobre o tema desejado para a história</Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>
-                Words (comma-separated) <span className="text-danger">*</span>
+                Palavras (separadas por vírgulas) <span className="text-danger">*</span>
               </Form.Label>
               <Form.Control
                 type="text"
-                placeholder="e.g., breakfast, coffee, meeting"
+                placeholder=" ex.: café da manhã, café, reunião"
                 value={words}
                 onChange={(e) => setWords(e.target.value)}
                 required
               />
-              <Form.Text className="text-muted">Enter words to be used in the story, separated by commas</Form.Text>
+              <Form.Text className="text-muted"> Insira as palavras a serem usadas na história, separadas por vírgulas</Form.Text>
             </Form.Group>
 
             {error && <Alert variant="danger">{error}</Alert>}
@@ -182,8 +182,7 @@ const CreateStory = () => {
 
             <Alert variant="info">
               <Icon icon="mdi:information" className="me-2" />
-              The story will contain two dialogues in Portugais using words from your vocabulary. The system will attempt to use up to 75 words while
-              creating a coherent story.
+              A história conterá dois diálogos em português usando palavras do seu vocabulário. O sistema tentará usar até 75 palavras ao criar uma história coerente.
             </Alert>
 
             <div className="text-end">
@@ -191,12 +190,12 @@ const CreateStory = () => {
                 {loading ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />
-                    Generating...
+                    Gerando...
                   </>
                 ) : (
                   <>
                     <Icon icon="mdi:pencil" className="me-2" />
-                    Generate the story
+                    Gerar a história
                   </>
                 )}
               </Button>
