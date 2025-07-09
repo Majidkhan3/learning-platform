@@ -82,7 +82,7 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
             className="cursor-pointer"
             onClick={() => handleTagChange('All')}
             style={{ cursor: 'pointer' }}>
-            All
+            Todas
           </Badge>
           {/* Render tags dynamically */}
           {tags.map((tag) => (
