@@ -238,16 +238,16 @@ const CardText = () => {
       {/* <PageTitle title="Gestionnaire de Dialogues" /> */}
       <div className="mb-4">
         <Link href="/dashboards/espagnol/dialogues/youtube">
-          <Button variant="primary">Utiliser une vidéo YouTube</Button>
+          <Button variant="primary">Usar un video de YouTube</Button>
         </Link>
       </div>
 
       <Card className="mb-4">
-        <Card.Header className="bg-light fw-bold">Envoyer un fichier PDF</Card.Header>
+        <Card.Header className="bg-light fw-bold">	Enviar un archivo PDF</Card.Header>
         <Card.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group controlId="formFile" className="mb-3">
-              <Form.Label>Fichier PDF (podcast en espagnol)</Form.Label>
+              <Form.Label>Archivo PDF (podcast en español)</Form.Label>
               <Form.Control
                 id="file-upload"
                 type="file"
@@ -256,22 +256,22 @@ const CardText = () => {
                 className="hidden"
                 disabled={isProcessing || loading}
               />
-              <small className="text-muted">Les dialogues seront générés en utilisant Claude (Anthropic)</small>
+              <small className="text-muted">Los diálogos se generarán usando Claude (Anthropic)</small>
             </Form.Group>
             {isProcessing && (
               <div className="d-flex align-items-center mb-3">
                 <Spinner size="sm" animation="border" className="me-2" />
-                <span>Traitement du PDF...</span>
+                <span>Procesando el PDF...</span>
               </div>
             )}
             <Button variant="primary" type="submit" disabled={loading || isProcessing || !extractedText.trim()}>
               {loading ? (
                 <>
                   <Spinner size="sm" animation="border" as="span" role="status" aria-hidden="true" />
-                  <span className="ms-1">Génération en cours...</span>
+                  <span className="ms-1">	Generando...</span>
                 </>
               ) : (
-                'Envoyer et générer des dialogues'
+                'Enviar y generar diálogos'
               )}
             </Button>
           </Form>
@@ -281,7 +281,7 @@ const CardText = () => {
       {/* Display generated dialogues (which is a single string) */}
       {generatedDialogues && (
         <Card className="mb-4">
-          <Card.Header className="bg-success text-white">Dialogues générés</Card.Header>
+          <Card.Header className="bg-success text-white">Diálogos generados</Card.Header>
           <Card.Body style={{ maxHeight: '300px', overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
             {/* If generatedDialogues is a single string, display it directly */}
             <p>{generatedDialogues}</p>
@@ -295,7 +295,7 @@ const CardText = () => {
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
           className="mb-3 w-auto"
-          aria-label="Trier les dialogues">
+          aria-label="	Ordenar los diálogos">
           <option value="newest">Del más nuevo al más antiguo</option>
           <option value="oldest">Del más antiguo al más nuevo</option>
         </Form.Select>
@@ -329,13 +329,13 @@ const CardText = () => {
                         autoFocus
                         size="sm"
                         maxLength={50}
-                        placeholder="Titre du dialogue"
+                        placeholder="Título del diálogo"
                       />
                       <Button variant="success" size="sm" onClick={() => handleTitleSave(dialogue._id)} disabled={savingTitle}>
-                        {savingTitle ? <Spinner size="sm" animation="border" /> : 'Sauver'}
+                        {savingTitle ? <Spinner size="sm" animation="border" /> : 'Guardar'}
                       </Button>
                       <Button variant="secondary" size="sm" onClick={handleTitleCancel} disabled={savingTitle}>
-                        Annuler
+                        Cancelar
                       </Button>
                     </div>
                   ) : (
@@ -354,12 +354,12 @@ const CardText = () => {
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent'
                       }}
-                      title="Double-cliquez pour modifier le titre">
+                      title="	Haz doble clic para editar el título">
                       <strong>{dialogue.title || 'Source inconnue'}</strong>
                     </p>
                   )}
                 </div>
-                <p className="text-muted small">Ajouté le: {new Date(dialogue.createdAt).toLocaleString()}</p>
+                <p className="text-muted small"> Agregado el: {new Date(dialogue.createdAt).toLocaleString()}</p>
                 <div className="d-flex gap-2">
                   <Link href={`/dashboards/espagnol/dialogues/view/${dialogue._id}`}>
                     <Button variant="outline-primary" size="sm">
@@ -367,14 +367,14 @@ const CardText = () => {
                     </Button>
                   </Link>
                   <Button variant="outline-danger" size="sm" onClick={(e) => handleDelete(dialogue._id, e)}>
-                    Supprimer
+                    Eliminar
                   </Button>
                 </div>
               </Card.Body>
             </Card>
           ))
       ) : (
-        <p>Aucun dialogue trouvé.</p>
+        <p>No se encontraron diálogos.</p>
       )}
     </>
   )

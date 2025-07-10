@@ -21,7 +21,7 @@ const {showNotification} = useNotificationContext()
 
     if (adminToken && admin) {
       // Redirect to /admin/home if authenticated
-      router.push("/admin/dashboard");
+      router.push("/admin/users");
     }
   }, [router]);
 
@@ -47,7 +47,7 @@ const {showNotification} = useNotificationContext()
         localStorage.setItem("admin", JSON.stringify(data.user));
         console.log("Admin data stored in localStorage:", data.isAdmin);
         
-        router.push("/admin/dashboard/users"); // Redirect to /admin/dashboard/home
+        router.push("/admin/users"); // Redirect to /admin/dashboard/home
         showNotification({
             message: 'Successfully logged in. Redirecting....',
             variant: 'success',
@@ -73,10 +73,10 @@ const {showNotification} = useNotificationContext()
           {error && <Alert variant="danger">{error}</Alert>}
           <Form onSubmit={handleLogin}>
             <Form.Group controlId="formUsername" className="mb-3">
-              <Form.Label>Username</Form.Label>
+              <Form.Label>Email address</Form.Label>
               <Form.Control
-                type="text"
-                placeholder="Enter username"
+                type="email"
+                placeholder="Enter email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required

@@ -27,7 +27,7 @@ export async function POST(req) {
     console.log('Password is valid')
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '30m',
+      expiresIn: '4d',
     })
     console.log('Token generated:', token)
 

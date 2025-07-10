@@ -215,7 +215,7 @@ const speak = async (text, voiceLabel) => {
       </h3>
 
       <Card className="mb-4">
-        <Card.Header className="bg-primary text-white">Configuration de la synthèse vocale (Amazon Polly)</Card.Header>
+        <Card.Header className="bg-primary text-white">Configuración de la síntesis de voz (Amazon Polly)</Card.Header>
         <Card.Body>
           <Row>
             <Col md={6}>
@@ -256,7 +256,7 @@ const speak = async (text, voiceLabel) => {
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
                   <strong>🧍 Personne A</strong>
-                  <Button variant="link" onClick={() => speak(conv.a, voiceA)} disabled={isSpeaking} title="Lire ce texte">
+                  <Button variant="link" onClick={() => speak(conv.a, voiceA)} disabled={isSpeaking} title="Leer este texto">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
                 </div>
@@ -265,7 +265,7 @@ const speak = async (text, voiceLabel) => {
               <Col md={6}>
                 <div className="d-flex align-items-center justify-content-between">
                   <strong>🧑 Personne B</strong>
-                  <Button variant="link" onClick={() => speak(conv.b, voiceB)} disabled={isSpeaking} title="Lire ce texte">
+                  <Button variant="link" onClick={() => speak(conv.b, voiceB)} disabled={isSpeaking} title="Leer este texto">
                     <IconifyIcon icon="ri:volume-up-line" className="align-middle fs-18" />
                   </Button>
                 </div>

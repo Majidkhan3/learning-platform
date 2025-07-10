@@ -99,7 +99,8 @@ export async function GET(req) {
     const voices = AVAILABLE_VOICES[language].map((voiceId) => ({
       id: voiceId,
       name: voiceId,
-      gender: ['Lucia', 'Conchita', 'Léa', 'Céline', 'Joanna', 'Salli', 'Camila', 'Vitória'].includes(voiceId) ? 'Female' : 'Male',
+      gender: ['Lucia', 'Conchita', 'Lea', 'Celine', 'Joanna', 'Salli', 'Camila', 'Vitoria'].includes(voiceId) ? 'Female' : 'Male',
+
     }))
     return NextResponse.json(voices)
   } else {

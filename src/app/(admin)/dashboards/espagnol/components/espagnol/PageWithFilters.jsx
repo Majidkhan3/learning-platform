@@ -65,7 +65,7 @@ const PageWithFilters = () => {
 
   const fetchVoices = async () => {
     try {
-      const res = await fetch("/api/polly"); // Replace with your API endpoint
+      const res = await fetch("/api/polly?language=es-ES"); // Replace with your API endpoint
       const data = await res.json();
       if (res.ok) {
         setAvailableVoices(data); // Assuming the API returns voices in this format
