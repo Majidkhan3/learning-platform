@@ -8,7 +8,7 @@ import MaximizeScreen from './components/MaximizeScreen';
 import { Container } from 'react-bootstrap';
 const page = () => {
   return <header>
-      <div className="topbar">
+      <div className="topbar" >
         <Container fluid>
           <div className="navbar-header">
             <div className="d-flex align-items-center gap-2">

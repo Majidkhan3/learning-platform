@@ -68,7 +68,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
       currentAudio.currentTime = 0;
     }
 
-    const response = await fetch('/api/polly', {
+    const response = await fetch('/api/polly?language=es-ES', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
