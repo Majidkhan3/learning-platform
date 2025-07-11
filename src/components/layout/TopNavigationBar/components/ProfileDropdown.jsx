@@ -25,6 +25,8 @@ const ProfileDropdown = () => {
   const fileInputRef = useRef(null)
   const [profileImage, setProfileImage] = useState(user?.image || avatar1)
   const [showImageModal, setShowImageModal] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+
 
   const handleImageClick = () => setShowImageModal(true)
   const handleModalClose = () => setShowImageModal(false)
@@ -34,39 +36,42 @@ const ProfileDropdown = () => {
     else alert("You don't have access to this language dashboard.")
   }
 
-  const handleProfileChange = async (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+const handleProfileChange = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
 
-    const formData = new FormData()
-    formData.append('image', file)
-    formData.append('userId', auth?.user?._id)
+  const reader = new FileReader()
+  reader.onloadend = async () => {
+    const base64String = reader.result // this is a base64 string
 
     try {
       const response = await fetch('/api/users/uploaddp', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: base64String,
+          userId: auth?.user?._id,
+        }),
       })
 
-      if (!response.ok) {
-        let errorData
-        try {
-          errorData = await response.json()
-        } catch {
-          errorData = { message: 'Upload failed' }
-        }
-        throw new Error(errorData.message || 'Upload failed')
-      }
-
       const data = await response.json()
+      if (!response.ok) throw new Error(data?.message || 'Upload failed')
+
       setProfileImage(data.imageUrl)
       auth.updateUser({ ...auth.user, image: data.imageUrl })
       alert('✅ Profile image updated successfully')
     } catch (err) {
       console.error('❌ Upload failed:', err)
-      alert(`❌ ${err.message || 'Upload failed due to a network/server error.'}`)
+      alert(`❌ ${err.message || 'Upload failed'}`)
     }
   }
+
+  reader.readAsDataURL(file) // convert file to base64
+}
+
+
 
   const languageOptions = [
     { title: 'Espagnol', route: '/dashboards/espagnol', access: 'Espagnol' },
@@ -84,15 +89,17 @@ const ProfileDropdown = () => {
 
   return (
     <>
-      <Dropdown className="topbar-item" drop="down">
+      <Dropdown className="topbar-item" show={showDropdown} onToggle={setShowDropdown}>
         <DropdownToggle
-          as="button"
-          type="button"
-          className="topbar-button content-none"
-          id="page-header-user-dropdown"
-          aria-haspopup="true"
-          aria-expanded="false"
-        >
+  as="button"
+  type="button"
+  className="topbar-button content-none"
+  id="page-header-user-dropdown"
+  aria-haspopup="true"
+  aria-expanded={showDropdown}
+  onClick={() => setShowDropdown(prev => !prev)} // manually toggles dropdown
+>
+
         <span className="d-flex align-items-center gap-2">
   <Image
     className="rounded-circle"

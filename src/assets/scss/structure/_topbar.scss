@@ -139,6 +139,8 @@ html[data-menu-size="hidden"] {
 
                .dropdown-menu {
                     width: 100%;
+            z-index: 9999; // ✅ ensure this is added
+        display: relative; 
                }
           }
      }
