@@ -17,6 +17,7 @@ import {
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
 import { getUsers, createUser, updateUser, deleteUser } from '@/services';
 import { useNotificationContext } from '@/context/useNotificationContext';
+import { useRouter } from 'next/navigation';
 
 const UsersPage = () => {
   const { showNotification } = useNotificationContext();
@@ -25,6 +26,7 @@ const UsersPage = () => {
   const [itemsPerPage] = useState(5); // Number of users per page
   const [showModal, setShowModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -110,6 +112,18 @@ const UsersPage = () => {
 
   return (
     <>
+    {/* Dropdown for navigation */}
+    <div className="mb-3 mt-2 d-flex justify-content-end">
+      <Form.Select
+        style={{ width: '200px' }}
+        onChange={(e) => {
+          if (e.target.value === 'home') router.push('/');
+        }}
+      >
+        <option value="">Navigate to...</option>
+        <option value="home">Home</option>
+      </Form.Select>
+    </div>
       <Row>
         <Col xl={12}>
           <Card>
