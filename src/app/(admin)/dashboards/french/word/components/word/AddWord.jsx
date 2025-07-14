@@ -160,7 +160,7 @@ const AddWord = () => {
         autoGenerateSummary: false,
       });
       setError('');
-      router.push('/dashboards/espagnol');
+      router.push('/dashboards/french');
     } else {
       setError(data.error || 'Something went wrong.');
     }
