@@ -165,14 +165,13 @@ const CreateStory = () => {
 
             <Form.Group className="mb-3">
               <Form.Label>
-                Palavras (separadas por vírgulas) <span className="text-danger">*</span>
+                Palavras (separadas por vírgulas)
               </Form.Label>
               <Form.Control
                 type="text"
                 placeholder=" ex.: café da manhã, café, reunião"
                 value={words}
                 onChange={(e) => setWords(e.target.value)}
-                required
               />
               <Form.Text className="text-muted"> Insira as palavras a serem usadas na história, separadas por vírgulas</Form.Text>
             </Form.Group>

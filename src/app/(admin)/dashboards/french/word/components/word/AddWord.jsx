@@ -111,59 +111,67 @@ const AddWord = () => {
   };
 
   // Save content to backend
-  const saveContent = async () => {
-    if (!formData.word.trim()) {
-      setError('Word is required');
-      return;
+ const saveContent = async () => {
+  if (!formData.word.trim()) {
+    setError('Word is required');
+    return;
+  }
+
+  try {
+    setError(''); // 🧹 clear previous error
+    setLoading(true);
+
+    const payload = {
+      word: formData.word,
+      tags: formData.selectedTags,
+      image: formData.image,
+      note: formData.note,
+      autoGenerateImage: formData.autoGenerateImage,
+      autoGenerateSummary: formData.autoGenerateSummary,
+      summary: convertToRaw(formData.summary.getCurrentContent()),
+      userId,
+    };
+
+    const res = await fetch('/api/french/frword', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // ✅ Check actual HTTP status firsts
+    if (!res.ok) {
+      throw new Error(`Request failed with status ${res.status}`);
     }
 
-    try {
-      setLoading(true);
+    const data = await res.json();
 
-      // Prepare data for backend
-      const payload = {
-        word: formData.word,
-        tags: formData.selectedTags,
-        image: formData.image,
-        note: formData.note,
-        autoGenerateImage: formData.autoGenerateImage,
-        autoGenerateSummary: formData.autoGenerateSummary,
-        summary: convertToRaw(formData.summary.getCurrentContent()),
-        userId,
-      };
-
-      const res = await fetch('/api/french/frword', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' 
-          , Authorization: `Bearer ${token}` // Include token for authentication
-        },
-        body: JSON.stringify(payload),
+    if (data.success) {
+      alert('Word saved successfully!');
+      setFormData({
+        word: '',
+        selectedTags: [],
+        summary: EditorState.createEmpty(),
+        image: '',
+        note: 0,
+        autoGenerateImage: false,
+        autoGenerateSummary: false,
       });
-
-      const data = await res.json();
-      if (data.success) {
-        alert('Word saved successfully!');
-        setFormData({
-          word: '',
-          selectedTags: [],
-          summary: EditorState.createEmpty(),
-          image: null,
-          note: 0,
-          autoGenerateImage: false,
-          autoGenerateSummary: false,
-        });
-        setError('');
-        router.push('/dashboards/french'); // Redirect after successful save
-      } else {
-        setError(data.error || 'Failed to save word');
-      }
-    } catch (err) {
-      console.error('Error saving word:', err);
-      setError('Failed to save word');
-    } finally {
-      setLoading(false);
+      setError('');
+      router.push('/dashboards/espagnol');
+    } else {
+      setError(data.error || 'Something went wrong.');
     }
-  };
+  } catch (err) {
+    console.error('Error saving word:', err);
+    setError('Failed to save word');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <>

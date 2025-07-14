@@ -165,14 +165,13 @@ const CreateStory = () => {
 
             <Form.Group className="mb-3">
               <Form.Label>
-                Words (comma-separated) <span className="text-danger">*</span>
+                Words (comma-separated)
               </Form.Label>
               <Form.Control
                 type="text"
                 placeholder="e.g., breakfast, coffee, meeting"
                 value={words}
-                onChange={(e) => setWords(e.target.value)}
-                required
+                onChange={(e) => setWords(e.target.value)}               
               />
               <Form.Text className="text-muted">Enter words to be used in the story, separated by commas</Form.Text>
             </Form.Group>
