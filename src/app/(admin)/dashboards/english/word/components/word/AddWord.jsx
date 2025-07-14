@@ -161,7 +161,7 @@ const saveContent = async () => {
         autoGenerateSummary: false,
       });
       setError('');
-      router.push('/dashboards/espagnol');
+      router.push('/dashboards/english');
     } else {
       setError(data.error || 'Something went wrong.');
     }
