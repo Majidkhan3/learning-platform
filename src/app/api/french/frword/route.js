@@ -35,7 +35,7 @@ export async function POST(req) {
 1. **Utilisation et Fréquence**:
    - Expliquez à quelle fréquence le mot est utilisé dans la langue et dans quels contextes il est couramment employé. Fournissez une brève description.
 
-2. **Mnémoniques **:
+2. **Mnémoniques**:
    - Fournissez deux mnémoniques créatifs pour aider à mémoriser le mot. Ceux-ci peuvent inclure des associations phonétiques, des histoires visuelles ou d'autres aides-mémoire.
 
 3. **Utilisations Principales**:

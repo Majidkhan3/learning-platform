@@ -129,7 +129,7 @@ const saveContent = async () => {
       note: formData.note,
       autoGenerateImage: formData.autoGenerateImage,
       autoGenerateSummary: formData.autoGenerateSummary,
-      summary: convertToRaw(formData.summary.getCurrentContent()),
+       summary: JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
       userId,
     };
 

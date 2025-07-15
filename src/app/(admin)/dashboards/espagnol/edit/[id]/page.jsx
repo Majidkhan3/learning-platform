@@ -4,87 +4,107 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
+import dynamic from 'next/dynamic';
+import {
+  EditorState,
+  convertToRaw,
+  convertFromRaw,
+  ContentState
+} from 'draft-js';
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
+const Editor = dynamic(
+  () => import('react-draft-wysiwyg').then((mod) => mod.Editor),
+  { ssr: false }
+);
 
 const EditEspagnol = ({ params }) => {
-  
-  const { user ,token} = useAuth();
-  const userId = user?._id || ''; 
+  const { user, token } = useAuth();
+  const userId = user?._id || '';
   const id = params.id;
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     word: '',
     selectedTags: [],
-    summary: '',
+    summary: EditorState.createEmpty(),
     image: '',
     note: 0,
     autoGenerateImage: false,
+    autoGenerateSummary: false,
   });
+
   const [availableTags, setAvailableTags] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-console.log("toke",token)
-  // Fetch word data by ID
+
+  // ✅ Fetch Data
   useEffect(() => {
-    if (id) {
-      fetch(`/api/words/${id}`,{
+    const fetchData = async () => {
+      try {
+        const wordRes = await fetch(`/api/words/${id}`, {
           headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((response) => response.json())
-        .then((result) => {
-          if (result.success) {
-            const wordData = result.word;
-            setFormData({
-              word: wordData.word,
-              selectedTags: wordData.tags || [],
-              summary: wordData.summary || '',
-              image: wordData.image || '',
-              note: wordData.note || 0,
-              autoGenerateImage: false,
-            });
-          } else {
-            console.error('Error fetching data:', result.error);
-          }
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error('Error fetching data:', error);
-          setLoading(false);
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         });
-    }
-  }, [id]);
+        const wordData = await wordRes.json();
 
-  // Fetch available tags
-  useEffect(() => {
-    fetch(`/api/tags?userId=${userId}`,{
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-    }) // Replace with your API endpoint for tags
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          setAvailableTags(data.tags);
+        const tagsRes = await fetch(`/api/tags?userId=${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        const tagsData = await tagsRes.json();
+
+        if (wordData.success && tagsData.success) {
+          let editorState;
+          if (wordData.word.summary) {
+            try {
+              // ✅ If stored as Draft.js raw JSON
+              const parsed = JSON.parse(wordData.word.summary);
+              editorState = EditorState.createWithContent(convertFromRaw(parsed));
+            } catch {
+              // ✅ Fallback for plain text (your current DB data)
+              editorState = EditorState.createWithContent(
+                ContentState.createFromText(wordData.word.summary)
+              );
+            }
+          } else {
+            editorState = EditorState.createEmpty();
+          }
+
+          setFormData({
+            word: wordData.word.word,
+            selectedTags: wordData.word.tags || [],
+            summary: editorState,
+            image: wordData.word.image || '',
+            note: wordData.word.note || 0,
+            autoGenerateImage: wordData.word.autoGenerateImage || false,
+            autoGenerateSummary: wordData.word.autoGenerateSummary || false,
+          });
+
+          setAvailableTags(tagsData.tags);
         } else {
-          setError(data.error || 'Failed to fetch tags');
+          setError(wordData.error || tagsData.error || 'Failed to load data');
         }
-      })
-      .catch((err) => {
-        console.error('Error fetching tags:', err);
-        setError('Failed to fetch tags');
-      });
-  }, []);
+      } catch (err) {
+        console.error('Error:', err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Update formData state for word input
+    if (id && userId) fetchData();
+  }, [id, token, userId]);
+
+  // ✅ Handlers
   const handleWordChange = (e) => {
     setFormData((prev) => ({ ...prev, word: e.target.value }));
   };
 
-  // Toggle tags in formData state
   const toggleTag = (tag) => {
     setFormData((prev) => ({
       ...prev,
@@ -94,18 +114,15 @@ console.log("toke",token)
     }));
   };
 
-  // Handle image upload
   const handleImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+    if (e.target.files?.[0]) {
       setFormData((prev) => ({
         ...prev,
-        image: URL.createObjectURL(file), // For preview
+        image: URL.createObjectURL(e.target.files[0]),
       }));
     }
   };
 
-  // Handle checkbox change for auto-generate image
   const handleAutoGenerateImageChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -113,17 +130,21 @@ console.log("toke",token)
     }));
   };
 
-  // Update summary in formData state
-  const handleSummaryChange = (e) => {
-    setFormData((prev) => ({ ...prev, summary: e.target.value }));
+  const handleAutoGenerateSummaryChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      autoGenerateSummary: e.target.checked,
+    }));
   };
 
-  // Handle star rating change
+  const onEditorStateChange = (editorState) => {
+    setFormData((prev) => ({ ...prev, summary: editorState }));
+  };
+
   const handleRatingChange = (rating) => {
     setFormData((prev) => ({ ...prev, note: rating }));
   };
 
-  // Save updated content to backend
   const saveContent = async () => {
     if (!formData.word.trim()) {
       setError('Word is required');
@@ -132,170 +153,201 @@ console.log("toke",token)
 
     try {
       setLoading(true);
+      setError('');
 
-      // Prepare data for backend
       const payload = {
         word: formData.word,
         tags: formData.selectedTags,
         image: formData.image,
         note: formData.note,
         autoGenerateImage: formData.autoGenerateImage,
-        summary: formData.summary,
+        autoGenerateSummary: formData.autoGenerateSummary,
+        summary: JSON.stringify(
+          convertToRaw(formData.summary.getCurrentContent())
+        ),
+        userId,
       };
 
-      const response = await fetch(`/api/words/${id}`, {
+      const res = await fetch(`/api/words/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`  // Include token for authentication
-         },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-      if (response.ok) {
+      const data = await res.json();
+      if (res.ok) {
         alert('Palabra actualizada con éxito!');
         router.push('/dashboards/espagnol');
-         // Redirect back to the main page
       } else {
         setError(data.error || 'Failed to update word');
       }
     } catch (err) {
-      console.error('Error updating word:', err);
+      console.error('Error:', err);
       setError('Failed to update word');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <>
-      <Row>
-        <Col xl={12}>
-          <Card>
-            <Card.Body>
-              <h2 className="mb-4">Editar palabra</h2>
+    <Row>
+      <Col xl={12}>
+        <Card>
+          <Card.Body>
+            <h2 className="mb-4">Editar palabra</h2>
 
-              {/* Word Input Section */}
-              <Form.Group className="mb-4">
-                <Form.Label>
-                  <h4>Palabra:</h4>
-                </Form.Label>
-                <Form.Control
-                  type="text"
-                  value={formData.word}
-                  onChange={handleWordChange}
-                  placeholder=" Ingresa la palabra"
-                />
-              </Form.Group>
+            {/* Word Input */}
+            <Form.Group className="mb-4">
+              <Form.Label><h4>Palabra:</h4></Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.word}
+                onChange={handleWordChange}
+                placeholder="Ingresa la palabra"
+              />
+            </Form.Group>
 
-              {/* Tags Section */}
-              <Form.Group className="mb-4">
-                <Form.Label>
-                  <h4>Etiquetas:</h4>
-                </Form.Label>
-                <div className="d-flex flex-wrap gap-2 mb-2">
-                  {availableTags.map((tag) => (
-                    <Badge
-                      key={tag._id}
-                      pill
-                      bg={formData.selectedTags.includes(tag.name) ? 'primary' : 'light'}
-                      text={formData.selectedTags.includes(tag.name) ? 'white' : 'dark'}
-                      className="cursor-pointer"
-                      onClick={() => toggleTag(tag.name)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {tag.name}
-                    </Badge>
-                  ))}
-                </div>
-                {error && <p className="text-danger">{error}</p>}
-                <small className="text-muted"> Haz clic para seleccionar/deseleccionar etiquetas</small>
-              </Form.Group>
+            {/* Tags */}
+            <Form.Group className="mb-4">
+              <Form.Label><h4>Etiquetas:</h4></Form.Label>
+              <div className="d-flex flex-wrap gap-2 mb-2">
+                {availableTags.map((tag) => (
+                  <Badge
+                    key={tag._id}
+                    pill
+                    bg={
+                      formData.selectedTags.includes(tag.name)
+                        ? 'primary'
+                        : 'light'
+                    }
+                    text={
+                      formData.selectedTags.includes(tag.name)
+                        ? 'white'
+                        : 'dark'
+                    }
+                    onClick={() => toggleTag(tag.name)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
+              </div>
+              <small className="text-muted">
+                Haz clic para seleccionar/deseleccionar etiquetas
+              </small>
+            </Form.Group>
 
-              {/* Summary Section */}
-              <Form.Group className="mb-4">
-                <Form.Label>
-                  <h4>Resumen:</h4>
-                </Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={5}
-                  value={formData.summary}
-                  onChange={handleSummaryChange}
+            {/* Summary */}
+            <Form.Group className="mb-4">
+              <Form.Label><h4>Resumen:</h4></Form.Label>
+              <div
+                className="border rounded p-2"
+                style={{ minHeight: '200px' }}
+              >
+                <Editor
+                  editorState={formData.summary}
+                  onEditorStateChange={onEditorStateChange}
+                  toolbar={{
+                    options: [
+                      'inline',
+                      'blockType',
+                      'fontSize',
+                      'list',
+                      'textAlign',
+                      'colorPicker',
+                      'link',
+                      'emoji',
+                      'remove',
+                      'history',
+                    ],
+                    inline: { inDropdown: true },
+                    list: { inDropdown: true },
+                    textAlign: { inDropdown: true },
+                    link: { inDropdown: true },
+                    history: { inDropdown: true },
+                  }}
                   placeholder="Ingresa tu resumen aquí..."
                 />
-              </Form.Group>
+              </div>
+              <Form.Check
+                type="checkbox"
+                className="mt-2"
+                label="Generar resumen automáticamente"
+                checked={formData.autoGenerateSummary}
+                onChange={handleAutoGenerateSummaryChange}
+              />
+            </Form.Group>
 
-              {/* Star Rating Section */}
-              <Form.Group className="mb-4">
-                <Form.Label>
-                  <h4>Calificación:</h4>
-                </Form.Label>
-                <div className="d-flex align-items-center">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <span
-                      key={star}
-                      className={`me-2 ${formData.note >= star ? 'text-warning' : 'text-muted'}`}
-                      style={{ cursor: 'pointer', fontSize: '1.5rem' }}
-                      onClick={() => handleRatingChange(star)}
-                    >
-                      ★
-                    </span>
-                  ))}
-                </div>
-              </Form.Group>
+            {/* Rating */}
+            <Form.Group className="mb-4">
+              <Form.Label><h4>Calificación:</h4></Form.Label>
+              <div className="d-flex align-items-center">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className={`me-2 ${
+                      formData.note >= star ? 'text-warning' : 'text-muted'
+                    }`}
+                    style={{ cursor: 'pointer', fontSize: '1.5rem' }}
+                    onClick={() => handleRatingChange(star)}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+            </Form.Group>
 
-              {/* Picture Upload */}
-              <Form.Group className="mb-4">
-                <Form.Label>
-                  <h5>Imagen:</h5>
-                </Form.Label>
-                <div className="d-flex align-items-center gap-3">
-                  <Form.Check
-                    type="checkbox"
-                    label="Generar imagen automáticamente"
-                    checked={formData.autoGenerateImage}
-                    onChange={handleAutoGenerateImageChange}
+            {/* Image */}
+            <Form.Group className="mb-4">
+              <Form.Label><h5>Imagen:</h5></Form.Label>
+              <div className="d-flex align-items-center gap-3">
+                <Form.Check
+                  type="checkbox"
+                  label="Generar imagen automáticamente"
+                  checked={formData.autoGenerateImage}
+                  onChange={handleAutoGenerateImageChange}
+                />
+              </div>
+              {!formData.autoGenerateImage && (
+                <div className="d-flex align-items-center gap-3 mt-3">
+                  <Form.Control
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-auto"
                   />
-                </div>
-                {!formData.autoGenerateImage && (
-                  <div className="d-flex align-items-center gap-3 mt-3">
-                    <Form.Control
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="w-auto"
+                  {formData.image && (
+                    <Image
+                      src={formData.image}
+                      alt="Preview"
+                      width={100}
+                      height={100}
+                      className="border rounded"
                     />
-                    {formData.image && (
-                      <Image
-                        src={formData.image}
-                        alt="Preview"
-                        width={100}
-                        height={100}
-                        className="border rounded"
-                      />
-                    )}
-                  </div>
-                )}
-              </Form.Group>
+                  )}
+                </div>
+              )}
+            </Form.Group>
 
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={saveContent}
-                disabled={loading}
-              >
-                {loading ? 'Guardando...' : 'Guardar cambios'}
-              </Button>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </>
+            {error && <div className="text-danger mb-3">{error}</div>}
+
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={saveContent}
+              disabled={loading}
+            >
+              {loading ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
+          </Card.Body>
+        </Card>
+      </Col>
+    </Row>
   );
 };
 

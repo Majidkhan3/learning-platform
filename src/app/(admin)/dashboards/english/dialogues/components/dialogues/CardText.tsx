@@ -50,11 +50,12 @@ const CardText = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${user._id}`, // Assuming you use user ID as token
+           Authorization: `Bearer ${token}`, 
           },
           body: JSON.stringify({
             text: text,
             userId: user._id,
+            title: fileName.replace(/\.[^/.]+$/, ''),
             fileName: fileName,
           }),
         })

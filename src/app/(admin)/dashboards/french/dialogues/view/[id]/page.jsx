@@ -72,10 +72,10 @@ const DialogueViewer = () => {
     let currentDialogue = {}
 
     lines.forEach((line) => {
-      if (line.includes('Persona A :') || line.includes('Personne A :')) {
-        currentDialogue.a = line.split(/Persona A :|Personne A :/)[1]?.trim()
-      } else if (line.includes('Persona B :') || line.includes('Personne B :')) {
-        currentDialogue.b = line.split(/Persona B :|Personne B :/)[1]?.trim()
+      if (line.includes('Personne A:') || line.includes('Personne A:')) {
+        currentDialogue.a = line.split(/Personne A:|Personne A:/)[1]?.trim()
+      } else if (line.includes('Personne B:') || line.includes('Personne B:')) {
+        currentDialogue.b = line.split(/Personne B:|Personne B:/)[1]?.trim()
         dialogues.push(currentDialogue) // Add the completed dialogue
         currentDialogue = {} // Reset for the next dialogue
       }
