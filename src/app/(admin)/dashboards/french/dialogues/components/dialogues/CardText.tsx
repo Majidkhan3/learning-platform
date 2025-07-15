@@ -54,6 +54,7 @@ const CardText = () => {
           body: JSON.stringify({
             text: text,
             userId: user._id,
+            title: fileName.replace(/\.[^/.]+$/, ''), // Remove file extension for title
             fileName: fileName,
           }),
         })

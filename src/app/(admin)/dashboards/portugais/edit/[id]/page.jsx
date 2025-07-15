@@ -4,29 +4,40 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
+import dynamic from 'next/dynamic';
+import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
-const EditEspagnol = ({ params }) => {
-  const { user ,token} = useAuth();
-  const userId = user?._id || ''; 
+const Editor = dynamic(
+  () => import('react-draft-wysiwyg').then((mod) => mod.Editor),
+  { ssr: false }
+);
+
+const EditPortugais = ({ params }) => {
+  const { user, token } = useAuth();
+  const userId = user?._id || '';
   const id = params.id;
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     word: '',
     selectedTags: [],
-    summary: '',
+    summary: EditorState.createEmpty(),
     image: '',
     note: 0,
     autoGenerateImage: false,
+    autoGenerateSummary: false,
   });
+
   const [availableTags, setAvailableTags] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Fetch word data by ID
+  // ✅ Fetch word data by ID
   useEffect(() => {
     if (id) {
-      fetch(`/api/portugal/porword/${id}`,{
-          headers: {
+      fetch(`/api/portugal/porword/${id}`, {
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
@@ -35,13 +46,30 @@ const EditEspagnol = ({ params }) => {
         .then((result) => {
           if (result.success) {
             const wordData = result.word;
+
+            // ✅ Handle summary (convert if saved as raw DraftJS JSON)
+            let editorState;
+            try {
+              const content =
+                wordData.summary && wordData.summary.startsWith('{')
+                  ? JSON.parse(wordData.summary)
+                  : null;
+              editorState = content
+                ? EditorState.createWithContent(convertFromRaw(content))
+                : EditorState.createEmpty();
+            } catch (e) {
+              console.error('Error parsing summary:', e);
+              editorState = EditorState.createEmpty();
+            }
+
             setFormData({
               word: wordData.word,
               selectedTags: wordData.tags || [],
-              summary: wordData.summary || '',
+              summary: editorState,
               image: wordData.image || '',
               note: wordData.note || 0,
-              autoGenerateImage: false,
+              autoGenerateImage: wordData.autoGenerateImage || false,
+              autoGenerateSummary: wordData.autoGenerateSummary || false,
             });
           } else {
             console.error('Error fetching data:', result.error);
@@ -55,34 +83,33 @@ const EditEspagnol = ({ params }) => {
     }
   }, [id]);
 
-  // Fetch available tags
+  // ✅ Fetch available tags
   useEffect(() => {
-    fetch(`/api/portugal/portags?userId=${userId}`,{
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-    }) // Replace with your API endpoint for tags
+    fetch(`/api/portugal/portags?userId=${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
           setAvailableTags(data.tags);
         } else {
-          setError(data.error || 'Failed to fetch tags');
+          setError(data.error || 'Falha ao buscar etiquetas');
         }
       })
       .catch((err) => {
         console.error('Error fetching tags:', err);
-        setError('Failed to fetch tags');
+        setError('Falha ao buscar etiquetas');
       });
-  }, []);
+  }, [userId, token]);
 
-  // Update formData state for word input
+  // ✅ Handlers
   const handleWordChange = (e) => {
     setFormData((prev) => ({ ...prev, word: e.target.value }));
   };
 
-  // Toggle tags in formData state
   const toggleTag = (tag) => {
     setFormData((prev) => ({
       ...prev,
@@ -92,18 +119,16 @@ const EditEspagnol = ({ params }) => {
     }));
   };
 
-  // Handle image upload
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFormData((prev) => ({
         ...prev,
-        image: URL.createObjectURL(file), // For preview
+        image: URL.createObjectURL(file),
       }));
     }
   };
 
-  // Handle checkbox change for auto-generate image
   const handleAutoGenerateImageChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -111,55 +136,63 @@ const EditEspagnol = ({ params }) => {
     }));
   };
 
-  // Update summary in formData state
-  const handleSummaryChange = (e) => {
-    setFormData((prev) => ({ ...prev, summary: e.target.value }));
+  const handleAutoGenerateSummaryChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      autoGenerateSummary: e.target.checked,
+    }));
   };
 
-  // Handle star rating change
+  const onEditorStateChange = (editorState) => {
+    setFormData((prev) => ({ ...prev, summary: editorState }));
+  };
+
   const handleRatingChange = (rating) => {
     setFormData((prev) => ({ ...prev, note: rating }));
   };
 
-  // Save updated content to backend
+  // ✅ Save Content
   const saveContent = async () => {
     if (!formData.word.trim()) {
-      setError('Word is required');
+      setError('A palavra é obrigatória');
       return;
     }
 
     try {
       setLoading(true);
+      setError('');
 
-      // Prepare data for backend
       const payload = {
         word: formData.word,
         tags: formData.selectedTags,
         image: formData.image,
         note: formData.note,
         autoGenerateImage: formData.autoGenerateImage,
-        summary: formData.summary,
+        autoGenerateSummary: formData.autoGenerateSummary,
+        summary: JSON.stringify(
+          convertToRaw(formData.summary.getCurrentContent())
+        ),
       };
 
       const response = await fetch(`/api/portugal/porword/${id}`, {
         method: 'PUT',
-        headers: { 
-           Authorization: `Bearer ${token}`,
+        headers: {
           'Content-Type': 'application/json',
-                  },
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
       const data = await response.json();
       if (response.ok) {
-        alert('Word updated successfully!');
-         router.push('/dashboards/portugais');
+        alert('Palavra atualizada com sucesso!');
+        router.push('/dashboards/portugais');
       } else {
-        setError(data.error || 'Failed to update word');
+        setError(data.error || 'Falha ao atualizar a palavra');
       }
     } catch (err) {
       console.error('Error updating word:', err);
-      setError('Failed to update word');
+      setError('Falha ao atualizar a palavra');
     } finally {
       setLoading(false);
     }
@@ -177,10 +210,10 @@ const EditEspagnol = ({ params }) => {
             <Card.Body>
               <h2 className="mb-4">Editar palavra</h2>
 
-              {/* Word Input Section */}
+              {/* ✅ Word Input */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4> Palavra:</h4>
+                  <h4>Palavra:</h4>
                 </Form.Label>
                 <Form.Control
                   type="text"
@@ -190,18 +223,26 @@ const EditEspagnol = ({ params }) => {
                 />
               </Form.Group>
 
-              {/* Tags Section */}
+              {/* ✅ Tags */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h4> Etiquetas:</h4>
+                  <h4>Etiquetas:</h4>
                 </Form.Label>
                 <div className="d-flex flex-wrap gap-2 mb-2">
                   {availableTags.map((tag) => (
                     <Badge
                       key={tag._id}
                       pill
-                      bg={formData.selectedTags.includes(tag.name) ? 'primary' : 'light'}
-                      text={formData.selectedTags.includes(tag.name) ? 'white' : 'dark'}
+                      bg={
+                        formData.selectedTags.includes(tag.name)
+                          ? 'primary'
+                          : 'light'
+                      }
+                      text={
+                        formData.selectedTags.includes(tag.name)
+                          ? 'white'
+                          : 'dark'
+                      }
                       className="cursor-pointer"
                       onClick={() => toggleTag(tag.name)}
                       style={{ cursor: 'pointer' }}
@@ -211,24 +252,55 @@ const EditEspagnol = ({ params }) => {
                   ))}
                 </div>
                 {error && <p className="text-danger">{error}</p>}
-                <small className="text-muted"> Clique para selecionar/deselecionar etiquetas</small>
+                <small className="text-muted">
+                  Clique para selecionar/deselecionar etiquetas
+                </small>
               </Form.Group>
 
-              {/* Summary Section */}
+              {/* ✅ Summary - SAME as Add Word */}
               <Form.Group className="mb-4">
                 <Form.Label>
                   <h4>Resumo:</h4>
                 </Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={5}
-                  value={formData.summary}
-                  onChange={handleSummaryChange}
-                  placeholder="Insira seu resumo aqui..."
+                <div
+                  className="border rounded p-2"
+                  style={{ minHeight: '200px' }}
+                >
+                  <Editor
+                    editorState={formData.summary}
+                    onEditorStateChange={onEditorStateChange}
+                    toolbar={{
+                      options: [
+                        'inline',
+                        'blockType',
+                        'fontSize',
+                        'list',
+                        'textAlign',
+                        'colorPicker',
+                        'link',
+                        'emoji',
+                        'remove',
+                        'history',
+                      ],
+                      inline: { inDropdown: true },
+                      list: { inDropdown: true },
+                      textAlign: { inDropdown: true },
+                      link: { inDropdown: true },
+                      history: { inDropdown: true },
+                    }}
+                    placeholder="Insira seu resumo aqui..."
+                  />
+                </div>
+                <Form.Check
+                  type="checkbox"
+                  className="mt-2"
+                  label="Gerar resumo automaticamente"
+                  checked={formData.autoGenerateSummary}
+                  onChange={handleAutoGenerateSummaryChange}
                 />
               </Form.Group>
 
-              {/* Star Rating Section */}
+              {/* ✅ Rating */}
               <Form.Group className="mb-4">
                 <Form.Label>
                   <h4>Avaliação:</h4>
@@ -237,7 +309,9 @@ const EditEspagnol = ({ params }) => {
                   {[1, 2, 3, 4, 5].map((star) => (
                     <span
                       key={star}
-                      className={`me-2 ${formData.note >= star ? 'text-warning' : 'text-muted'}`}
+                      className={`me-2 ${
+                        formData.note >= star ? 'text-warning' : 'text-muted'
+                      }`}
                       style={{ cursor: 'pointer', fontSize: '1.5rem' }}
                       onClick={() => handleRatingChange(star)}
                     >
@@ -247,15 +321,15 @@ const EditEspagnol = ({ params }) => {
                 </div>
               </Form.Group>
 
-              {/* Picture Upload */}
+              {/* ✅ Image Upload */}
               <Form.Group className="mb-4">
                 <Form.Label>
-                  <h5> Imagem:</h5>
+                  <h5>Imagem:</h5>
                 </Form.Label>
                 <div className="d-flex align-items-center gap-3">
                   <Form.Check
                     type="checkbox"
-                    label=" Gerar imagem automaticamente"
+                    label="Gerar imagem automaticamente"
                     checked={formData.autoGenerateImage}
                     onChange={handleAutoGenerateImageChange}
                   />
@@ -297,4 +371,4 @@ const EditEspagnol = ({ params }) => {
   );
 };
 
-export default EditEspagnol;
+export default EditPortugais;
