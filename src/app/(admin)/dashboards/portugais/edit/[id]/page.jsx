@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 import dynamic from 'next/dynamic';
-import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
+import { EditorState, convertFromRaw, convertToRaw,ContentState } from 'draft-js';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 const Editor = dynamic(
@@ -33,7 +33,7 @@ const EditPortugais = ({ params }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch word data by ID
+    // ✅ Fetch word data by ID
   useEffect(() => {
     if (id) {
       fetch(`/api/portugal/porword/${id}`, {
@@ -47,16 +47,23 @@ const EditPortugais = ({ params }) => {
           if (result.success) {
             const wordData = result.word;
 
-            // ✅ Handle summary (convert if saved as raw DraftJS JSON)
+            // ✅ Handle summary (DraftJS JSON or plain text)
             let editorState;
             try {
-              const content =
-                wordData.summary && wordData.summary.startsWith('{')
-                  ? JSON.parse(wordData.summary)
-                  : null;
-              editorState = content
-                ? EditorState.createWithContent(convertFromRaw(content))
-                : EditorState.createEmpty();
+              if (wordData.summary) {
+                if (wordData.summary.startsWith('{')) {
+                  editorState = EditorState.createWithContent(
+                    convertFromRaw(JSON.parse(wordData.summary))
+                  );
+                } else {
+                  // ✅ Plain text → convert to DraftJS state
+                  editorState = EditorState.createWithContent(
+                    ContentState.createFromText(wordData.summary)
+                  );
+                }
+              } else {
+                editorState = EditorState.createEmpty();
+              }
             } catch (e) {
               console.error('Error parsing summary:', e);
               editorState = EditorState.createEmpty();
@@ -162,17 +169,18 @@ const EditPortugais = ({ params }) => {
       setLoading(true);
       setError('');
 
-      const payload = {
-        word: formData.word,
-        tags: formData.selectedTags,
-        image: formData.image,
-        note: formData.note,
-        autoGenerateImage: formData.autoGenerateImage,
-        autoGenerateSummary: formData.autoGenerateSummary,
-        summary: JSON.stringify(
-          convertToRaw(formData.summary.getCurrentContent())
-        ),
-      };
+const payload = {
+  word: formData.word,
+  tags: formData.selectedTags,
+  image: formData.image,
+  note: formData.note,
+  autoGenerateImage: formData.autoGenerateImage,
+  autoGenerateSummary: formData.autoGenerateSummary,
+  summary: formData.autoGenerateSummary
+    ? '' // ✅ same as AddWord
+    : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+  userId,
+};
 
       const response = await fetch(`/api/portugal/porword/${id}`, {
         method: 'PUT',

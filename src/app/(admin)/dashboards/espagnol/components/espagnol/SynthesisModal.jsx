@@ -4,6 +4,8 @@ import { useState } from 'react'
 import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { Button, Modal } from 'react-bootstrap'
 import { useRouter } from 'next/navigation'
+import { convertFromRaw } from 'draft-js';
+
 
 const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
   const [showModal, setShowModal] = useState(false)
@@ -13,10 +15,22 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
 
   let currentAudio = null;
 
-  const handleSynthesisClick = (description) => {
-    setSelectedDescription(description)
-    setShowModal(true)
+const handleSynthesisClick = (summary) => {
+  let plainText = summary;
+
+  try {
+    if (summary && summary.trim().startsWith('{')) {
+      const content = convertFromRaw(JSON.parse(summary));
+      plainText = content.getPlainText('\n'); // ✅ Convert to plain text
+    }
+  } catch (e) {
+    console.error('Error parsing summary:', e);
   }
+
+  setSelectedDescription(plainText);
+  setShowModal(true);
+};
+
 
   const handleImageClick = (image) => {
     setSelectedImage(image)
@@ -187,132 +201,88 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
         <Modal.Header closeButton>
           <Modal.Title>{selectedImage ? 'Word Image' : 'Word Synthesis'}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          {selectedImage ? (
-            <img src={selectedImage} alt="Word Illustration" className="img-fluid" />
-          ) : (
-            <div className="synthesis-content">
-              {(() => {
-                const sections = []
-                const lines = selectedDescription.split('\n')
-                let currentSection = null
-                let currentSubsection = null
+    <Modal.Body>
+  {selectedImage ? (
+    <img src={selectedImage} alt="Word Illustration" className="img-fluid" />
+  ) : (
+    <div className="synthesis-content">
+      {selectedDescription.includes('\n') || selectedDescription.includes('**') ? (
+        // ✅ Existing formatted parsing logic for AI-generated summaries
+        (() => {
+          const sections = []
+          const lines = selectedDescription.split('\n')
+          let currentSection = null
+          let currentSubsection = null
 
-                for (let i = 0; i < lines.length; i++) {
-                  const line = lines[i].trim()
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim()
 
-                  if (line.match(/^\d+\. \*\*.+\*\*/)) {
-                    currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1')
-                    currentSubsection = null
-                    continue
-                  }
+            if (line.match(/^\d+\. \*\*.+\*\*/)) {
+              currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1')
+              currentSubsection = null
+              continue
+            }
 
-                  if (currentSection === 'Main Uses' && line.match(/^[A-Za-z\/]/) && !line.startsWith('"')) {
-                    currentSubsection = line
-                    continue
-                  }
+            if (currentSection === 'Main Uses' && line.match(/^[A-Za-z\/]/) && !line.startsWith('"')) {
+              currentSubsection = line
+              continue
+            }
 
-                  if (!line || line.startsWith("Here's a detailed synthesis")) continue
+            if (!line || line.startsWith("Here's a detailed synthesis")) continue
 
-                  if (currentSection) {
-                    if (!sections.find((s) => s.title === currentSection)) {
-                      sections.push({
-                        title: currentSection,
-                        subsections: [],
-                        content: [],
-                      })
-                    }
+            if (currentSection) {
+              if (!sections.find((s) => s.title === currentSection)) {
+                sections.push({
+                  title: currentSection,
+                  subsections: [],
+                  content: [],
+                })
+              }
 
-                    const section = sections.find((s) => s.title === currentSection)
+              const section = sections.find((s) => s.title === currentSection)
 
-                    if (currentSubsection) {
-                      let subsection = section.subsections.find((ss) => ss.title === currentSubsection)
-                      if (!subsection) {
-                        subsection = { title: currentSubsection, content: [] }
-                        section.subsections.push(subsection)
-                      }
-
-                      if (line.startsWith('"') && line.endsWith('"')) {
-                        subsection.content.push(line.slice(1, -1))
-                      }
-                    } else if (line && !line.match(/^[A-Za-z\/]/)) {
-                      section.content.push(line)
-                    }
-                  }
+              if (currentSubsection) {
+                let subsection = section.subsections.find((ss) => ss.title === currentSubsection)
+                if (!subsection) {
+                  subsection = { title: currentSubsection, content: [] }
+                  section.subsections.push(subsection)
                 }
 
-                return sections.map((section, index) => (
-                  <div key={index} className="mb-4">
-                    <h5 className="fw-bold">{section.title}</h5>
-                    {section.title === 'Usos Principales:' && section.content.length > 1 && (
-                      <ul>
-                        {section.content.map((item, idx) => (
-                          <li key={idx}>{item}</li>
-                        ))}
-                      </ul>
-                    )}
-                    {section.title === 'Mnemotecnias:' && section.content.length > 1 && (
-                      <ul>
-                        {section.content.map((item, idx) => (
-                          <li key={idx}>{item}</li>
-                        ))}
-                      </ul>
-                    )}
-                    {section.title === 'Uso y Frecuencia:' && (
-                      <ul>
-                        {section.content.map((item, idx) => (
-                          <li key={idx}>{item}</li>
-                        ))}
-                      </ul>
-                    )}
-                    {section.title === 'Sinónimos:' && (
-                      <div className="d-flex flex-wrap gap-2 mb-3">
-                        {section.content.map((item, idx) => (
-                          <span
-                            key={idx}
-                            className="synonym-chip"
-                            style={{
-                              backgroundColor: '#e3f2fd',
-                              color: '#1976d2',
-                              padding: '4px 12px',
-                              borderRadius: '16px',
-                              fontSize: '0.875rem',
-                              fontWeight: '500',
-                              border: '1px solid #bbdefb',
-                            }}>
-                            {item.replace(/^- /, '')}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                if (line.startsWith('"') && line.endsWith('"')) {
+                  subsection.content.push(line.slice(1, -1))
+                }
+              } else if (line && !line.match(/^[A-Za-z\/]/)) {
+                section.content.push(line)
+              }
+            }
+          }
 
-                    {section.title === 'Antónimos:' && (
-                      <div className="d-flex flex-wrap gap-2 mb-3">
-                        {section.content.map((item, idx) => (
-                          <span
-                            key={idx}
-                            className="antonym-chip"
-                            style={{
-                              backgroundColor: '#ffebee',
-                              color: '#d32f2f',
-                              padding: '4px 12px',
-                              borderRadius: '16px',
-                              fontSize: '0.875rem',
-                              fontWeight: '500',
-                              border: '1px solid #ffcdd2',
-                            }}>
-                            {item.replace(/^- /, '')}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                   
-                  </div>
-                ))
-              })()}
-            </div>
-          )}
-        </Modal.Body>
+          return sections.length > 0 ? (
+            sections.map((section, index) => (
+              <div key={index} className="mb-4">
+                <h5 className="fw-bold">{section.title}</h5>
+                {section.content.length > 0 && (
+                  <ul>
+                    {section.content.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))
+          ) : (
+            <p>{selectedDescription}</p>
+          )
+        })()
+      ) : (
+        // ✅ Fallback for plain summaries (your manual "hello")
+        <p>{selectedDescription}</p>
+      )}
+    </div>
+  )}
+</Modal.Body>
+
+        
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
             Close

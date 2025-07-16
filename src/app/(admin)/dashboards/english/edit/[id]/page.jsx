@@ -156,18 +156,18 @@ const EditEnglishWord = ({ params }) => {
       setLoading(true);
       setError('');
 
-      const payload = {
-        word: formData.word,
-        tags: formData.selectedTags,
-        summary: JSON.stringify(
-          convertToRaw(formData.summary.getCurrentContent())
-        ),
-        image: formData.image,
-        note: formData.note,
-        autoGenerateImage: formData.autoGenerateImage,
-        autoGenerateSummary: formData.autoGenerateSummary,
-        userId,
-      };
+const payload = {
+  word: formData.word,
+  tags: formData.selectedTags,
+  image: formData.image,
+  note: formData.note,
+  autoGenerateImage: formData.autoGenerateImage,
+  autoGenerateSummary: formData.autoGenerateSummary,
+  summary: formData.autoGenerateSummary
+    ? '' // ✅ same as AddWord
+    : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+  userId,
+};
 
       const response = await fetch(`/api/english/enword/${id}`, {
         method: 'PUT',

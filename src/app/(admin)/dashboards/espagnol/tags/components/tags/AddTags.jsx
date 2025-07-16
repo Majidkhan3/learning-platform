@@ -106,7 +106,7 @@ const AddTags = () => {
         <Card>
           <Card.Body>
             <div className="d-flex align-items-center mb-4">
-              <Link href="/" className="me-3">
+              <Link href="/dashboards/espagnol" className="me-3">
                 <Icon icon="mdi:arrow-left" width={20} />
               </Link>
               <h4 className="mb-0"> Gestión de etiquetas</h4>
