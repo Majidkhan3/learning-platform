@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 import dynamic from 'next/dynamic';
-import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
+import { EditorState, convertFromRaw, convertToRaw,ContentState, } from 'draft-js';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 const Editor = dynamic(
@@ -33,6 +33,7 @@ const EditEspagnol = ({ params }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
+
   // ✅ Fetch word data by ID
   useEffect(() => {
     if (id) {
@@ -47,16 +48,23 @@ const EditEspagnol = ({ params }) => {
           if (result.success) {
             const wordData = result.word;
 
-            // ✅ Handle summary (convert if saved as raw DraftJS JSON)
+            // ✅ Handle summary (DraftJS JSON or plain text)
             let editorState;
             try {
-              const content =
-                wordData.summary && wordData.summary.startsWith('{')
-                  ? JSON.parse(wordData.summary)
-                  : null;
-              editorState = content
-                ? EditorState.createWithContent(convertFromRaw(content))
-                : EditorState.createEmpty();
+              if (wordData.summary) {
+                if (wordData.summary.startsWith('{')) {
+                  editorState = EditorState.createWithContent(
+                    convertFromRaw(JSON.parse(wordData.summary))
+                  );
+                } else {
+                  // ✅ Plain text → convert to DraftJS state
+                  editorState = EditorState.createWithContent(
+                    ContentState.createFromText(wordData.summary)
+                  );
+                }
+              } else {
+                editorState = EditorState.createEmpty();
+              }
             } catch (e) {
               console.error('Error parsing summary:', e);
               editorState = EditorState.createEmpty();

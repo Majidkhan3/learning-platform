@@ -155,18 +155,20 @@ const EditEspagnol = ({ params }) => {
       setLoading(true);
       setError('');
 
-      const payload = {
-        word: formData.word,
-        tags: formData.selectedTags,
-        image: formData.image,
-        note: formData.note,
-        autoGenerateImage: formData.autoGenerateImage,
-        autoGenerateSummary: formData.autoGenerateSummary,
-        summary: JSON.stringify(
-          convertToRaw(formData.summary.getCurrentContent())
-        ),
-        userId,
-      };
+const payload = {
+  word: formData.word,
+  tags: formData.selectedTags,
+  image: formData.image,
+  note: formData.note,
+  autoGenerateImage: formData.autoGenerateImage,
+  autoGenerateSummary: formData.autoGenerateSummary,
+  summary: formData.autoGenerateSummary
+    ? '' // ✅ same as AddWord
+    : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+  userId,
+};
+
+
 
       const res = await fetch(`/api/words/${id}`, {
         method: 'PUT',
