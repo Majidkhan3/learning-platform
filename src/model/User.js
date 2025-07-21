@@ -4,6 +4,7 @@
     {
       email: { type: String, required: true, unique: true },
       password: { type: String, required: true },
+      pseudo: { type: String, required: true },
       creationDate: {
         type: Date,
         default: Date.now,

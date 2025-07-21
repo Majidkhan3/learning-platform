@@ -8,7 +8,7 @@ export async function GET() {
   try {
     await connectToDatabase()
     const users = await User.find({})
-    .select('email createdAt languages')
+    .select('email  pseudo createdAt languages')
     .select('-password').sort({ createdAt: -1 })
     console.log("Fetched users:", users);
     return NextResponse.json(users, { status: 200 })
@@ -29,7 +29,7 @@ export async function POST(req) {
     await connectToDatabase()
     const body = await req.json()
     console.log('Received request body:', body)
-    const { email, password, dentist, address, languages = [] } = body
+    const { email, password, dentist, address, pseudo, languages = [] } = body
 
     // Validate required fields
     if (!email || !password) {

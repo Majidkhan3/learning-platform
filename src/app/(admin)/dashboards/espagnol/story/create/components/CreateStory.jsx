@@ -137,7 +137,7 @@ const CreateStory = () => {
             <Form.Group className="mb-3">
               <Form.Label>Nivel de dificultad (opcional)</Form.Label>
               <div>
-                {[1, 2, 3, 4, 5].map((star) => (
+                {[1, 2, 3, 4].map((star) => (
                   <Icon
                     key={star}
                     icon={difficulty >= star ? 'mdi:star' : 'mdi:star-outline'}

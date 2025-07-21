@@ -8,9 +8,13 @@ export async function PUT(req, { params }) {
     await connectToDatabase()
     const { id } = params
     const body = await req.json()
-    const { email, password, languages } = body
+    const { email, password, languages ,pseudo} = body
 
     const updateData = { email, languages }
+
+    if (pseudo) {
+      updateData.pseudo = pseudo // ✅ update pseudo if provided
+    }
 
     // Only hash and update password if provided
     if (password) {
