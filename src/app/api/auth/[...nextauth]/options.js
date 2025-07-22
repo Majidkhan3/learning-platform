@@ -61,7 +61,7 @@ export const options = {
     }
   },
   session: {
-    maxAge: 24 * 60 * 60 * 1000,
+    maxAge: 4 * 24 * 60 * 60,
     generateSessionToken: () => {
       return randomBytes(32).toString('hex');
     }

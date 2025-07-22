@@ -146,33 +146,39 @@ const handleTap = useCallback(() => {
   }
 }, [isFlipped, goToCard, currentIndex, toggleFlip]);
 
-const handleKeyPress = useCallback((e) => {
-  if (!cards.length) return; // Do nothing if cards aren't loaded yet
-  console.log('Key pressed:', e.key, 'currentIndex:', currentIndex)
+const handleKeyPress = useCallback(
+  (e) => {
+    if (!cards.length) return;
+    console.log('Key pressed:', e.key, 'currentIndex:', currentIndex);
 
-  // Prevent default behavior for the keys we're handling
-  if (['Enter', 'ArrowRight', 'ArrowLeft'].includes(e.key)) {
-    e.preventDefault();
-  }
+    if (['Enter', 'ArrowRight', 'ArrowLeft', 'Escape'].includes(e.key)) {
+      e.preventDefault();
+    }
 
-  switch (e.key) {
-    case 'Enter':
-      if (!isFlipped) {
-        toggleFlip(); // Only flip the card on Enter if it's not flipped
-      } else {
-        goToCard(currentIndex + 1); // Only go to next card if already flipped
-      }
-      break;
-    case 'ArrowRight':          // next
-      goToCard(currentIndex + 1);
-      break;
-    case 'ArrowLeft':           // previous
-      goToCard(currentIndex - 1);
-      break;
-    default:
-      break;
-  }
-}, [cards.length, currentIndex, isFlipped, toggleFlip, goToCard]);
+    switch (e.key) {
+      case 'Enter':
+        if (!isFlipped) {
+          toggleFlip();
+        } else {
+          goToCard(currentIndex + 1);
+        }
+        break;
+      case 'ArrowRight':
+        goToCard(currentIndex + 1);
+        break;
+      case 'ArrowLeft':
+        goToCard(currentIndex - 1);
+        break;
+      case 'Escape':  // ✅ NEW
+        router.push('/dashboards/espagnol'); // Or wherever the word list is
+        break;
+      default:
+        break;
+    }
+  },
+  [cards.length, currentIndex, isFlipped, toggleFlip, goToCard, router]
+);
+
 
   const handleRating = async (star) => {
     if (!currentCard) return
@@ -241,12 +247,23 @@ const handleKeyPress = useCallback((e) => {
   if (error) return <div className="text-center text-danger">{error}</div>
 
   return (
+    <>
+    <div className="d-flex align-items-center mb-4">
+  <Button
+    variant="link"
+    className="me-3 p-0"
+    onClick={() => router.push('/dashboards/espagnol')}
+  >
+    <IconifyIcon icon="bi:arrow-left" width={20} />
+  </Button>
+  <h4 className="mb-0">Tarjeta Didáctica</h4>
+</div>
     <div
       className="d-flex justify-content-center align-items-center"
       style={{ minHeight: '100vh' }}
       onClick={handleTap} // Handle tap for mobile devices
       {...swipeHandlers} // Attach swipe handlers for touch gestures
-    >
+    >  
       <div className="flashcard-container" style={{ width: '400px' }}>
         <div className="text-center mb-2">
           <small>
@@ -500,6 +517,7 @@ const handleKeyPress = useCallback((e) => {
         </Modal.Body>
       </Modal>
     </div>
+    </>
   )
 }
 

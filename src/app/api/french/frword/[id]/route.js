@@ -41,7 +41,7 @@ export async function PUT(req, { params }) {
       }
 
       const claudePrompt = `
-    Générez une synthèse détaillée pour le mot ${word} dans le format structuré suivant :
+Générez une synthèse détaillée pour le mot ${word} dans le format structuré suivant :
 1. **Utilisation et Fréquence**:
    - Expliquez à quelle fréquence le mot est utilisé dans la langue et dans quels contextes il est couramment employé. Fournissez une brève description.
 

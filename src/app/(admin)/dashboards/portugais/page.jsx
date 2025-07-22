@@ -9,7 +9,7 @@ export const metadata = {
 };
 const AnalyticsPage = () => {
   return <>
-      <PageTitle title="Portugaise" subName="Dashboard" />
+      <PageTitle title="Portuguese" subName="Dashboard" />
       {/* <Statistics />
       <Row>
         <SalesChart />

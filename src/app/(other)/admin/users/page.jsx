@@ -31,6 +31,7 @@ const UsersPage = () => {
     email: '',
     password: '',
      languages: [], 
+     pseudo: '', 
   });
 
   useEffect(() => {
@@ -58,6 +59,7 @@ const UsersPage = () => {
     setFormData({
       email: '',
       password: '',
+      pseudo: '', 
       languages: Array.isArray(users.languages) ? users.languages : [],
     });
   };
@@ -140,6 +142,7 @@ const UsersPage = () => {
                 <Table className="table align-middle text-nowrap table-hover table-centered mb-0">
                   <thead className="bg-light-subtle">
                     <tr>
+                      <th>Username</th>
                       <th>Email</th>
                       <th>Created At</th>
                       <th>Languages</th>
@@ -149,6 +152,7 @@ const UsersPage = () => {
                   <tbody>
                     {currentUsers.map((user) => (
                       <tr key={user._id}>
+                         <td>{user.pseudo || 'N/A'}</td>
                         <td>{user.email}</td>
                         <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                    <td>{user.languages && user.languages.length > 0 ? user.languages.join(', ') : 'N/A'}</td>
@@ -168,6 +172,7 @@ const UsersPage = () => {
                                 setFormData({
                                   email: user.email,
                                   password: '',
+                                   pseudo: user.pseudo || '', 
                                    languages: user.languages || [],
                                 });
                                 setShowModal(true);
@@ -235,6 +240,16 @@ const UsersPage = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
+            <Form.Group className="mb-3">
+  <Form.Label>Pseudo (Username)</Form.Label>
+  <Form.Control
+    type="text"
+    value={formData.pseudo}
+    onChange={(e) => setFormData({ ...formData, pseudo: e.target.value })}
+    placeholder="Enter user's pseudo"
+  />
+</Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label>Email</Form.Label>
               <Form.Control

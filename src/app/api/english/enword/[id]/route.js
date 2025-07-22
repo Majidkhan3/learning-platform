@@ -41,8 +41,7 @@ export async function PUT(req, { params }) {
       }
 
       const claudePrompt = `
-         Responde exclusivamente en español. No incluyas texto en inglés, ni en los ejemplos ni en los sinónimos o antónimos.
-    Generate a detailed synthesis for the word ${word} in the following structured format:
+   Generate a detailed synthesis for the word ${word} in the following structured format:
 
 1. **Use and Frequency**:
    - Explain how frequently the word is used in the language and in which contexts it is commonly used. Provide a brief description.

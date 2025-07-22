@@ -71,15 +71,15 @@ const ProfileDropdown = () => {
   }
 
   const languageOptions = [
-    { title: 'Espagnol', route: '/dashboards/espagnol', access: 'Espagnol' },
-    { title: 'Portugais', route: '/dashboards/portugais', access: 'Portuguese' },
+    { title: 'Spanish', route: '/dashboards/espagnol', access: 'Espagnol' },
+    { title: 'Portuguese', route: '/dashboards/portugais', access: 'Portuguese' },
     { title: 'French', route: '/dashboards/french', access: 'French' },
     { title: 'English', route: '/dashboards/english', access: 'English' },
   ]
 
   const languageIcons = {
-    Espagnol: 'mdi:translate',
-    Portugais: 'mdi:alphabet-latin',
+    Spanish: 'mdi:translate',
+    Portuguese: 'mdi:alphabet-latin',
     French: 'mdi:book-open-page-variant',
     English: 'mdi:book-education-outline',
   }
@@ -148,7 +148,7 @@ const ProfileDropdown = () => {
             }}
           >
             <DropdownHeader as="h6" className="dropdown-header">
-               Welcome Gaston!
+                 Welcome {user?.pseudo || 'User'}!
             </DropdownHeader>
             <div className="dropdown-divider my-1" />
             <DropdownItem onClick={() => router.push('/admin')}>

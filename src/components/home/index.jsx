@@ -7,14 +7,14 @@ import AuthProtectionWrapper, { useAuth } from '@/components/wrappers/AuthProtec
 
 const languages = [
   {
-    title: 'Espagnol',
+    title: 'Spanish',
     route: '/dashboards/espagnol',
     bg: '#44287d',
     icon: <FaFlag size={32} />,
     access: 'Espagnol'
   },
   {
-    title: 'Portugal',
+    title: 'Portuguese',
     route: '/dashboards/portugais',
     bg: '#1d613e',
     icon: <FaFlag size={32} />,

@@ -6,12 +6,12 @@ export const MENU_ITEMS = [
   },
   {
     key: 'spanish-dashboard',
-    label: 'Aprender español',
+    label: 'Aprender Spanish',
     icon: 'ri:dashboard-2-line',
     children: [
       {
         key: 'espagnol',
-        label: 'Español',
+        label: 'Spanish',
         url: '/dashboards/espagnol',
         parentKey: 'spanish-dashboard',
       },

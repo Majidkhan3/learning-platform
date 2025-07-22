@@ -41,7 +41,7 @@ export async function PUT(req, { params }) {
       }
 
       const claudePrompt = `
-   Gere uma síntese detalhada para a palavra ${word} no seguinte formato estruturado e responda inteiramente em português:
+      Gere uma síntese detalhada para a palavra ${word} no seguinte formato estruturado e responda inteiramente em português:
 
 1. **Uso e Frequência:**:
    - Explique com que frequência a palavra é usada na língua portuguesa e em quais contextos ela é mais comum. Forneça uma breve descrição.
