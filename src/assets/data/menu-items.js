@@ -46,6 +46,12 @@ export const MENU_ITEMS = [
         parentKey: 'spanish-dashboard',
       },
       {
+        key: 'spanish-prompts',
+        label: 'Inmediato',
+        url: '/dashboards/espagnol/prompts',
+        parentKey: 'spanish-dashboard',
+      },
+      {
         key: 'spanish-flashcards',
         label: 'Tarjetas de memoria',
         url: '/dashboards/espagnol/flashcard',
@@ -92,6 +98,12 @@ export const MENU_ITEMS = [
         key: 'portuguese-stories',
         label: 'Histórias',
         url: '/dashboards/portugais/story',
+        parentKey: 'portuguese-dashboard',
+      },
+        {
+        key: 'portuguese-prompts',
+        label: 'Avisos',
+        url: '/dashboards/portugais/prompts',
         parentKey: 'portuguese-dashboard',
       },
       {
@@ -143,6 +155,12 @@ export const MENU_ITEMS = [
         url: '/dashboards/french/story',
         parentKey: 'french-dashboard',
       },
+        {
+        key: 'french-prompts',
+        label: 'Invites',
+        url: '/dashboards/french/prompts',
+        parentKey: 'french-dashboard',
+      },
       {
         key: 'french-flashcards',
         label: 'Cartes mémoire',
@@ -190,6 +208,12 @@ export const MENU_ITEMS = [
         key: 'english-stories',
         label: 'Stories',
         url: '/dashboards/english/story ',
+        parentKey: 'english-dashboard',
+      },
+       {
+        key: 'english-stories',
+        label: 'Prompts',
+        url: '/dashboards/english/prompts ',
         parentKey: 'english-dashboard',
       },
       {
