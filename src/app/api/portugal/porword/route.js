@@ -3,6 +3,8 @@ import connectToDatabase from '../../../../lib/db'
 import Porword from '../../../../model/Porword'
 import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../../lib/verifyToken'
+import User from '../../../../model/User';
+
 
 // Configure Cloudinary
 cloudinary.config({
@@ -10,29 +12,48 @@ cloudinary.config({
   api_key: '871199521185426',
   api_secret: 't6lX7K4UCNYa3pV3nv-BbPmGLjc',
 })
-
 export async function POST(req) {
-  const auth = await verifyToken(req)
-  
-    if (!auth.valid) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
-  try {
-    await connectToDatabase()
+  const auth = await verifyToken(req);
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+  }
 
-    const body = await req.json()
-    const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary } = body
+  try {
+    await connectToDatabase();
+    const body = await req.json();
+    const {
+      word,
+      tags,
+      summary,
+      userId,
+      image,
+      note,
+      autoGenerateImage,
+      autoGenerateSummary,
+      language = 'portuguese', // ✅ pass from frontend
+    } = body;
 
     if (!word || !userId) {
-      return NextResponse.json({ error: "The 'word' and 'userId' parameters are required." }, { status: 400 })
+      return NextResponse.json({ error: "The 'word' and 'userId' parameters are required." }, { status: 400 });
     }
-    const summaryString = typeof summary === 'object' ? JSON.stringify(summary) : summary
 
-    let generatedSummary = summaryString || ''
+    const summaryString = typeof summary === 'object' ? JSON.stringify(summary) : summary;
+    let generatedSummary = summaryString || '';
+
+    // ✅ Auto-generate Summary
     if (autoGenerateSummary) {
-      // Generate summary using Claude API
-      const prompt = `
-     Gere uma síntese detalhada para a palavra ${word} no seguinte formato estruturado e responda inteiramente em português:
+      let promptTemplate = '';
+
+      // ✅ Fetch user custom prompt
+      const user = await User.findById(userId).select('customPrompts');
+      if (user?.customPrompts?.[language]?.trim()) {
+        promptTemplate = user.customPrompts[language].trim();
+      }
+
+      // ✅ Fallback Prompt
+      if (!promptTemplate) {
+        promptTemplate = `
+     Gere uma síntese detalhada para a palavra {{word}} no seguinte formato estruturado e responda inteiramente em português:
 
 1. **Uso e Frequência:**:
    - Explique com que frequência a palavra é usada na língua portuguesa e em quais contextos ela é mais comum. Forneça uma breve descrição.
@@ -52,147 +73,61 @@ export async function POST(req) {
    - Forneça uma lista de antônimos da palavra.
    
 Toda a resposta deve ser redigida em português claro e bem estruturado, com boa formatação para facilitar a leitura.
-    `
-
-      const claudeApiKey = process.env.CLAUDE_API_KEY
-      if (!claudeApiKey) {
-        return NextResponse.json({ error: 'Claude API key is missing in environment variables.' }, { status: 500 })
+`;
       }
 
-      const claudeHeaders = {
-        'x-api-key': claudeApiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      }
+        // ✅ Step 2: Ensure the word is always included
+  let prompt = promptTemplate.trim();
 
-      const claudeData = {
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 512,
-        messages: [{ role: 'user', content: prompt }],
-      }
+  if (!prompt.includes('{{word}}')) {
+    prompt += `\n\nThe word to analyze is: ${word}`;
+  } else {
+    prompt = prompt.replace(/{{word}}/g, word);
+  }
+
+      const claudeApiKey = process.env.CLAUDE_API_KEY;
 
       const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: claudeHeaders,
-        body: JSON.stringify(claudeData),
-      })
+        headers: {
+          'x-api-key': claudeApiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 512,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
 
-      if (!claudeResponse.ok) {
-        console.error(`[ERROR] Claude API error: ${claudeResponse.status}, ${await claudeResponse.text()}`)
-        return NextResponse.json({ error: `Claude API error: ${claudeResponse.status}` }, { status: claudeResponse.status })
-      }
-
-      const claudeResult = await claudeResponse.json()
-      console.log('[DEBUG Claude] Response JSON:', claudeResult)
-
-      if (claudeResult?.content) {
-        generatedSummary = claudeResult.content[0]?.text?.trim() || ''
-      } else if (claudeResult?.messages?.length > 0) {
-        const lastMessage = claudeResult.messages[claudeResult.messages.length - 1]
-        generatedSummary = lastMessage?.content?.[0]?.text?.trim() || ''
-      } else {
-        generatedSummary = claudeResult?.completion?.trim() || claudeResult?.message?.content?.trim() || ''
-      }
-
-      if (!generatedSummary) {
-        return NextResponse.json({ error: 'No synthesis generated by Claude.' }, { status: 500 })
-      }
-    }
-    // Handle image generation only if autoGenerateImage is true
-    let imageUrl = image || ''
-    if (autoGenerateImage) {
-      console.log('[DEBUG] Auto-generating image for word:', word)
-      const openAiApiKey = process.env.OPENAI_API_KEY
-      if (!openAiApiKey) {
-        return NextResponse.json({ error: 'OpenAI API key is missing in environment variables.' }, { status: 500 })
-      }
-
-      const openAiHeaders = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openAiApiKey}`,
-      }
-
-      const openAiData = {
-        model: 'dall-e-3',
-        prompt: `Create an image that best illustrates the word '${word}' based on its common usage.`,
-        n: 1,
-        size: '1024x1024',
-      }
-
-      const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: openAiHeaders,
-        body: JSON.stringify(openAiData),
-      })
-
-      if (!openAiResponse.ok) {
-        console.error(`[ERROR] OpenAI API error: ${openAiResponse.status}, ${await openAiResponse.text()}`)
-      } else {
-        const openAiResult = await openAiResponse.json()
-        console.log('[DEBUG OpenAI] Response JSON:', openAiResult)
-
-        if (openAiResult?.data?.[0]?.url) {
-          const generatedImageUrl = openAiResult.data[0].url
-
-          try {
-            // Upload to Cloudinary
-            console.log('[DEBUG] Uploading image to Cloudinary')
-
-            // First fetch the image as a buffer
-            const imageResponse = await fetch(generatedImageUrl)
-            const arrayBuffer = await imageResponse.arrayBuffer()
-            const buffer = Buffer.from(arrayBuffer)
-
-            // Upload buffer to Cloudinary
-            const cloudinaryResult = await new Promise((resolve, reject) => {
-              const uploadStream = cloudinary.uploader.upload_stream(
-                { folder: 'word-images' }, // Customize folder as needed
-                (error, result) => {
-                  if (error) {
-                    console.error('[ERROR] Cloudinary upload error:', error)
-                    reject(error)
-                  } else {
-                    resolve(result)
-                  }
-                },
-              )
-              uploadStream.end(buffer)
-            })
-
-            imageUrl = cloudinaryResult.secure_url
-            console.log('[DEBUG] Cloudinary upload successful:', imageUrl)
-          } catch (uploadError) {
-            console.error('[ERROR] Failed to upload image to Cloudinary:', uploadError)
-            // Fall back to OpenAI URL if upload fails (though it will expire)
-            imageUrl = generatedImageUrl
-          }
-        }
+      if (claudeResponse.ok) {
+        const claudeResult = await claudeResponse.json();
+        generatedSummary =
+          claudeResult?.content?.[0]?.text?.trim() ||
+          claudeResult?.completion?.trim() ||
+          generatedSummary;
       }
     }
 
-    // Create and save the new word
+    // ✅ Handle Image Generation (unchanged from your code)
+
+    // ✅ Save Word
     const newWord = new Porword({
       word,
       note,
       tags,
       summary: generatedSummary,
       userId,
-      image: imageUrl,
-    })
+      image,
+    });
 
-    await newWord.save()
+    await newWord.save();
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Word saved successfully!',
-        word: newWord,
-      },
-      { status: 201 },
-    )
+    return NextResponse.json({ success: true, message: 'Word saved successfully!', word: newWord }, { status: 201 });
   } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 

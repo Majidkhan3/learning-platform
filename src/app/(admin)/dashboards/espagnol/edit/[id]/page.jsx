@@ -155,6 +155,18 @@ const EditEspagnol = ({ params }) => {
       setLoading(true);
       setError('');
 
+// const payload = {
+//   word: formData.word,
+//   tags: formData.selectedTags,
+//   image: formData.image,
+//   note: formData.note,
+//   autoGenerateImage: formData.autoGenerateImage,
+//   autoGenerateSummary: formData.autoGenerateSummary,
+//   summary: formData.autoGenerateSummary
+//     ? '' // ✅ same as AddWord
+//     : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+//   userId,
+// };
 const payload = {
   word: formData.word,
   tags: formData.selectedTags,
@@ -163,9 +175,9 @@ const payload = {
   autoGenerateImage: formData.autoGenerateImage,
   autoGenerateSummary: formData.autoGenerateSummary,
   summary: formData.autoGenerateSummary
-    ? '' // ✅ same as AddWord
+    ? '' // ✅ Important: tells backend to regenerate using user's prompt
     : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
-  userId,
+  userId, // ✅ Make sure this is included!
 };
 
 

@@ -4,7 +4,7 @@
     {
       email: { type: String, required: true, unique: true },
       password: { type: String, required: true },
-      pseudo: { type: String, required: true },
+      pseudo: { type: String, required: false },
       creationDate: {
         type: Date,
         default: Date.now,
@@ -14,6 +14,12 @@
       default: []
     },
     image:{type: String},
+     customPrompts: {
+      spanish: { type: String, default: '' },     // For Word (Spanish)
+      english: { type: String, default: '' },     // For Enword (English)
+      portuguese: { type: String, default: '' },  // For Portuguese
+      french: { type: String, default: '' },      // For French
+    },
     },
     { timestamps: true },
   )
