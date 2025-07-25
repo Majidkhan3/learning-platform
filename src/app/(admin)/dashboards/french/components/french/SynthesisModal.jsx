@@ -112,6 +112,32 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
     router.push(`/dashboards/french/edit/${id}`) // Navigate to the edit page with the item's ID
   }
   console.log('selected ', selectedDescription)
+  const renderFormattedSynthesis = (text) => {
+  const sections = text.split(/(?=[A-Z][a-z]+:)/); // Split at "Synonyms:", "Antonyms:", etc.
+
+  return sections.map((section, index) => {
+    if (!section.trim() || !section.includes(':')) return (
+      <p key={index} className="mb-1">{section.trim()}</p>
+    );
+
+    const [title, items] = section.split(':');
+    const itemList = (items || "")
+      .split(/•|\n|,/)
+      .map((i) => i.trim())
+      .filter((i) => i);
+
+    return (
+      <div key={index} className="mb-3">
+        <h6 className="fw-bold">{title.trim()}</h6>
+        <ul>
+          {itemList.map((item, idx) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  });
+};
   return (
     <>
       <table className="table align-middle text-nowrap table-hover table-centered border-bottom mb-0">
@@ -195,86 +221,57 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
         <Modal.Header closeButton>
           <Modal.Title>{selectedImage ? 'Word Image' : 'Word Synthesis'}</Modal.Title>
         </Modal.Header>
-     <Modal.Body>
-  {selectedImage ? (
-    <img src={selectedImage} alt="Word Illustration" className="img-fluid" />
-  ) : (
-    <div className="synthesis-content">
-      {selectedDescription.includes('\n') || selectedDescription.includes('**') ? (
-        // ✅ Existing formatted parsing logic for AI-generated summaries
-        (() => {
-          const sections = []
-          const lines = selectedDescription.split('\n')
-          let currentSection = null
-          let currentSubsection = null
-
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim()
-
-            if (line.match(/^\d+\. \*\*.+\*\*/)) {
-              currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1')
-              currentSubsection = null
-              continue
-            }
-
-            if (currentSection === 'Main Uses' && line.match(/^[A-Za-z\/]/) && !line.startsWith('"')) {
-              currentSubsection = line
-              continue
-            }
-
-            if (!line || line.startsWith("Here's a detailed synthesis")) continue
-
-            if (currentSection) {
-              if (!sections.find((s) => s.title === currentSection)) {
-                sections.push({
-                  title: currentSection,
-                  subsections: [],
-                  content: [],
-                })
-              }
-
-              const section = sections.find((s) => s.title === currentSection)
-
-              if (currentSubsection) {
-                let subsection = section.subsections.find((ss) => ss.title === currentSubsection)
-                if (!subsection) {
-                  subsection = { title: currentSubsection, content: [] }
-                  section.subsections.push(subsection)
-                }
-
-                if (line.startsWith('"') && line.endsWith('"')) {
-                  subsection.content.push(line.slice(1, -1))
-                }
-              } else if (line && !line.match(/^[A-Za-z\/]/)) {
-                section.content.push(line)
-              }
-            }
-          }
-
-          return sections.length > 0 ? (
-            sections.map((section, index) => (
-              <div key={index} className="mb-4">
-                <h5 className="fw-bold">{section.title}</h5>
-                {section.content.length > 0 && (
-                  <ul>
-                    {section.content.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))
-          ) : (
-            <p>{selectedDescription}</p>
-          )
-        })()
-      ) : (
-        // ✅ Fallback for plain summaries (your manual "hello")
-        <p>{selectedDescription}</p>
-      )}
-    </div>
-  )}
-</Modal.Body>
+     <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+       {selectedImage ? (
+         <img src={selectedImage} alt="Word Illustration" className="img-fluid" />
+       ) : (
+         <div className="synthesis-content">
+           {(() => {
+             // ✅ 1) If AI-formatted with numbered/bold sections → use your existing AI parsing logic
+             if (selectedDescription.match(/^\d+\. \*\*.+\*\*/m)) {
+               const sections = []
+               const lines = selectedDescription.split('\n')
+               let currentSection = null
+     
+               for (let line of lines) {
+                 line = line.trim()
+                 if (line.match(/^\d+\. \*\*.+\*\*/)) {
+                   currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1')
+                   sections.push({ title: currentSection, content: [] })
+                   continue
+                 }
+                 if (currentSection && line) {
+     sections[sections.length - 1].content.push(line)
+                 }
+               }
+     
+               return sections.map((section, idx) => (
+                 <div key={idx} className="mb-3">
+                   <h5 className="fw-bold">{section.title}</h5>
+                   <ul>
+                     {section.content.map((item, i) => (
+                       <li key={i}>{item}</li>
+     
+     
+                     ))}
+                   </ul>
+                 </div>
+               ))
+             }
+     
+             // ✅ 2) If structured with "Synonyms:", "Antonyms:", etc. → use renderFormattedSynthesis
+             if (selectedDescription.match(/[A-Z][a-z]+:/)) {
+               return <div>{renderFormattedSynthesis(selectedDescription)}</div>
+             }
+     
+             // ✅ 3) Fallback → split by lines for readability
+             return selectedDescription.split('\n').map((line, i) => (
+               <p key={i} className="mb-1">{line}</p>
+             ))
+           })()}
+         </div>
+       )}
+     </Modal.Body>
 
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
