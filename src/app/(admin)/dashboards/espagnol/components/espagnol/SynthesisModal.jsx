@@ -227,27 +227,42 @@ const handleSynthesisClick = (summary) => {
         <Modal.Header closeButton>
           <Modal.Title>{selectedImage ? 'Word Image' : 'Word Synthesis'}</Modal.Title>
         </Modal.Header>
-   <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+  <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
   {selectedImage ? (
     <img src={selectedImage} alt="Word Illustration" className="img-fluid" />
   ) : (
     <div className="synthesis-content">
       {(() => {
-        // ✅ 1) If AI-formatted with numbered/bold sections → use your existing AI parsing logic
+        // ✅ 0) Render HTML table if present
+        if (selectedDescription.trim().startsWith('<!DOCTYPE html>') || selectedDescription.includes('<html')) {
+          return (
+              <div
+      className="table-responsive"
+      dangerouslySetInnerHTML={{
+        __html: selectedDescription.replace(
+          '<table',
+          '<table class="table table-bordered table-striped text-center align-middle w-100"'
+        ),
+      }}
+    />
+          );
+        }
+
+        // ✅ 1) Handle AI-formatted numbered bold sections
         if (selectedDescription.match(/^\d+\. \*\*.+\*\*/m)) {
-          const sections = []
-          const lines = selectedDescription.split('\n')
-          let currentSection = null
+          const sections = [];
+          const lines = selectedDescription.split('\n');
+          let currentSection = null;
 
           for (let line of lines) {
-            line = line.trim()
+            line = line.trim();
             if (line.match(/^\d+\. \*\*.+\*\*/)) {
-              currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1')
-              sections.push({ title: currentSection, content: [] })
-              continue
+              currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1');
+              sections.push({ title: currentSection, content: [] });
+              continue;
             }
             if (currentSection && line) {
-sections[sections.length - 1].content.push(line)
+              sections[sections.length - 1].content.push(line);
             }
           }
 
@@ -260,22 +275,22 @@ sections[sections.length - 1].content.push(line)
                 ))}
               </ul>
             </div>
-          ))
+          ));
         }
 
-        // ✅ 2) If structured with "Synonyms:", "Antonyms:", etc. → use renderFormattedSynthesis
+        // ✅ 2) Handle "Synonyms:", "Antonyms:", etc.
         if (selectedDescription.match(/[A-Z][a-z]+:/)) {
-          return <div>{renderFormattedSynthesis(selectedDescription)}</div>
+          return <div>{renderFormattedSynthesis(selectedDescription)}</div>;
         }
 
-        // ✅ 3) Fallback → split by lines for readability
+        // ✅ 3) Fallback: just show plain lines
         return selectedDescription.split('\n').map((line, i) => (
           <p key={i} className="mb-1">{line}</p>
-        ))
+        ));
       })()}
     </div>
   )}
-</Modal.Body>        
+</Modal.Body>       
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
             Close
