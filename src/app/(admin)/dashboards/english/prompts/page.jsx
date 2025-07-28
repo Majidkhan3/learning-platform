@@ -90,7 +90,7 @@ const language='english'
           rows={10}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Use {{word}} where the word should be inserted"
+          placeholder="Define your custom prompt:"
         />
       </Form.Group>
       <Button onClick={savePrompt} disabled={loading}>
