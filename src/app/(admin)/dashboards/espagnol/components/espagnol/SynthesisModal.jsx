@@ -5,6 +5,8 @@ import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { Button, Modal } from 'react-bootstrap'
 import { useRouter } from 'next/navigation'
 import { convertFromRaw } from 'draft-js';
+import parse from 'html-react-parser';
+
 
 
 const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
@@ -15,21 +17,21 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
 
   let currentAudio = null;
 
-const handleSynthesisClick = (summary) => {
-  let plainText = summary;
+  const handleSynthesisClick = (summary) => {
+    let plainText = summary;
 
-  try {
-    if (summary && summary.trim().startsWith('{')) {
-      const content = convertFromRaw(JSON.parse(summary));
-      plainText = content.getPlainText('\n'); // ✅ Convert to plain text
+    try {
+      if (summary && summary.trim().startsWith('{')) {
+        const content = convertFromRaw(JSON.parse(summary));
+        plainText = content.getPlainText('\n'); // ✅ Convert to plain text
+      }
+    } catch (e) {
+      console.error('Error parsing summary:', e);
     }
-  } catch (e) {
-    console.error('Error parsing summary:', e);
-  }
 
-  setSelectedDescription(plainText);
-  setShowModal(true);
-};
+    setSelectedDescription(plainText);
+    setShowModal(true);
+  };
 
 
   const handleImageClick = (image) => {
@@ -75,43 +77,43 @@ const handleSynthesisClick = (summary) => {
   //   }
   // }
   const speakWord = async (word) => {
-  try {
-    // Stop previous audio if playing
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
+    try {
+      // Stop previous audio if playing
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+
+      const response = await fetch('/api/polly?language=es-ES', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: word,
+          voice: selectedVoice,
+          language: 'es-ES',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Polly API');
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      currentAudio = new Audio(audioUrl);
+      currentAudio.play();
+
+      // Reset currentAudio when done
+      currentAudio.onended = () => {
+        currentAudio = null;
+      };
+    } catch (error) {
+      console.error('Error fetching Polly API:', error);
     }
-
-    const response = await fetch('/api/polly?language=es-ES', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: word,
-        voice: selectedVoice,
-        language: 'es-ES',
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch Polly API');
-    }
-
-    const audioBlob = await response.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-
-    currentAudio = new Audio(audioUrl);
-    currentAudio.play();
-
-    // Reset currentAudio when done
-    currentAudio.onended = () => {
-      currentAudio = null;
-    };
-  } catch (error) {
-    console.error('Error fetching Polly API:', error);
-  }
-};
+  };
 
 
   const handleEditClick = (id) => {
@@ -119,31 +121,31 @@ const handleSynthesisClick = (summary) => {
   }
   console.log('selected ', selectedDescription)
   const renderFormattedSynthesis = (text) => {
-  const sections = text.split(/(?=[A-Z][a-z]+:)/); // Split at "Synonyms:", "Antonyms:", etc.
+    const sections = text.split(/(?=[A-Z][a-z]+:)/); // Split at "Synonyms:", "Antonyms:", etc.
 
-  return sections.map((section, index) => {
-    if (!section.trim() || !section.includes(':')) return (
-      <p key={index} className="mb-1">{section.trim()}</p>
-    );
+    return sections.map((section, index) => {
+      if (!section.trim() || !section.includes(':')) return (
+        <p key={index} className="mb-1">{section.trim()}</p>
+      );
 
-    const [title, items] = section.split(':');
-    const itemList = (items || "")
-      .split(/•|\n|,/)
-      .map((i) => i.trim())
-      .filter((i) => i);
+      const [title, items] = section.split(':');
+      const itemList = (items || "")
+        .split(/•|\n|,/)
+        .map((i) => i.trim())
+        .filter((i) => i);
 
-    return (
-      <div key={index} className="mb-3">
-        <h6 className="fw-bold">{title.trim()}</h6>
-        <ul>
-          {itemList.map((item, idx) => (
-            <li key={idx}>{item}</li>
-          ))}
-        </ul>
-      </div>
-    );
-  });
-};
+      return (
+        <div key={index} className="mb-3">
+          <h6 className="fw-bold">{title.trim()}</h6>
+          <ul>
+            {itemList.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    });
+  };
   return (
     <>
       <table className="table align-middle text-nowrap table-hover table-centered border-bottom mb-0">
@@ -227,70 +229,87 @@ const handleSynthesisClick = (summary) => {
         <Modal.Header closeButton>
           <Modal.Title>{selectedImage ? 'Word Image' : 'Word Synthesis'}</Modal.Title>
         </Modal.Header>
-  <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-  {selectedImage ? (
-    <img src={selectedImage} alt="Word Illustration" className="img-fluid" />
-  ) : (
-    <div className="synthesis-content">
-      {(() => {
-        // ✅ 0) Render HTML table if present
-        if (selectedDescription.trim().startsWith('<!DOCTYPE html>') || selectedDescription.includes('<html')) {
-          return (
-              <div
-      className="table-responsive"
-      dangerouslySetInnerHTML={{
-        __html: selectedDescription.replace(
-          '<table',
-          '<table class="table table-bordered table-striped text-center align-middle w-100"'
-        ),
-      }}
-    />
-          );
-        }
+        <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          {selectedImage ? (
+            <img src={selectedImage} alt="Word Illustration" className="img-fluid rounded shadow-sm" />
+          ) : (
+            <div className="synthesis-content">
+              {(() => {
+                const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(selectedDescription);
 
-        // ✅ 1) Handle AI-formatted numbered bold sections
-        if (selectedDescription.match(/^\d+\. \*\*.+\*\*/m)) {
-          const sections = [];
-          const lines = selectedDescription.split('\n');
-          let currentSection = null;
+                if (isLikelyHTML) {
+                  try {
+                    const cleanedHtml = selectedDescription.replace(
+                      /<table/gi,
+                      '<table class="table table-bordered table-striped text-center align-middle w-100 rounded shadow-sm mb-3"'
+                    );
+                    return <div className="table-responsive">{parse(cleanedHtml)}</div>;
+                  } catch (err) {
+                    console.warn("HTML parse failed, fallback to text:", err);
+                  }
+                }
 
-          for (let line of lines) {
-            line = line.trim();
-            if (line.match(/^\d+\. \*\*.+\*\*/)) {
-              currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1');
-              sections.push({ title: currentSection, content: [] });
-              continue;
-            }
-            if (currentSection && line) {
-              sections[sections.length - 1].content.push(line);
-            }
-          }
+                // 1) AI formatted (1. **Title**)
+                if (selectedDescription.match(/^\d+\. \*\*.+\*\*/m)) {
+                  const sections = [];
+                  const lines = selectedDescription.split('\n');
+                  let current = null;
 
-          return sections.map((section, idx) => (
-            <div key={idx} className="mb-3">
-              <h5 className="fw-bold">{section.title}</h5>
-              <ul>
-                {section.content.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
+                  for (let line of lines) {
+                    line = line.trim();
+                    if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
+                      const title = line.match(/^\d+\. \*\*(.+)\*\*/)[1];
+                      current = { title, content: [] };
+                      sections.push(current);
+                    } else if (current && line) {
+                      current.content.push(line);
+                    }
+                  }
+
+                  return sections.map((s, idx) => (
+                    <div key={idx} className="mb-3">
+                      <h5 className="fw-bold">{s.title}</h5>
+                      <ul>
+                        {s.content.map((line, i) => (
+                          <li key={i}>{line}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ));
+                }
+
+                // 2) Keyword sections like Synonyms:
+                if (selectedDescription.match(/[A-Z][a-z]+:/)) {
+                  const parts = selectedDescription.split(/(?=[A-Z][a-z]+:)/);
+                  return parts.map((part, idx) => {
+                    if (!part.includes(':')) return <p key={idx}>{part.trim()}</p>;
+                    const [label, data] = part.split(':');
+                    const items = data
+                      .split(/•|\n|,/)
+                      .map((x) => x.trim())
+                      .filter((x) => x);
+
+                    return (
+                      <div key={idx} className="mb-3">
+                        <h6 className="fw-bold">{label.trim()}</h6>
+                        <ul>
+                          {items.map((i, j) => (
+                            <li key={j}>{i}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  });
+                }
+
+                // 3) Plain fallback
+                return selectedDescription.split('\n').map((line, i) => (
+                  <p key={i} className="mb-1">{line}</p>
+                ));
+              })()}
             </div>
-          ));
-        }
-
-        // ✅ 2) Handle "Synonyms:", "Antonyms:", etc.
-        if (selectedDescription.match(/[A-Z][a-z]+:/)) {
-          return <div>{renderFormattedSynthesis(selectedDescription)}</div>;
-        }
-
-        // ✅ 3) Fallback: just show plain lines
-        return selectedDescription.split('\n').map((line, i) => (
-          <p key={i} className="mb-1">{line}</p>
-        ));
-      })()}
-    </div>
-  )}
-</Modal.Body>       
+          )}
+        </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
             Close
