@@ -40,6 +40,7 @@ export async function POST(req) {
 
     const summaryString = typeof summary === 'object' ? JSON.stringify(summary) : summary;
     let generatedSummary = summaryString || '';
+    let updatedImage = image || ''; // ✅ Declare updatedImage before using it
 
     // ✅ Auto-generate Summary
     if (autoGenerateSummary) {
@@ -113,6 +114,57 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
     }
 
     // ✅ Handle Image Generation (unchanged from your code)
+    if (autoGenerateImage) {
+      console.log('[DEBUG] Auto-generating image for word:', word);
+
+      const openAiApiKey = process.env.OPENAI_API_KEY;
+      if (!openAiApiKey) {
+        return NextResponse.json({ error: 'OpenAI API key is missing in environment variables.' }, { status: 500 });
+      }
+
+      try {
+        const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openAiApiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'dall-e-3',
+            prompt: `Create an image that best illustrates the word '${word}' based on its common usage.`,
+            n: 1,
+            size: '1024x1024',
+          }),
+        });
+
+        if (openAiResponse.ok) {
+          const openAiResult = await openAiResponse.json();
+          if (openAiResult?.data?.[0]?.url) {
+            const generatedImageUrl = openAiResult.data[0].url;
+
+            try {
+              const imageResponse = await fetch(generatedImageUrl);
+              const arrayBuffer = await imageResponse.arrayBuffer();
+              const buffer = Buffer.from(arrayBuffer);
+
+              const cloudinaryResult = await new Promise((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                  { folder: 'word-images' },
+                  (error, result) => (error ? reject(error) : resolve(result))
+                );
+                uploadStream.end(buffer);
+              });
+
+              updatedImage = cloudinaryResult.secure_url;
+            } catch {
+              updatedImage = generatedImageUrl;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[ERROR] OpenAI request failed:', err);
+      }
+    }
 
     // ✅ Save Word
     const newWord = new Enword({
@@ -121,7 +173,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
       tags,
       summary: generatedSummary,
       userId,
-      image,
+      image: updatedImage,
     });
 
     await newWord.save();
