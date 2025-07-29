@@ -5,6 +5,8 @@ import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { Button, Modal } from 'react-bootstrap'
 import { useRouter } from 'next/navigation'
 import { convertFromRaw } from 'draft-js'
+import parse from 'html-react-parser';
+
 
 const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
   const [showModal, setShowModal] = useState(false)
@@ -220,70 +222,86 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
           <Modal.Title>{selectedImage ? 'Word Image' : 'Word Synthesis'}</Modal.Title>
         </Modal.Header>
         <Modal.Body style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          {selectedImage ? (
-            <img src={selectedImage} alt="Word Illustration" className="img-fluid" />
-          ) : (
-            <div className="synthesis-content">
-              {(() => {
-                // ✅ 0) Render HTML table if present
-                if (selectedDescription.trim().startsWith('<!DOCTYPE html>') || selectedDescription.includes('<html')) {
-                  return (
-                    <div
-                      className="table-responsive"
-                      dangerouslySetInnerHTML={{
-                        __html: selectedDescription.replace(
-                          '<table',
-                          '<table class="table table-bordered table-striped text-center align-middle w-100"'
-                        ),
-                      }}
-                    />
-                  );
-                }
+  {selectedImage ? (
+    <img src={selectedImage} alt="Word Illustration" className="img-fluid rounded shadow-sm" />
+  ) : (
+    <div className="synthesis-content">
+      {(() => {
+        const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(selectedDescription);
 
-                // ✅ 1) Handle AI-formatted numbered bold sections
-                if (selectedDescription.match(/^\d+\. \*\*.+\*\*/m)) {
-                  const sections = [];
-                  const lines = selectedDescription.split('\n');
-                  let currentSection = null;
+        if (isLikelyHTML) {
+          try {
+            const cleanedHtml = selectedDescription.replace(
+              /<table/gi,
+              '<table class="table table-bordered table-striped text-center align-middle w-100 rounded shadow-sm mb-3"'
+            );
+            return <div className="table-responsive">{parse(cleanedHtml)}</div>;
+          } catch (err) {
+            console.warn("HTML parse failed, fallback to text:", err);
+          }
+        }
 
-                  for (let line of lines) {
-                    line = line.trim();
-                    if (line.match(/^\d+\. \*\*.+\*\*/)) {
-                      currentSection = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1');
-                      sections.push({ title: currentSection, content: [] });
-                      continue;
-                    }
-                    if (currentSection && line) {
-                      sections[sections.length - 1].content.push(line);
-                    }
-                  }
+        // 1) AI formatted (1. **Title**)
+        if (selectedDescription.match(/^\d+\. \*\*.+\*\*/m)) {
+          const sections = [];
+          const lines = selectedDescription.split('\n');
+          let current = null;
 
-                  return sections.map((section, idx) => (
-                    <div key={idx} className="mb-3">
-                      <h5 className="fw-bold">{section.title}</h5>
-                      <ul>
-                        {section.content.map((item, i) => (
-                          <li key={i}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ));
-                }
+          for (let line of lines) {
+            line = line.trim();
+            if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
+              const title = line.match(/^\d+\. \*\*(.+)\*\*/)[1];
+              current = { title, content: [] };
+              sections.push(current);
+            } else if (current && line) {
+              current.content.push(line);
+            }
+          }
 
-                // ✅ 2) Handle "Synonyms:", "Antonyms:", etc.
-                if (selectedDescription.match(/[A-Z][a-z]+:/)) {
-                  return <div>{renderFormattedSynthesis(selectedDescription)}</div>;
-                }
-
-                // ✅ 3) Fallback: just show plain lines
-                return selectedDescription.split('\n').map((line, i) => (
-                  <p key={i} className="mb-1">{line}</p>
-                ));
-              })()}
+          return sections.map((s, idx) => (
+            <div key={idx} className="mb-3">
+              <h5 className="fw-bold">{s.title}</h5>
+              <ul>
+                {s.content.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
             </div>
-          )}
-        </Modal.Body>
+          ));
+        }
 
+        // 2) Keyword sections like Synonyms:
+        if (selectedDescription.match(/[A-Z][a-z]+:/)) {
+          const parts = selectedDescription.split(/(?=[A-Z][a-z]+:)/);
+          return parts.map((part, idx) => {
+            if (!part.includes(':')) return <p key={idx}>{part.trim()}</p>;
+            const [label, data] = part.split(':');
+            const items = data
+              .split(/•|\n|,/)
+              .map((x) => x.trim())
+              .filter((x) => x);
+
+            return (
+              <div key={idx} className="mb-3">
+                <h6 className="fw-bold">{label.trim()}</h6>
+                <ul>
+                  {items.map((i, j) => (
+                    <li key={j}>{i}</li>
+                  ))}
+                </ul>
+              </div>
+            );
+          });
+        }
+
+        // 3) Plain fallback
+        return selectedDescription.split('\n').map((line, i) => (
+          <p key={i} className="mb-1">{line}</p>
+        ));
+      })()}
+    </div>
+  )}
+</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
             Close
