@@ -21,12 +21,16 @@ const LeftSideBarToggle = () => {
     if (size === 'condensed') changeMenuSize('default');else if (size === 'default') changeMenuSize('condensed');
   };
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-    } else if (size === 'hidden') {
-      toggleBackdrop();
-    }
-  }, [pathname]);
+  const excludedPaths = ['/edit', '/flashcard', '/aflashcards'];
+  const isExcluded = excludedPaths.some(path => pathname.includes(path));
+
+  if (isFirstRender.current) {
+    isFirstRender.current = false;
+  } else if (size === 'hidden' && !isExcluded) {
+    toggleBackdrop();
+  }
+}, [pathname]);
+
   return <div className="topbar-item">
       <button type="button" onClick={handleMenuSize} className="button-toggle-menu topbar-button">
         <IconifyIcon icon="ri:menu-2-line" width={24} height={24} className="fs-24" />
