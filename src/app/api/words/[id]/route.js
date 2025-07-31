@@ -110,7 +110,7 @@ Responde exclusivamente en español. No incluyas texto en inglés, ni en los eje
           },
           body: JSON.stringify({
             model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 512,
+            max_tokens: 2000,
             messages: [{ role: 'user', content: prompt }],
           }),
         });
@@ -121,6 +121,8 @@ Responde exclusivamente en español. No incluyas texto en inglés, ni en los eje
             claudeResult?.content?.[0]?.text?.trim() ||
             claudeResult?.completion?.trim() ||
             updatedSummary;
+            console.log('🧠 Generated Summary:', updatedSummary);
+
         } else {
           console.error('[ERROR] Claude API failed');
         }

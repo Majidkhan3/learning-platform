@@ -98,7 +98,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
         },
         body: JSON.stringify({
           model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 512,
+          max_tokens: 2000,
           messages: [{ role: 'user', content: prompt }],
         }),
       });

@@ -97,7 +97,7 @@ Fournissez uniquement du contenu en français, y compris les phrases d'exemple, 
         },
         body: JSON.stringify({
           model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 512,
+          max_tokens: 2000,
           messages: [{ role: 'user', content: prompt }],
         }),
       });
