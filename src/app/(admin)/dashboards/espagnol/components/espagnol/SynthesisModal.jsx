@@ -233,7 +233,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
           {selectedImage ? (
             <img src={selectedImage} alt="Word Illustration" className="img-fluid rounded shadow-sm" />
           ) : (
-            <div className="synthesis-content">
+            <div className="synthesis-content" style={{ whiteSpace: 'pre-wrap' }}>
               {(() => {
                 const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(selectedDescription);
 
@@ -301,11 +301,40 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                     );
                   });
                 }
-
+                // Special case for numbered lists with bullet points
+                if (selectedDescription.match(/^\d+\.\s+.+\n(\s*•\s+.+\n)+/m)) {
+                  return (
+                    <div style={{ whiteSpace: 'pre-wrap' }}>
+                      {selectedDescription.split('\n').map((line, i) => {
+                        if (line.match(/^\d+\./)) {
+                          return <h5 key={i} style={{ fontWeight: 'bold', margin: '15px 0 5px 0' }}>{line}</h5>;
+                        } else if (line.startsWith('•')) {
+                          return <div key={i} style={{ marginLeft: '25px' }}>{line}</div>;
+                        } else if (line.trim() === '') {
+                          return <br key={i} />;
+                        }
+                        return <div key={i}>{line}</div>;
+                      })}
+                    </div>
+                  );
+                }
                 // 3) Plain fallback
-                return selectedDescription.split('\n').map((line, i) => (
-                  <p key={i} className="mb-1">{line}</p>
-                ));
+                // 3) Plain fallback with better formatting
+                return (
+                  <div style={{ whiteSpace: 'pre-wrap' }}>
+                    {selectedDescription.split('\n').map((line, i) => (
+                      line.trim() ? (
+                        <div key={i} className="mb-2">
+                          {line.startsWith('•') ? (
+                            <div style={{ marginLeft: '20px' }}>{line}</div>
+                          ) : (
+                            line
+                          )}
+                        </div>
+                      ) : <br key={i} />
+                    ))}
+                  </div>
+                );
               })()}
             </div>
           )}

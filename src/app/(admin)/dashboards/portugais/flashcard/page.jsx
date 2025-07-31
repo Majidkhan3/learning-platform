@@ -6,6 +6,7 @@ import { useSwipeable } from 'react-swipeable' // Import react-swipeable
 import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 import { Icon } from '@iconify/react/dist/iconify.js'
+import parse from 'html-react-parser'; // Import html-react-parser for parsing HTML content
 
 const FlashCard = () => {
   const { user ,token } = useAuth()
@@ -271,7 +272,7 @@ const handleKeyPress = useCallback(
           </small>
         </div>
 
-        <div className={`flip-card ${isFlipped ? 'flipped' : ''}`} style={{ height: '1800px', perspective: '1000px' }}>
+        <div className={`flip-card ${isFlipped ? 'flipped' : ''}`} style={{ height: '4500px', perspective: '1000px' }}>
           <div className="flip-card-inner position-relative w-100 h-100" style={{ transition: 'transform 0.6s', transformStyle: 'preserve-3d' }}>
             {/* Front Side */}
             <Card className={`position-absolute w-100 h-100 ${isFlipped ? 'd-none' : ''}`} style={{ backfaceVisibility: 'hidden', zIndex: '2' }}>
@@ -328,108 +329,136 @@ const handleKeyPress = useCallback(
                 {/* <div className="mb-3 text-center">
                   <p>{currentCard?.synthesis}</p>
                 </div> */}
-                <div className="synthesis-content mb-3" style={{ fontSize: '0.9rem' }}>
-                  {(() => {
-                    const sections = []
-                    // Ensure synthesis is a string and split, provide default empty array
-                    const lines = (currentCard?.synthesis || '').split('\n')
-                    let currentSectionTitle = null
-                    let currentSubsectionTitle = null
-
-                    for (let i = 0; i < lines.length; i++) {
-                      const line = lines[i].trim()
-
-                      if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
-                        // Capture title without asterisks
-                        currentSectionTitle = line.replace(/^\d+\. \*\*(.+)\*\*/, '$1').trim()
-                        currentSubsectionTitle = null // Reset subsection
-                        // Ensure section object is created
-                        if (currentSectionTitle && !sections.find((s) => s.title === currentSectionTitle)) {
-                          sections.push({ title: currentSectionTitle, subsections: [], content: [] })
-                        }
-                        continue
-                      }
-
-                      // More robust subsection detection for "Main Uses"
-                      if (currentSectionTitle === 'Main Uses' && line.match(/^[A-Z][A-Za-z\s\/()'-]+:?$/) && !line.startsWith('"')) {
-                        currentSubsectionTitle = line.replace(/:$/, '').trim() // Remove trailing colon if present
-                        const section = sections.find((s) => s.title === currentSectionTitle)
-                        if (section && !section.subsections.find((ss) => ss.title === currentSubsectionTitle)) {
-                          section.subsections.push({ title: currentSubsectionTitle, content: [] })
-                        }
-                        continue
-                      }
-
-                      if (!line || line.toLowerCase().startsWith("here's a detailed synthesis")) continue
-
-                      if (currentSectionTitle) {
-                        const section = sections.find((s) => s.title === currentSectionTitle)
-                        if (!section) continue // Should not happen if section created above
-
-                        if (currentSubsectionTitle && section.title === 'Main Uses') {
-                          const subsection = section.subsections.find((ss) => ss.title === currentSubsectionTitle)
-                          if (subsection && line.startsWith('"') && line.endsWith('"')) {
-                            subsection.content.push(line.slice(1, -1))
-                          } else if (subsection && !line.match(/^[A-Z][A-Za-z\s\/()'-]+:?$/)) {
-                            // Add to existing subsection if not a new title
-                            subsection.content.push(line)
-                          }
-                        } else if (line) {
-                          // Add to general content of the section
-                          section.content.push(line)
-                        }
-                      }
-                    }
-
-                    return sections.map((section, sectionIndex) => (
-                      <div key={sectionIndex} className="mb-3">
-                        <h6 className="fw-bold">{section.title}</h6>
-                        {/* Corrected title comparisons (no colons) */}
-                        {section.title === 'Main Uses' && section.subsections.length > 0
-                          ? section.subsections.map((sub, subIdx) => (
-                              <div key={subIdx} className="ms-2 mb-2">
-                                <p className="mb-1 fst-italic">{sub.title}:</p>
-                                {sub.content.length > 0 && (
-                                  <ul className="list-unstyled ps-3">
-                                    {sub.content.map((item, itemIdx) => (
-                                      <li key={itemIdx} style={{ fontSize: '0.85rem' }}>
-                                        <em>{item}</em>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </div>
-                            ))
-                          : section.content.length > 0 && (
-                              <ul className="list-unstyled ps-3">
-                                {section.content.map((item, idx) => (
-                                  <li key={idx} style={{ fontSize: '0.85rem' }}>
-                                    {section.title === 'Synonyms' || section.title === 'Antonyms' ? (
-                                      <span
-                                        className={section.title === 'Synonyms' ? 'synonym-chip' : 'antonym-chip'}
-                                        style={{
-                                          backgroundColor: section.title === 'Synonyms' ? '#e3f2fd' : '#ffebee',
-                                          color: section.title === 'Synonyms' ? '#1976d2' : '#d32f2f',
-                                          padding: '3px 9px',
-                                          borderRadius: '12px',
-                                          fontSize: '0.8rem',
-                                          border: `1px solid ${section.title === 'Synonyms' ? '#bbdefb' : '#ffcdd2'}`,
-                                          display: 'inline-block',
-                                          margin: '2px',
-                                        }}>
-                                        {item.replace(/^- /, '')}
-                                      </span>
-                                    ) : (
-                                      item
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                      </div>
-                    ))
-                  })()}
-                </div>
+                       <div 
+                     className="synthesis-content mb-3" 
+                     style={{ 
+                       fontSize: '0.9rem',
+                       whiteSpace: 'pre-wrap', // Preserves spaces and line break
+                     }}
+                   >
+                     {(() => {
+                       const summary = currentCard?.synthesis || '';
+                       
+                       // 1. First check for flashcard format (numbered sections with bullets)
+                       if (summary.match(/^\d+\.\s+.+\n(\s*•\s+.+\n)+/m)) {
+                         return (
+                           <>
+                             {summary.split('\n').map((line, i) => {
+                               if (line.match(/^\d+\./)) {
+                                 return (
+                                   <h6 
+                                     key={i} 
+                                     style={{ 
+                                       fontWeight: 'bold', 
+                                       margin: '15px 0 5px 0',
+                                       color: '#2c3e50'
+                                     }}
+                                   >
+                                     {line}
+                                   </h6>
+                                 );
+                               } else if (line.startsWith('•')) {
+                                 return (
+                                   <div 
+                                     key={i} 
+                                     style={{ 
+                                       marginLeft: '20px',
+                                       paddingLeft: '5px'
+                                     }}
+                                   >
+                                     {line}
+                                   </div>
+                                 );
+                               } else if (line.trim() === '') {
+                                 return <br key={i} />;
+                               }
+                               return <div key={i}>{line}</div>;
+                             })}
+                           </>
+                         );
+                       }
+                   
+                       // 2. Check for HTML content
+                       const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(summary);
+                       if (isLikelyHTML) {
+                         try {
+                           const cleanedHtml = summary.replace(
+                             /<table/gi,
+                             '<table class="table table-bordered table-striped text-center align-middle w-100 rounded shadow-sm mb-3"'
+                           );
+                           return <div className="table-responsive">{parse(cleanedHtml)}</div>;
+                         } catch (err) {
+                           console.warn("HTML parse failed, fallback to text:", err);
+                         }
+                       }
+                   
+                       // 3. AI-formatted content (with markdown-like **bold**)
+                       if (summary.match(/^\d+\. \*\*.+\*\*/m)) {
+                         const sections = [];
+                         const lines = summary.split('\n');
+                         let current = null;
+                   
+                         for (let line of lines) {
+                           line = line.trim();
+                           if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
+                             const title = line.match(/^\d+\. \*\*(.+)\*\*/)[1];
+                             current = { title, content: [] };
+                             sections.push(current);
+                           } else if (current && line) {
+                             current.content.push(line);
+                           }
+                         }
+                   
+                         return sections.map((s, idx) => (
+                           <div key={idx} className="mb-3">
+                             <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{s.title}</h6>
+                             <ul className="list-unstyled ps-3">
+                               {s.content.map((line, i) => (
+                                 <li key={i}>{line}</li>
+                               ))}
+                             </ul>
+                           </div>
+                         ));
+                       }
+                   
+                       // 4. Keyword sections (like "Synonyms:")
+                       if (summary.match(/[A-Z][a-z]+:/)) {
+                         const parts = summary.split(/(?=[A-Z][a-z]+:)/);
+                         return parts.map((part, idx) => {
+                           if (!part.includes(':')) return <p key={idx}>{part.trim()}</p>;
+                           const [label, data] = part.split(':');
+                           const items = data
+                             .split(/•|\n|,/)
+                             .map((x) => x.trim())
+                             .filter((x) => x);
+                   
+                           return (
+                             <div key={idx} className="mb-3">
+                               <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{label.trim()}</h6>
+                               <ul className="list-unstyled ps-3">
+                                 {items.map((i, j) => (
+                                   <li key={j}>{i}</li>
+                                 ))}
+                               </ul>
+                             </div>
+                           );
+                         });
+                       }
+                   
+                       // 5. Plain text fallback with preserved line breaks
+                       return (
+                         <>
+                           {summary.split('\n').map((line, i) => (
+                             line.trim() ? (
+                               <p key={i} className="mb-2">{line}</p>
+                             ) : (
+                               <br key={i} />
+                             )
+                           ))}
+                         </>
+                       );
+                     })()}
+                   </div>
 
                 {/* Rating Section */}
                 <div className="mb-3">
