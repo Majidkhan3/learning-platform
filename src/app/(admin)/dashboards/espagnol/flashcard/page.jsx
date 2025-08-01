@@ -7,7 +7,7 @@ import IconifyIcon from '@/components/wrappers/IconifyIcon'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import parse from 'html-react-parser';
-
+import { convertFromRaw } from 'draft-js';
 
 const FlashCard = () => {
   const { user,token } = useAuth()
@@ -231,6 +231,108 @@ const handleKeyPress = useCallback(
     }
   }, [handleKeyPress])
 
+  const renderFormattedSynthesis = (text) => {
+  if (!text) return null;
+
+  // 1) Check for HTML content
+  const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(text);
+  if (isLikelyHTML) {
+    try {
+      const cleanedHtml = text.replace(
+        /<table/gi,
+        '<table class="table table-bordered table-striped text-center align-middle w-100 rounded shadow-sm mb-3"'
+      );
+      return <div className="table-responsive">{parse(cleanedHtml)}</div>;
+    } catch (err) {
+      console.warn("HTML parse failed, fallback to text:", err);
+    }
+  }
+
+  // 2) Check for AI-formatted content (1. **Title**)
+  if (text.match(/^\d+\. \*\*.+\*\*/m)) {
+    const sections = [];
+    const lines = text.split('\n');
+    let current = null;
+
+    for (let line of lines) {
+      line = line.trim();
+      if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
+        const title = line.match(/^\d+\. \*\*(.+)\*\*/)[1];
+        current = { title, content: [] };
+        sections.push(current);
+      } else if (current && line) {
+        current.content.push(line);
+      }
+    }
+
+    return sections.map((s, idx) => (
+      <div key={idx} className="mb-3">
+        <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{s.title}</h6>
+        <ul className="list-unstyled ps-3">
+          {s.content.map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+        </ul>
+      </div>
+    ));
+  }
+
+  // 3) Check for keyword sections (Synonyms:, Antonyms:, etc.)
+  if (text.match(/[A-Z][a-z]+:/)) {
+    const parts = text.split(/(?=[A-Z][a-z]+:)/);
+    return parts.map((part, idx) => {
+      if (!part.includes(':')) return <p key={idx}>{part.trim()}</p>;
+      const [label, data] = part.split(':');
+      const items = data
+        .split(/•|\n|,/)
+        .map(x => x.trim())
+        .filter(x => x);
+
+      return (
+        <div key={idx} className="mb-3">
+          <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{label.trim()}</h6>
+          <ul className="list-unstyled ps-3">
+            {items.map((i, j) => (
+              <li key={j}>{i}</li>
+            ))}
+          </ul>
+        </div>
+      );
+    });
+  }
+
+  // 4) Special case for numbered lists with bullet points
+  if (text.match(/^\d+\.\s+.+\n(\s*•\s+.+\n)+/m)) {
+    return (
+      <>
+        {text.split('\n').map((line, i) => {
+          if (line.match(/^\d+\./)) {
+            return <h6 key={i} style={{ fontWeight: 'bold', margin: '15px 0 5px 0', color: '#2c3e50' }}>{line}</h6>;
+          } else if (line.startsWith('•')) {
+            return <div key={i} style={{ marginLeft: '20px', paddingLeft: '5px' }}>{line}</div>;
+          } else if (line.trim() === '') {
+            return <br key={i} />;
+          }
+          return <div key={i}>{line}</div>;
+        })}
+      </>
+    );
+  }
+
+  // 5) Plain text fallback
+  return (
+    <>
+      {text.split('\n').map((line, i) => (
+        line.trim() ? (
+          <p key={i} className="mb-2">{line}</p>
+        ) : (
+          <br key={i} />
+        )
+      ))}
+    </>
+  );
+};
+
   // Swipe handlers for touch gestures
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => goToCard(currentIndex + 1), // Swipe left to go to the next card
@@ -238,7 +340,6 @@ const handleKeyPress = useCallback(
     preventDefaultTouchmoveEvent: true,
     trackMouse: true, // Optional: Allow swipe gestures with a mouse
   })
-
   if (loading)
     return (
       <Col className="text-center w-full justify-center py-5">
@@ -273,7 +374,7 @@ const handleKeyPress = useCallback(
           </small>
         </div>
 
-        <div className={`flip-card ${isFlipped ? 'flipped' : ''}`} style={{ height: '4500px', perspective: '1000px' }}>
+        <div className={`flip-card ${isFlipped ? 'flipped' : ''}`} style={{ height: '7000px', perspective: '1000px' }}>
           <div className="flip-card-inner position-relative w-100 h-100" style={{ transition: 'transform 0.6s', transformStyle: 'preserve-3d' }}>
             {/* Front Side */}
             <Card className={`position-absolute w-100 h-100 ${isFlipped ? 'd-none' : ''}`} style={{ backfaceVisibility: 'hidden', zIndex: '2' }}>
@@ -326,138 +427,24 @@ const handleKeyPress = useCallback(
                     <p>No image available for this card.</p>
                   )}
                 </div>
-                {/* Synthesis Content */}
-                {/* <div className="mb-3 text-center">
-                  <p>{currentCard?.synthesis}</p>
-                </div> */}
-             <div 
-  className="synthesis-content mb-3" 
-  style={{ 
-    fontSize: '0.9rem',
-    whiteSpace: 'pre-wrap', // Preserves spaces and line break
-  }}
->
+               
+           <div className="synthesis-content mb-3" style={{ 
+  fontSize: '0.9rem',
+  whiteSpace: 'pre-wrap',
+}}>
   {(() => {
-    const summary = currentCard?.synthesis || '';
-    
-    // 1. First check for flashcard format (numbered sections with bullets)
-    if (summary.match(/^\d+\.\s+.+\n(\s*•\s+.+\n)+/m)) {
-      return (
-        <>
-          {summary.split('\n').map((line, i) => {
-            if (line.match(/^\d+\./)) {
-              return (
-                <h6 
-                  key={i} 
-                  style={{ 
-                    fontWeight: 'bold', 
-                    margin: '15px 0 5px 0',
-                    color: '#2c3e50'
-                  }}
-                >
-                  {line}
-                </h6>
-              );
-            } else if (line.startsWith('•')) {
-              return (
-                <div 
-                  key={i} 
-                  style={{ 
-                    marginLeft: '20px',
-                    paddingLeft: '5px'
-                  }}
-                >
-                  {line}
-                </div>
-              );
-            } else if (line.trim() === '') {
-              return <br key={i} />;
-            }
-            return <div key={i}>{line}</div>;
-          })}
-        </>
-      );
-    }
-
-    // 2. Check for HTML content
-    const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(summary);
-    if (isLikelyHTML) {
+    // First try to parse as Draft.js content if it looks like JSON
+    if (currentCard?.synthesis?.trim().startsWith('{')) {
       try {
-        const cleanedHtml = summary.replace(
-          /<table/gi,
-          '<table class="table table-bordered table-striped text-center align-middle w-100 rounded shadow-sm mb-3"'
-        );
-        return <div className="table-responsive">{parse(cleanedHtml)}</div>;
-      } catch (err) {
-        console.warn("HTML parse failed, fallback to text:", err);
+        const content = convertFromRaw(JSON.parse(currentCard.synthesis));
+        const plainText = content.getPlainText('\n');
+        return renderFormattedSynthesis(plainText);
+      } catch (e) {
+        console.error('Error parsing Draft.js content:', e);
+        return renderFormattedSynthesis(currentCard?.synthesis || '');
       }
     }
-
-    // 3. AI-formatted content (with markdown-like **bold**)
-    if (summary.match(/^\d+\. \*\*.+\*\*/m)) {
-      const sections = [];
-      const lines = summary.split('\n');
-      let current = null;
-
-      for (let line of lines) {
-        line = line.trim();
-        if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
-          const title = line.match(/^\d+\. \*\*(.+)\*\*/)[1];
-          current = { title, content: [] };
-          sections.push(current);
-        } else if (current && line) {
-          current.content.push(line);
-        }
-      }
-
-      return sections.map((s, idx) => (
-        <div key={idx} className="mb-3">
-          <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{s.title}</h6>
-          <ul className="list-unstyled ps-3">
-            {s.content.map((line, i) => (
-              <li key={i}>{line}</li>
-            ))}
-          </ul>
-        </div>
-      ));
-    }
-
-    // 4. Keyword sections (like "Synonyms:")
-    if (summary.match(/[A-Z][a-z]+:/)) {
-      const parts = summary.split(/(?=[A-Z][a-z]+:)/);
-      return parts.map((part, idx) => {
-        if (!part.includes(':')) return <p key={idx}>{part.trim()}</p>;
-        const [label, data] = part.split(':');
-        const items = data
-          .split(/•|\n|,/)
-          .map((x) => x.trim())
-          .filter((x) => x);
-
-        return (
-          <div key={idx} className="mb-3">
-            <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{label.trim()}</h6>
-            <ul className="list-unstyled ps-3">
-              {items.map((i, j) => (
-                <li key={j}>{i}</li>
-              ))}
-            </ul>
-          </div>
-        );
-      });
-    }
-
-    // 5. Plain text fallback with preserved line breaks
-    return (
-      <>
-        {summary.split('\n').map((line, i) => (
-          line.trim() ? (
-            <p key={i} className="mb-2">{line}</p>
-          ) : (
-            <br key={i} />
-          )
-        ))}
-      </>
-    );
+    return renderFormattedSynthesis(currentCard?.synthesis || '');
   })()}
 </div>
 
