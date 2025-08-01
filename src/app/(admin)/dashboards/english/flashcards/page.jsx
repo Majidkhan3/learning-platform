@@ -180,37 +180,57 @@ const FlashCard = () => {
 
 
 
-  const handleRating = async (star) => {
-    if (!currentCard) return
+    const handleRating = async (star) => {
+  if (!currentCard) return;
 
-    try {
-      const updatedCard = { ...currentCard, rating: star }
-      setCards((prevCards) => prevCards.map((card) => (card.id === currentCard.id ? updatedCard : card)))
+  try {
+    // Create a complete copy of the current card with updated rating
+    const updatedCard = { 
+      ...currentCard,
+      rating: star,
+      synthesis: currentCard.synthesis // Explicitly preserve synthesis
+    };
 
-      // Update the rating in the database
-      const response = await fetch(`/api/english/enword/${currentCard.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // Include token for authentication
-        },
-        body: JSON.stringify({
-          word: currentCard.word, // Include the required 'word' field
-          tags: currentCard.tags,
-          note: star,
-        }),
-      })
+    // Optimistically update local state
+    setCards(prevCards => 
+      prevCards.map(card => 
+        card.id === currentCard.id ? updatedCard : card
+      )
+    );
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Failed to update rating:', errorData.error)
-        setError('Failed to update rating')
-      }
-    } catch (err) {
-      console.error('Error updating rating:', err)
-      setError('Error updating rating')
+    // Update the rating in the database
+    const response = await fetch(`/api/english/enword/${currentCard.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        word: currentCard.word,
+        tags: currentCard.tags,
+        note: star,
+        summary: currentCard.synthesis // Ensure synthesis is sent to backend
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update rating');
     }
+
+    // Optionally: Refresh the data from server to ensure consistency
+    // fetchWords();
+    
+  } catch (err) {
+    console.error('Error updating rating:', err);
+    // Revert UI if API call fails
+    setCards(prevCards => 
+      prevCards.map(card => 
+        card.id === currentCard.id ? currentCard : card
+      )
+    );
+    setError('Failed to update rating');
   }
+};
 
   const openModal = (image) => {
     setModalImage(image)
@@ -229,108 +249,108 @@ const FlashCard = () => {
       window.removeEventListener('keydown', handleKeyPress)
     }
   }, [handleKeyPress])
-  
-   const renderFormattedSynthesis = (text) => {
-  if (!text) return null;
 
-  // 1) Check for HTML content
-  const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(text);
-  if (isLikelyHTML) {
-    try {
-      const cleanedHtml = text.replace(
-        /<table/gi,
-        '<table class="table table-bordered table-striped text-center align-middle w-100 rounded shadow-sm mb-3"'
-      );
-      return <div className="table-responsive">{parse(cleanedHtml)}</div>;
-    } catch (err) {
-      console.warn("HTML parse failed, fallback to text:", err);
-    }
-  }
+  const renderFormattedSynthesis = (text) => {
+    if (!text) return null;
 
-  // 2) Check for AI-formatted content (1. **Title**)
-  if (text.match(/^\d+\. \*\*.+\*\*/m)) {
-    const sections = [];
-    const lines = text.split('\n');
-    let current = null;
-
-    for (let line of lines) {
-      line = line.trim();
-      if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
-        const title = line.match(/^\d+\. \*\*(.+)\*\*/)[1];
-        current = { title, content: [] };
-        sections.push(current);
-      } else if (current && line) {
-        current.content.push(line);
+    // 1) Check for HTML content
+    const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(text);
+    if (isLikelyHTML) {
+      try {
+        const cleanedHtml = text.replace(
+          /<table/gi,
+          '<table class="table table-bordered table-striped text-center align-middle w-100 rounded shadow-sm mb-3"'
+        );
+        return <div className="table-responsive">{parse(cleanedHtml)}</div>;
+      } catch (err) {
+        console.warn("HTML parse failed, fallback to text:", err);
       }
     }
 
-    return sections.map((s, idx) => (
-      <div key={idx} className="mb-3">
-        <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{s.title}</h6>
-        <ul className="list-unstyled ps-3">
-          {s.content.map((line, i) => (
-            <li key={i}>{line}</li>
-          ))}
-        </ul>
-      </div>
-    ));
-  }
+    // 2) Check for AI-formatted content (1. **Title**)
+    if (text.match(/^\d+\. \*\*.+\*\*/m)) {
+      const sections = [];
+      const lines = text.split('\n');
+      let current = null;
 
-  // 3) Check for keyword sections (Synonyms:, Antonyms:, etc.)
-  if (text.match(/[A-Z][a-z]+:/)) {
-    const parts = text.split(/(?=[A-Z][a-z]+:)/);
-    return parts.map((part, idx) => {
-      if (!part.includes(':')) return <p key={idx}>{part.trim()}</p>;
-      const [label, data] = part.split(':');
-      const items = data
-        .split(/•|\n|,/)
-        .map(x => x.trim())
-        .filter(x => x);
+      for (let line of lines) {
+        line = line.trim();
+        if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
+          const title = line.match(/^\d+\. \*\*(.+)\*\*/)[1];
+          current = { title, content: [] };
+          sections.push(current);
+        } else if (current && line) {
+          current.content.push(line);
+        }
+      }
 
-      return (
+      return sections.map((s, idx) => (
         <div key={idx} className="mb-3">
-          <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{label.trim()}</h6>
+          <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{s.title}</h6>
           <ul className="list-unstyled ps-3">
-            {items.map((i, j) => (
-              <li key={j}>{i}</li>
+            {s.content.map((line, i) => (
+              <li key={i}>{line}</li>
             ))}
           </ul>
         </div>
-      );
-    });
-  }
+      ));
+    }
 
-  // 4) Special case for numbered lists with bullet points
-  if (text.match(/^\d+\.\s+.+\n(\s*•\s+.+\n)+/m)) {
+    // 3) Check for keyword sections (Synonyms:, Antonyms:, etc.)
+    if (text.match(/[A-Z][a-z]+:/)) {
+      const parts = text.split(/(?=[A-Z][a-z]+:)/);
+      return parts.map((part, idx) => {
+        if (!part.includes(':')) return <p key={idx}>{part.trim()}</p>;
+        const [label, data] = part.split(':');
+        const items = data
+          .split(/•|\n|,/)
+          .map(x => x.trim())
+          .filter(x => x);
+
+        return (
+          <div key={idx} className="mb-3">
+            <h6 className="fw-bold" style={{ color: '#2c3e50' }}>{label.trim()}</h6>
+            <ul className="list-unstyled ps-3">
+              {items.map((i, j) => (
+                <li key={j}>{i}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      });
+    }
+
+    // 4) Special case for numbered lists with bullet points
+    if (text.match(/^\d+\.\s+.+\n(\s*•\s+.+\n)+/m)) {
+      return (
+        <>
+          {text.split('\n').map((line, i) => {
+            if (line.match(/^\d+\./)) {
+              return <h6 key={i} style={{ fontWeight: 'bold', margin: '15px 0 5px 0', color: '#2c3e50' }}>{line}</h6>;
+            } else if (line.startsWith('•')) {
+              return <div key={i} style={{ marginLeft: '20px', paddingLeft: '5px' }}>{line}</div>;
+            } else if (line.trim() === '') {
+              return <br key={i} />;
+            }
+            return <div key={i}>{line}</div>;
+          })}
+        </>
+      );
+    }
+
+    // 5) Plain text fallback
     return (
       <>
-        {text.split('\n').map((line, i) => {
-          if (line.match(/^\d+\./)) {
-            return <h6 key={i} style={{ fontWeight: 'bold', margin: '15px 0 5px 0', color: '#2c3e50' }}>{line}</h6>;
-          } else if (line.startsWith('•')) {
-            return <div key={i} style={{ marginLeft: '20px', paddingLeft: '5px' }}>{line}</div>;
-          } else if (line.trim() === '') {
-            return <br key={i} />;
-          }
-          return <div key={i}>{line}</div>;
-        })}
+        {text.split('\n').map((line, i) => (
+          line.trim() ? (
+            <p key={i} className="mb-2">{line}</p>
+          ) : (
+            <br key={i} />
+          )
+        ))}
       </>
     );
-  }
-
-  // 5) Plain text fallback
-  return (
-    <>
-      {text.split('\n').map((line, i) => (
-        line.trim() ? (
-          <p key={i} className="mb-2">{line}</p>
-        ) : (
-          <br key={i} />
-        )
-      ))}
-    </>
-  );
-};
+  };
   // Swipe handlers for touch gestures
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => goToCard(currentIndex + 1), // Swipe left to go to the next card
@@ -373,7 +393,7 @@ const FlashCard = () => {
             </small>
           </div>
 
-          <div className={`flip-card ${isFlipped ? 'flipped' : ''}`} style={{ height: '7000px', perspective: '1000px' }}>
+          <div className={`flip-card ${isFlipped ? 'flipped' : ''}`} style={{ height: '1500px', perspective: '1000px' }}>
             <div className="flip-card-inner position-relative w-100 h-100" style={{ transition: 'transform 0.6s', transformStyle: 'preserve-3d' }}>
               {/* Front Side */}
               <Card className={`position-absolute w-100 h-100 ${isFlipped ? 'd-none' : ''}`} style={{ backfaceVisibility: 'hidden', zIndex: '2' }}>
@@ -430,25 +450,32 @@ const FlashCard = () => {
                   {/* <div className="mb-3 text-center">
                   <p>{currentCard?.synthesis}</p>
                 </div> */}
-         <div className="synthesis-content mb-3" style={{ 
-  fontSize: '0.9rem',
-  whiteSpace: 'pre-wrap',
-}}>
-  {(() => {
-    // First try to parse as Draft.js content if it looks like JSON
-    if (currentCard?.synthesis?.trim().startsWith('{')) {
-      try {
-        const content = convertFromRaw(JSON.parse(currentCard.synthesis));
-        const plainText = content.getPlainText('\n');
-        return renderFormattedSynthesis(plainText);
-      } catch (e) {
-        console.error('Error parsing Draft.js content:', e);
-        return renderFormattedSynthesis(currentCard?.synthesis || '');
-      }
-    }
-    return renderFormattedSynthesis(currentCard?.synthesis || '');
-  })()}
-</div>
+                  <div className="synthesis-content mb-3" style={{
+                    fontSize: '0.9rem',
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '600px',  // Set a fixed height
+                    overflowY: 'auto',   // Enable vertical scrolling
+                    padding: '15px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    backgroundColor: '#f9f9f9',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                  }}>
+                    {(() => {
+                      // First try to parse as Draft.js content if it looks like JSON
+                      if (currentCard?.synthesis?.trim().startsWith('{')) {
+                        try {
+                          const content = convertFromRaw(JSON.parse(currentCard.synthesis));
+                          const plainText = content.getPlainText('\n');
+                          return renderFormattedSynthesis(plainText);
+                        } catch (e) {
+                          console.error('Error parsing Draft.js content:', e);
+                          return renderFormattedSynthesis(currentCard?.synthesis || '');
+                        }
+                      }
+                      return renderFormattedSynthesis(currentCard?.synthesis || '');
+                    })()}
+                  </div>
 
                   {/* Rating Section */}
                   <div className="mb-3">

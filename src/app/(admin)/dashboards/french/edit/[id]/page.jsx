@@ -312,7 +312,7 @@ const EditEspagnol = ({ params }) => {
                   <h4>Note:</h4>
                 </Form.Label>
                 <div className="d-flex align-items-center">
-                  {[1, 2, 3, 4, 5].map((star) => (
+                  {[1, 2, 3, 4].map((star) => (
                     <span
                       key={star}
                       className={`me-2 ${
