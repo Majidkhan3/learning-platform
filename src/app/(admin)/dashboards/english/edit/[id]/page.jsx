@@ -308,7 +308,7 @@ const payload = {
                 <h4>Rating:</h4>
               </Form.Label>
               <div className="d-flex align-items-center">
-                {[1, 2, 3, 4, 5].map((star) => (
+                {[1, 2, 3, 4].map((star) => (
                   <span
                     key={star}
                     className={`me-2 ${formData.note >= star ? 'text-warning' : 'text-muted'
