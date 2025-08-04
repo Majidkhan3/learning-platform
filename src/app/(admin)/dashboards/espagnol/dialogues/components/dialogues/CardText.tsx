@@ -43,7 +43,6 @@ const CardText = () => {
         if (!user?._id) console.error('User ID is missing, cannot generate dialogues.')
         return
       }
-      console.log('Sending token:', token)
       setLoading(true)
       try {
         const res = await fetch('/api/dialogues/create', {
