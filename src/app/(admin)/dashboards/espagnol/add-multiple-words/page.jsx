@@ -27,7 +27,17 @@ export default function AddWordsPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,         
         },})
-      const data = await res.json()
+
+      let data;
+try {
+  data = await res.json();
+} catch (e) {
+  const text = await res.text();
+  console.error('❌ Failed to parse JSON. Response was:', text);
+  throw new Error('Invalid response from server (not JSON)');
+}
+
+
       if (data.success) {
         setExistingWords(data.words.map((wordObj) => wordObj.word.toLowerCase())) // Store existing words in lowercase
       } else {
