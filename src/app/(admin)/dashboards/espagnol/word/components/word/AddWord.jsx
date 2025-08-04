@@ -40,7 +40,15 @@ const AddWord = () => {
           },
         }
       ); // Replace with your API endpoint
-      const data = await res.json();
+      let data;
+try {
+  data = await res.json();
+} catch (e) {
+  const text = await res.text();
+  console.error('❌ Failed to parse JSON. Response was:', text);
+  throw new Error('Invalid response from server (not JSON)');
+}
+
       if (data.success) {
         setAvailableTags(data.tags); // Assuming the API returns tags in this format
       } else {

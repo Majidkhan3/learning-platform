@@ -139,7 +139,7 @@ try {
             tags: selectedTags,
             summary:"no synthesis",
             note: wordRatings[word] || 0, // Default to 0 if no rating is selected
-            autoGenerateImage, // Pass the autoGenerateImage flag
+             autoGenerateImage: true, // Pass the autoGenerateImage flag
             autoGenerateSummary, // Pass the autoGenerateSummary flag
             userId: user._id,
           }),
