@@ -118,7 +118,7 @@ export default function AddWordsPage() {
 
       // Loop through each word and make an API call
       for (const word of filteredWords) {
-        const response = await fetch(`/api/words?userId=${user._id}`, {
+        const response = await fetch(`/api/words`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,

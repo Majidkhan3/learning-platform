@@ -25,7 +25,7 @@ const FlashCard = () => {
   const currentIndex = parseInt(searchParams.get('index') || '1', 10)
 
   const currentCard = cards[currentIndex - 1] // Adjust index for zero-based array
-
+  
   const fetchWords = async () => {
     try {
       setLoading(true)
@@ -353,6 +353,7 @@ const FlashCard = () => {
       </>
     );
   };
+  
 
   // Swipe handlers for touch gestures
   const swipeHandlers = useSwipeable({
