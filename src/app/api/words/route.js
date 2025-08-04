@@ -121,7 +121,7 @@ Responde exclusivamente en español. No incluyas texto en inglés, ni en los eje
           if (!openAiApiKey) {
             return NextResponse.json({ error: 'OpenAI API key is missing in environment variables.' }, { status: 500 });
           }
-    
+    const cleanWord = word.replace(/<[^>]*>|[*_~`]/g, '').trim();
           try {
             const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
               method: 'POST',
@@ -131,7 +131,8 @@ Responde exclusivamente en español. No incluyas texto en inglés, ni en los eje
               },
               body: JSON.stringify({
                 model: 'dall-e-3',
-                prompt: `Create an image that best illustrates the word '${word}' based on its common usage.`,
+                 prompt: `A realistic or artistic image illustrating the meaning of the word "${cleanWord}". Do not include any text in the image.`,
+
                 n: 1,
                 size: '1024x1024',
               }),
