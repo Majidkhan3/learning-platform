@@ -118,7 +118,7 @@ const saveContent = async () => {
   }
 
   try {
-    setError(''); // 🧹 clear previous error
+    setError('');
     setLoading(true);
 
     const payload = {
@@ -141,14 +141,15 @@ const saveContent = async () => {
       body: JSON.stringify(payload),
     });
 
-    // ✅ Check actual HTTP status first
-    if (!res.ok) {
-      throw new Error(`Request failed with status ${res.status}`);
-    }
-
     const data = await res.json();
 
-    if (data.success) {
+    // First check if we got any response at all
+    if (!data) {
+      throw new Error('No response from server');
+    }
+
+    // Then check for success flag or other indicators
+    if (res.ok && (data.success || data._id)) {
       alert('Word saved successfully!');
       setFormData({
         word: '',
@@ -159,20 +160,26 @@ const saveContent = async () => {
         autoGenerateImage: false,
         autoGenerateSummary: false,
       });
-      setError('');
       router.push('/dashboards/espagnol');
     } else {
-      setError(data.error || 'Something went wrong.');
+      // Handle different error cases
+      const errorMsg = data.message || 
+                      data.error || 
+                      (data.errors ? data.errors.join(', ') : 'Failed to save word');
+      throw new Error(errorMsg);
     }
   } catch (err) {
     console.error('Error saving word:', err);
-    setError('Failed to save word');
+    // Check if the error is about image generation
+    if (err.message.includes('image') || err.message.includes('generate')) {
+      setError('Word was saved, but there was an issue generating the image');
+    } else {
+      setError(err.message || 'Failed to save word');
+    }
   } finally {
     setLoading(false);
   }
 };
-
-
   return (
     <>
       <Row>
