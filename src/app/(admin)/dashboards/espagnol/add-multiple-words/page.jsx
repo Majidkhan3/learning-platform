@@ -16,26 +16,28 @@ export default function AddWordsPage() {
   const [fetchingTags, setFetchingTags] = useState(true)
   const [existingWords, setExistingWords] = useState([]) // Store existing words from the database
   const [wordRatings, setWordRatings] = useState({})
-  const { user ,token} = useAuth()
+  const { user, token } = useAuth()
   const userId = user._id
 
   // Fetch existing words from the database
   const fetchWords = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/words?userId=${userId}`,{headers: {
+      const res = await fetch(`/api/words?userId=${userId}`, {
+        headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,         
-        },})
+          Authorization: `Bearer ${token}`,
+        },
+      })
 
       let data;
-try {
-  data = await res.json();
-} catch (e) {
-  const text = await res.text();
-  console.error('❌ Failed to parse JSON. Response was:', text);
-  throw new Error('Invalid response from server (not JSON)');
-}
+      try {
+        data = await res.json();
+      } catch (e) {
+        const text = await res.text();
+        console.error('❌ Failed to parse JSON. Response was:', text);
+        throw new Error('Invalid response from server (not JSON)');
+      }
 
 
       if (data.success) {
@@ -63,10 +65,12 @@ try {
       try {
         if (!user?._id) return
 
-        const response = await fetch(`/api/tags?userId=${user._id}`,{headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,         
-        },})
+        const response = await fetch(`/api/tags?userId=${user._id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        })
         const data = await response.json()
 
         if (!response.ok) {
@@ -135,12 +139,12 @@ try {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            word, // Send one word at a time
+            word,
             tags: selectedTags,
-            summary:"no synthesis",
-            note: wordRatings[word] || 0, // Default to 0 if no rating is selected
-             autoGenerateImage: true, // Pass the autoGenerateImage flag
-            autoGenerateSummary, // Pass the autoGenerateSummary flag
+            summary: autoGenerateSummary ? undefined : "no synthesis",
+            note: wordRatings[word] || 0,
+            autoGenerateImage,
+            autoGenerateSummary,
             userId: user._id,
           }),
         })
