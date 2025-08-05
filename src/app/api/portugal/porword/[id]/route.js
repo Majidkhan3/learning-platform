@@ -163,7 +163,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
       },
       { new: true, runValidators: true }
     )
-
+console.log("recached")
     if (!updatedWord) {
       return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
     }
