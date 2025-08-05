@@ -17,7 +17,6 @@ export async function POST(req) {
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
-  console.log("reached")
   await connectToDatabase()
   const body = await req.json()
   const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'spanish' } = body
@@ -70,7 +69,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
     }
     const claudeApiKey = process.env.CLAUDE_API_KEY
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 20000)
+    const timeout = setTimeout(() => controller.abort(), 40000)
     try {
       const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
