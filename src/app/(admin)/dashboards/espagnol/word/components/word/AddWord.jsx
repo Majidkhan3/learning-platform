@@ -128,16 +128,18 @@ const AddWord = () => {
       setError('')
       setLoading(true)
 
-      const payload = {
-        word: formData.word,
-        tags: formData.selectedTags,
-        image: formData.image,
-        note: formData.note,
-        autoGenerateImage: formData.autoGenerateImage,
-        autoGenerateSummary: formData.autoGenerateSummary,
-        summary: JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
-        userId,
-      }
+     const payload = {
+  word: formData.word,
+  tags: formData.selectedTags,
+  image: formData.image,
+  note: formData.note,
+  autoGenerateImage: formData.autoGenerateImage,
+  autoGenerateSummary: formData.autoGenerateSummary,
+  summary: formData.autoGenerateSummary
+    ? undefined
+    : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+  userId,
+}
 
       const res = await fetch('/api/words', {
         method: 'POST',
