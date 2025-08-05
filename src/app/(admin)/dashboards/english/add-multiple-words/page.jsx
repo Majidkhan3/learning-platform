@@ -16,21 +16,27 @@ export default function AddWordsPage() {
   const [fetchingTags, setFetchingTags] = useState(true)
   const [existingWords, setExistingWords] = useState([]) // Store existing words from the database
   const [wordRatings, setWordRatings] = useState({})
-  const { user ,token} = useAuth()
+  const { user, token } = useAuth()
   const userId = user._id
 
   // Fetch existing words from the database
   const fetchWords = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/english/enword?userId=${userId}`,{
+      const res = await fetch(`/api/english/enword?userId=${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         }
       })
-      const data = await res.json()
-      if (data.success) {
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        const text = await res.text();
+        console.error('❌ Failed to parse JSON. Response was:', text);
+        throw new Error('Invalid response from server (not JSON)');
+      } if (data.success) {
         setExistingWords(data.words.map((wordObj) => wordObj.word.toLowerCase())) // Store existing words in lowercase
       } else {
         setError(data.error || 'Failed to fetch words')
@@ -55,11 +61,11 @@ export default function AddWordsPage() {
       try {
         if (!user?._id) return
 
-        const response = await fetch(`/api/english/entags?userId=${user._id}`,{
+        const response = await fetch(`/api/english/entags?userId=${user._id}`, {
           headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
         })
         const data = await response.json()
 
@@ -129,17 +135,24 @@ export default function AddWordsPage() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            word, // Send one word at a time
+            word,
             tags: selectedTags,
-            summary:"no synthesis",
-            note: wordRatings[word] || 0, // Default to 0 if no rating is selected
-            autoGenerateImage, // Pass the autoGenerateImage flag
-            autoGenerateSummary, // Pass the autoGenerateSummary flag
+            summary: autoGenerateSummary ? undefined : "no synthesis",
+            note: wordRatings[word] || 0,
+            autoGenerateImage,
+            autoGenerateSummary,
             userId: user._id,
           }),
         })
 
-        const data = await response.json()
+        let data;
+        try {
+          data = await res.json();
+        } catch (e) {
+          const text = await res.text();
+          console.error('❌ Failed to parse JSON. Response was:', text);
+          throw new Error('Invalid response from server (not JSON)');
+        }
 
         if (!response.ok) {
           throw new Error(data.error || `Failed to add word: ${word}`)
