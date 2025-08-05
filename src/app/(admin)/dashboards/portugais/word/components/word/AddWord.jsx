@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 
 const AddWord = () => {
   const router = useRouter();
-  const { user,token } = useAuth();
+  const { user, token } = useAuth();
   const userId = user?._id || ''; // Assuming you have a way to get the user ID
 
   // Consolidated state for all form data
@@ -32,13 +32,20 @@ const AddWord = () => {
   const fetchTags = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/portugal/portags?userId=${userId}`,{
-         headers: {
+      const res = await fetch(`/api/portugal/portags?userId=${userId}`, {
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       }); // Replace with your API endpoint
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        const text = await res.text();
+        console.error('❌ Failed to parse JSON. Response was:', text);
+        throw new Error('Invalid response from server (not JSON)');
+      }
       if (data.success) {
         setAvailableTags(data.tags); // Assuming the API returns tags in this format
       } else {
@@ -111,75 +118,82 @@ const AddWord = () => {
   };
 
   // Save content to backend
-const saveContent = async () => {
-  if (!formData.word.trim()) {
-    setError('Word is required');
-    return;
-  }
-
-  try {
-    setError('');
-    setLoading(true);
-
-    const payload = {
-      word: formData.word,
-      tags: formData.selectedTags,
-      image: formData.image,
-      note: formData.note,
-      autoGenerateImage: formData.autoGenerateImage,
-      autoGenerateSummary: formData.autoGenerateSummary,
-      summary: JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
-      userId,
-    };
-
-    const res = await fetch('/api/portugal/porword', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await res.json();
-
-    // First check if we got any response at all
-    if (!data) {
-      throw new Error('No response from server');
+  const saveContent = async () => {
+    if (!formData.word.trim()) {
+      setError('Word is required');
+      return;
     }
 
-    // Then check for success flag or other indicators
-    if (res.ok && (data.success || data._id)) {
-      alert('Word saved successfully!');
-      setFormData({
-        word: '',
-        selectedTags: [],
-        summary: EditorState.createEmpty(),
-        image: '',
-        note: 0,
-        autoGenerateImage: false,
-        autoGenerateSummary: false,
+    try {
+      setError('');
+      setLoading(true);
+
+      const payload = {
+        word: formData.word,
+        tags: formData.selectedTags,
+        image: formData.image,
+        note: formData.note,
+        autoGenerateImage: formData.autoGenerateImage,
+        autoGenerateSummary: formData.autoGenerateSummary,
+        summary: JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+        userId,
+      };
+
+      const res = await fetch('/api/portugal/porword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
-      router.push('/dashboards/portugais');
-    } else {
-      // Handle different error cases
-      const errorMsg = data.message || 
-                      data.error || 
-                      (data.errors ? data.errors.join(', ') : 'Failed to save word');
-      throw new Error(errorMsg);
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        const text = await res.text();
+        console.error('❌ Failed to parse JSON. Response was:', text);
+        throw new Error('Invalid response from server (not JSON)');
+      }
+
+      // First check if we got any response at all
+      if (!data) {
+        throw new Error('No response from server');
+      }
+
+      // Then check for success flag or other indicators
+      if (res.ok && (data.success || data._id)) {
+        alert('Word saved successfully!');
+        setFormData({
+          word: '',
+          selectedTags: [],
+          summary: EditorState.createEmpty(),
+          image: '',
+          note: 0,
+          autoGenerateImage: false,
+          autoGenerateSummary: false,
+        });
+        router.push('/dashboards/portugais');
+      } else {
+        // Handle different error cases
+        const errorMsg = data.message ||
+          data.error ||
+          (data.errors ? data.errors.join(', ') : 'Failed to save word');
+        throw new Error(errorMsg);
+      }
+    } catch (err) {
+      console.error('Error saving word:', err);
+      // Check if the error is about image generation
+      if (err.message.includes('image') || err.message.includes('generate')) {
+        setError('Word was saved, but there was an issue generating the image');
+      } else {
+        setError(err.message || 'Failed to save word');
+      }
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Error saving word:', err);
-    // Check if the error is about image generation
-    if (err.message.includes('image') || err.message.includes('generate')) {
-      setError('Word was saved, but there was an issue generating the image');
-    } else {
-      setError(err.message || 'Failed to save word');
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   return (
     <>
       <Row>

@@ -9,6 +9,7 @@ import { Icon } from '@iconify/react/dist/iconify.js'
 import parse from 'html-react-parser';
 import { convertFromRaw } from 'draft-js';
 
+
 const FlashCard = () => {
   const { user, token } = useAuth()
   const userId = user?._id
@@ -450,17 +451,7 @@ const FlashCard = () => {
                     )}
                   </div>
 
-                  <div className="synthesis-content mb-3" style={{
-                    fontSize: '0.9rem',
-                    whiteSpace: 'pre-wrap',
-                    maxHeight: '600px',  // Set a fixed height
-                    overflowY: 'auto',   // Enable vertical scrolling
-                    padding: '15px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    backgroundColor: '#f9f9f9',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                  }}>
+                  <div className="synthesis-content mb-3">
                     {(() => {
                       // First try to parse as Draft.js content if it looks like JSON
                       if (currentCard?.synthesis?.trim().startsWith('{')) {
