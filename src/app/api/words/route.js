@@ -17,6 +17,7 @@ export async function POST(req) {
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
+  console.log("reached")
   await connectToDatabase()
   const body = await req.json()
   const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'spanish' } = body
