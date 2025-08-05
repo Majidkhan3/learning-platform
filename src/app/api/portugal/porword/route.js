@@ -39,26 +39,26 @@ export async function POST(req) {
     }
     if (!promptTemplate) {
       promptTemplate = `
-Generate a detailed synthesis for the word {{word}} in the following structured format:
+Crie uma síntese detalhada para a palavra {{word}} no seguinte formato estruturado:
 
-1. **Use and Frequency**:
-   - Explain how frequently the word is used in the language and in which contexts it is commonly used. Provide a brief description.
+1. **Uso e Frequência**:
+- Explique com que frequência a palavra é utilizada na língua e em que contextos é comummente utilizada. Apresente uma breve descrição.
 
-2. **Mnemonics**:
-   - Provide two creative mnemonics to help remember the word. These can include phonetic associations, visual stories, or other memory aids.
+2. **Mnemónicas**:
+- Forneça dois mnemónicos criativos para ajudar a recordar a palavra. Podem incluir associações fonéticas, histórias visuais ou outros recursos de memória.
 
-3. **Main Uses**:
-   - List the main contexts or scenarios where the word is used. For each context:
-     - Provide a title for the context.
-     - Include 2-3 example sentences in the language (without translation).
+3. **Principais Utilizações**:
+- Enumere os principais contextos ou cenários em que a palavra é utilizada. Para cada contexto:
+- Forneça um título para o contexto.
+- Inclua 2 a 3 frases de exemplo na língua (sem tradução).
 
-4. **Synonyms**:
-   - Provide a list of synonyms for the word.
+4. **Sinónimos**:
+- Forneça uma lista de sinónimos para a palavra.
 
-5. **Antonyms**:
-   - Provide a list of antonyms for the word.
+5. **Antónimos**:
+- Forneça uma lista de antónimos para a palavra.
 
-Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
+Certifique-se de que a resposta está bem estruturada, clara e formatada de forma a ser de fácil leitura.
 `
     }
     let prompt = promptTemplate.trim()
