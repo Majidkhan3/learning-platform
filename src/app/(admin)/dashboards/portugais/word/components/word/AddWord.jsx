@@ -127,7 +127,6 @@ const AddWord = () => {
     try {
       setError('');
       setLoading(true);
-
       const payload = {
         word: formData.word,
         tags: formData.selectedTags,
@@ -135,9 +134,11 @@ const AddWord = () => {
         note: formData.note,
         autoGenerateImage: formData.autoGenerateImage,
         autoGenerateSummary: formData.autoGenerateSummary,
-        summary: JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+        summary: formData.autoGenerateSummary
+          ? undefined
+          : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
         userId,
-      };
+      }
 
       const res = await fetch('/api/portugal/porword', {
         method: 'POST',

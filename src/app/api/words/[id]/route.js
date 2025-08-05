@@ -12,7 +12,7 @@ cloudinary.config({
   api_secret: 't6lX7K4UCNYa3pV3nv-BbPmGLjc',
 });
 
-export async function POST(req) {
+export async function PUT(req, { params }) {
   const auth = await verifyToken(req)
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
@@ -20,6 +20,7 @@ export async function POST(req) {
   await connectToDatabase()
   const body = await req.json()
   const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'spanish' } = body
+  const { id } = params
 
   if (!word || !userId) {
     return NextResponse.json({ error: "The 'word' and 'userId' parameters are required." }, { status: 400 })
@@ -94,7 +95,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
     } catch (err) {
       clearTimeout(timeout)
       console.error('Claude API timeout or error:', err)
-      return generatedSummary
+      return generatedSummary || 'No summary available.'
     }
   })()
 
@@ -150,16 +151,24 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
 
   try {
     const [finalSummary, finalImage] = await Promise.all([summaryPromise, imagePromise])
-    const newWord = new Word({
-      word,
-      note,
-      tags,
-      summary: finalSummary,
-      userId,
-      image: finalImage,
-    })
-    await newWord.save()
-    return NextResponse.json({ success: true, message: 'Word saved successfully!', word: newWord }, { status: 201 })
+    const updatedWord = await Word.findByIdAndUpdate(
+      id,
+      {
+        word,
+        note,
+        tags,
+        summary: finalSummary,
+        userId,
+        image: finalImage,
+      },
+      { new: true, runValidators: true }
+    )
+
+    if (!updatedWord) {
+      return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, message: 'Word updated successfully!', word: updatedWord }, { status: 200 })
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
