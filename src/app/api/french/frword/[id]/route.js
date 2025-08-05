@@ -13,61 +13,33 @@ cloudinary.config({
   api_secret: 't6lX7K4UCNYa3pV3nv-BbPmGLjc',
 })
 export async function PUT(req, { params }) {
-  const auth = await verifyToken(req);
+  const auth = await verifyToken(req)
   if (!auth.valid) {
-    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
+  await connectToDatabase()
+  const body = await req.json()
+  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'spanish' } = body
+  const { id } = params
+
+  if (!word || !userId) {
+    return NextResponse.json({ error: "The 'word' and 'userId' parameters are required." }, { status: 400 })
   }
 
-  try {
-    await connectToDatabase();
-    const { id } = params;
-    const body = await req.json();
+  const summaryString = typeof summary === 'object' ? JSON.stringify(summary) : summary
+  let generatedSummary = summaryString || ''
+  let updatedImage = image || ''
 
-    const {
-      word,
-      tags,
-      summary,
-      image,
-      note,
-      autoGenerateImage,
-      autoGenerateSummary,
-      userId, // fallback if needed
-    } = body;
-
-    if (!word || typeof word !== 'string' || word.trim() === '') {
-      return NextResponse.json({ error: "The 'word' parameter is required and must be a valid string." }, { status: 400 });
+  // Prepare summary and image generation promises
+  const summaryPromise = (async () => {
+    if (!autoGenerateSummary) return generatedSummary
+    let promptTemplate = ''
+    const user = await User.findById(userId).select('customPrompts')
+    if (user?.customPrompts?.[language]?.trim()) {
+      promptTemplate = user.customPrompts[language].trim()
     }
-
-    let updatedSummary = summary || '';
-    let updatedImage = image;
-
-    // ✅ Auto-generate Summary if requested
-    if (autoGenerateSummary) {
-      console.log('[DEBUG] Auto-generating summary for word:', word);
-
-      const claudeApiKey = process.env.CLAUDE_API_KEY;
-      if (!claudeApiKey) {
-        return NextResponse.json({ error: 'Claude API key is missing in environment variables.' }, { status: 500 });
-      }
-
-      // ✅ Fetch user’s custom prompt (if exists)
-      const userIdToUse = auth.userId || userId;
-      let promptTemplate = '';
-
-      try {
-        if (userIdToUse) {
-          const user = await User.findById(auth.userId).select('customPrompts');
-          if (user?.customPrompts?.french?.trim()) {
-        promptTemplate = user.customPrompts.french.trim();
-      }
-        }
-      } catch (err) {
-        console.error('[ERROR] Failed to fetch user prompt:', err);
-      }
-
-      // ✅ Fallback french prompt if user has no custom prompt
-      if (!promptTemplate) {
-        promptTemplate = `
+    if (!promptTemplate) {
+      promptTemplate = `
 Générez une synthèse détaillée pour le mot {{word}} dans le format structuré suivant :
 1. **Utilisation et Fréquence**:
    - Expliquez à quelle fréquence le mot est utilisé dans la langue et dans quels contextes il est couramment employé. Fournissez une brève description.
@@ -87,126 +59,121 @@ Générez une synthèse détaillée pour le mot {{word}} dans le format structur
    - Fournissez une liste d'antonymes du mot.
 
 Assurez-vous que la réponse est bien structurée, claire et formatée de manière à être facile à lire.Toute la réponse doit être rédigée en français, y compris les mnémoniques, les exemples, les synonymes et les antonymes.
-Fournissez uniquement du contenu en français, y compris les phrases d'exemple, les synonymes et les antonymes. `;
-      }
-  // ✅ Step 2: Ensure the word is always included
-  let prompt = promptTemplate.trim();
-
-  if (!prompt.includes('{{word}}')) {
-    prompt += `\n\nThe word to analyze is: ${word}`;
-  } else {
-    prompt = prompt.replace(/{{word}}/g, word);
-  }
-
-
-
-      try {
-        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': claudeApiKey,
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 2000,
-            messages: [{ role: 'user', content: prompt }],
-          }),
-        });
-
-        if (claudeResponse.ok) {
-          const claudeResult = await claudeResponse.json();
-          updatedSummary =
-            claudeResult?.content?.[0]?.text?.trim() ||
-            claudeResult?.completion?.trim() ||
-            updatedSummary;
-        } else {
-          console.error('[ERROR] Claude API failed');
-        }
-      } catch (err) {
-        console.error('[ERROR] Claude API request error:', err);
-      }
+Fournissez uniquement du contenu en français, y compris les phrases d'exemple, les synonymes et les antonymes. `
     }
-
-    // ✅ Auto-generate Image if requested
-    if (autoGenerateImage) {
-      console.log('[DEBUG] Auto-generating image for word:', word);
-
-      const openAiApiKey = process.env.OPENAI_API_KEY;
-      if (!openAiApiKey) {
-        return NextResponse.json({ error: 'OpenAI API key is missing in environment variables.' }, { status: 500 });
+    let prompt = promptTemplate.trim()
+    if (!prompt.includes('{{word}}')) {
+      prompt += `\n\nThe word to analyze is: ${word}`
+    } else {
+      prompt = prompt.replace(/{{word}}/g, word)
+    }
+    const claudeApiKey = process.env.CLAUDE_API_KEY
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 40000)
+    try {
+      const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': claudeApiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeout)
+      if (claudeResponse.ok) {
+        const claudeResult = await claudeResponse.json()
+        return claudeResult?.content?.[0]?.text?.trim() || claudeResult?.completion?.trim() || generatedSummary
       }
+      return generatedSummary
+    } catch (err) {
+      clearTimeout(timeout)
+      console.error('Claude API timeout or error:', err)
+      return generatedSummary || 'No summary available.'
+    }
+  })()
 
-      try {
-        const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${openAiApiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'dall-e-3',
-            prompt: `Create an image that best illustrates the word '${word}' based on its common usage.`,
-            n: 1,
-            size: '1024x1024',
-          }),
-        });
-
-        if (openAiResponse.ok) {
-          const openAiResult = await openAiResponse.json();
-          if (openAiResult?.data?.[0]?.url) {
-            const generatedImageUrl = openAiResult.data[0].url;
-
-            try {
-              const imageResponse = await fetch(generatedImageUrl);
-              const arrayBuffer = await imageResponse.arrayBuffer();
-              const buffer = Buffer.from(arrayBuffer);
-
-              const cloudinaryResult = await new Promise((resolve, reject) => {
-                const uploadStream = cloudinary.uploader.upload_stream(
-                  { folder: 'word-images' },
-                  (error, result) => (error ? reject(error) : resolve(result))
-                );
-                uploadStream.end(buffer);
-              });
-
-              updatedImage = cloudinaryResult.secure_url;
-            } catch {
-              updatedImage = generatedImageUrl;
-            }
+  const imagePromise = (async () => {
+    if (!autoGenerateImage) return updatedImage
+    const openAiApiKey = process.env.OPENAI_API_KEY
+    if (!openAiApiKey) return updatedImage
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 20000)
+    try {
+      const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openAiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: `Create an image that best illustrates the word '${word}' based on its common usage.`,
+          n: 1,
+          size: '1024x1024',
+        }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeout)
+      if (openAiResponse.ok) {
+        const openAiResult = await openAiResponse.json()
+        if (openAiResult?.data?.[0]?.url) {
+          const generatedImageUrl = openAiResult.data[0].url
+          try {
+            const imageResponse = await fetch(generatedImageUrl)
+            const arrayBuffer = await imageResponse.arrayBuffer()
+            const buffer = Buffer.from(arrayBuffer)
+            const cloudinaryResult = await new Promise((resolve, reject) => {
+              const uploadStream = cloudinary.uploader.upload_stream({ folder: 'word-images' }, (error, result) =>
+                error ? reject(error) : resolve(result),
+              )
+              uploadStream.end(buffer)
+            })
+            return cloudinaryResult.secure_url
+          } catch {
+            return generatedImageUrl
           }
         }
-      } catch (err) {
-        console.error('[ERROR] OpenAI request failed:', err);
       }
+      return updatedImage
+    } catch (err) {
+      clearTimeout(timeout)
+      console.error('[ERROR] OpenAI request failed:', err)
+      return updatedImage
     }
+  })()
 
-    // ✅ Update Word in DB
+  try {
+    const [finalSummary, finalImage] = await Promise.all([summaryPromise, imagePromise])
     const updatedWord = await Frword.findByIdAndUpdate(
       id,
       {
         word,
-        tags,
-        summary: updatedSummary,
-        image: updatedImage,
         note,
-        autoGenerateImage,
-        autoGenerateSummary,
+        tags,
+        summary: finalSummary,
+        userId,
+        image: finalImage,
       },
-      { new: true }
-    );
+      { new: true, runValidators: true }
+    )
 
     if (!updatedWord) {
-      return NextResponse.json({ error: 'Word not found.' }, { status: 404 });
+      return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, message: 'Word updated successfully!', word: updatedWord }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'Word updated successfully!', word: updatedWord }, { status: 200 })
   } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
 export async function GET(req, { params }) {
   const auth = await verifyToken(req)
 
