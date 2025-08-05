@@ -1,17 +1,17 @@
-"use client";
-import PageTitle from '@/components/PageTitle';
-import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { Editor } from 'react-draft-wysiwyg';
-import { EditorState, convertToRaw } from 'draft-js';
-import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
-import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
+'use client'
+import PageTitle from '@/components/PageTitle'
+import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { Editor } from 'react-draft-wysiwyg'
+import { EditorState, convertToRaw } from 'draft-js'
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const AddWord = () => {
-  const { user, token } = useAuth();
-  const userId = user?._id || ''; // Assuming you have a way to get the user ID
-  const router = useRouter();
+  const { user, token } = useAuth()
+  const userId = user?._id || '' // Assuming you have a way to get the user ID
+  const router = useRouter()
 
   // Consolidated state for all form data
   const [formData, setFormData] = useState({
@@ -22,115 +22,111 @@ const AddWord = () => {
     note: 0, // Default note value
     autoGenerateImage: false, // State for auto-generate image checkbox
     autoGenerateSummary: false, // State for auto-generate summary checkbox
-  });
+  })
 
-  const [availableTags, setAvailableTags] = useState([]); // State for fetched tags
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false); // Loading state for API calls
+  const [availableTags, setAvailableTags] = useState([]) // State for fetched tags
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false) // Loading state for API calls
 
   // Fetch tags from the backend
   const fetchTags = async () => {
     try {
-      setLoading(true);
-      const res = await fetch(`/api/tags?userId=${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      ); // Replace with your API endpoint
-const responseText = await res.text();
-let data;
+      setLoading(true)
+      const res = await fetch(`/api/tags?userId=${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }) // Replace with your API endpoint
+      const responseText = await res.text()
+      let data
 
-try {
-  data = JSON.parse(responseText);
-} catch (e) {
-  console.error('❌ Failed to parse JSON. Response was:', responseText);
-  throw new Error('Invalid response from server (not JSON)');
-}
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        console.error('❌ Failed to parse JSON. Response was:', responseText)
+        throw new Error('Invalid response from server (not JSON)')
+      }
 
       if (data.success) {
-        setAvailableTags(data.tags); // Assuming the API returns tags in this format
+        setAvailableTags(data.tags) // Assuming the API returns tags in this format
       } else {
-        setError(data.error || 'Failed to fetch tags');
+        setError(data.error || 'Failed to fetch tags')
       }
     } catch (err) {
-      console.error('Error fetching tags:', err);
-      setError('Failed to fetch tags');
+      console.error('Error fetching tags:', err)
+      setError('Failed to fetch tags')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
     if (userId) {
-      fetchTags();
+      fetchTags()
     }
-  }, [userId]);
+  }, [userId])
 
   // Update formData state for word input
   const handleWordChange = (e) => {
-    setFormData((prev) => ({ ...prev, word: e.target.value }));
-  };
+    setFormData((prev) => ({ ...prev, word: e.target.value }))
+  }
 
   // Toggle tags in formData state
   const toggleTag = (tag) => {
     setFormData((prev) => ({
       ...prev,
-      selectedTags: prev.selectedTags.includes(tag)
-        ? prev.selectedTags.filter((t) => t !== tag)
-        : [...prev.selectedTags, tag],
-    }));
-  };
+      selectedTags: prev.selectedTags.includes(tag) ? prev.selectedTags.filter((t) => t !== tag) : [...prev.selectedTags, tag],
+    }))
+  }
 
   // Handle image upload
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+      const file = e.target.files[0]
       setFormData((prev) => ({
         ...prev,
         image: URL.createObjectURL(file), // For preview
-      }));
+      }))
     }
-  };
+  }
 
   // Handle checkbox change for auto-generate image
   const handleAutoGenerateImageChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       autoGenerateImage: e.target.checked,
-    }));
-  };
+    }))
+  }
 
   // Handle checkbox change for auto-generate summary
   const handleAutoGenerateSummaryChange = (e) => {
     setFormData((prev) => ({
       ...prev,
       autoGenerateSummary: e.target.checked,
-    }));
-  };
+    }))
+  }
 
   // Update summary in formData state
   const onEditorStateChange = (editorState) => {
-    setFormData((prev) => ({ ...prev, summary: editorState }));
-  };
+    setFormData((prev) => ({ ...prev, summary: editorState }))
+  }
 
   // Handle star rating change
   const handleRatingChange = (rating) => {
-    setFormData((prev) => ({ ...prev, note: rating }));
-  };
+    setFormData((prev) => ({ ...prev, note: rating }))
+  }
 
   // Save content to backend
   const saveContent = async () => {
     if (!formData.word.trim()) {
-      setError('Word is required');
-      return;
+      setError('Word is required')
+      return
     }
 
     try {
-      setError('');
-      setLoading(true);
+      setError('')
+      setLoading(true)
 
       const payload = {
         word: formData.word,
@@ -141,7 +137,7 @@ try {
         autoGenerateSummary: formData.autoGenerateSummary,
         summary: JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
         userId,
-      };
+      }
 
       const res = await fetch('/api/words', {
         method: 'POST',
@@ -150,26 +146,25 @@ try {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
-      });
+      })
 
-      let data;
+      let data
       try {
-        data = await res.json();
+        data = await res.json()
       } catch (e) {
-        const text = await res.text();
-        console.error('❌ Failed to parse JSON. Response was:', text);
-        throw new Error('Invalid response from server (not JSON)');
+        const text = await res.text()
+        console.error('❌ Failed to parse JSON. Response was:', text)
+        throw new Error('Invalid response from server (not JSON)')
       }
-
 
       // First check if we got any response at all
       if (!data) {
-        throw new Error('No response from server');
+        throw new Error('No response from server')
       }
 
       // Then check for success flag or other indicators
       if (res.ok && (data.success || data._id)) {
-        alert('Word saved successfully!');
+        alert('Word saved successfully!')
         setFormData({
           word: '',
           selectedTags: [],
@@ -178,27 +173,25 @@ try {
           note: 0,
           autoGenerateImage: false,
           autoGenerateSummary: false,
-        });
-        router.push('/dashboards/espagnol');
+        })
+        router.push('/dashboards/espagnol')
       } else {
         // Handle different error cases
-        const errorMsg = data.message ||
-          data.error ||
-          (data.errors ? data.errors.join(', ') : 'Failed to save word');
-        throw new Error(errorMsg);
+        const errorMsg = data.message || data.error || (data.errors ? data.errors.join(', ') : 'Failed to save word')
+        throw new Error(errorMsg)
       }
     } catch (err) {
-      console.error('Error saving word:', err);
+      console.error('Error saving word:', err)
       // Check if the error is about image generation
       if (err.message.includes('image') || err.message.includes('generate')) {
-        setError('Word was saved, but there was an issue generating the image');
+        setError('Word was saved, but there was an issue generating the image')
       } else {
-        setError(err.message || 'Failed to save word');
+        setError(err.message || 'Failed to save word')
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
   return (
     <>
       <Row>
@@ -212,12 +205,7 @@ try {
                 <Form.Label>
                   <h4>Palabra:</h4>
                 </Form.Label>
-                <Form.Control
-                  type="text"
-                  value={formData.word}
-                  onChange={handleWordChange}
-                  placeholder="Enter the word"
-                />
+                <Form.Control type="text" value={formData.word} onChange={handleWordChange} placeholder="Enter the word" />
               </Form.Group>
 
               {/* Tags Section */}
@@ -234,8 +222,7 @@ try {
                       text={formData.selectedTags.includes(tag.name) ? 'white' : 'dark'}
                       className="cursor-pointer"
                       onClick={() => toggleTag(tag.name)}
-                      style={{ cursor: 'pointer' }}
-                    >
+                      style={{ cursor: 'pointer' }}>
                       {tag.name}
                     </Badge>
                   ))}
@@ -254,18 +241,7 @@ try {
                     editorState={formData.summary}
                     onEditorStateChange={onEditorStateChange}
                     toolbar={{
-                      options: [
-                        'inline',
-                        'blockType',
-                        'fontSize',
-                        'list',
-                        'textAlign',
-                        'colorPicker',
-                        'link',
-                        'emoji',
-                        'remove',
-                        'history',
-                      ],
+                      options: ['inline', 'blockType', 'fontSize', 'list', 'textAlign', 'colorPicker', 'link', 'emoji', 'remove', 'history'],
                       inline: { inDropdown: true },
                       list: { inDropdown: true },
                       textAlign: { inDropdown: true },
@@ -298,8 +274,7 @@ try {
                       key={star}
                       className={`me-2 ${formData.note >= star ? 'text-warning' : 'text-muted'}`}
                       style={{ cursor: 'pointer', fontSize: '1.5rem' }}
-                      onClick={() => handleRatingChange(star)}
-                    >
+                      onClick={() => handleRatingChange(star)}>
                       ★
                     </span>
                   ))}
@@ -321,31 +296,13 @@ try {
                 </div>
                 {!formData.autoGenerateImage && (
                   <div className="d-flex align-items-center gap-3 mt-3">
-                    <Form.Control
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="w-auto"
-                    />
-                    {formData.image && (
-                      <Image
-                        src={formData.image}
-                        alt="Preview"
-                        width={100}
-                        height={100}
-                        className="border rounded"
-                      />
-                    )}
+                    <Form.Control type="file" accept="image/*" onChange={handleImageChange} className="w-auto" />
+                    {formData.image && <Image src={formData.image} alt="Preview" width={100} height={100} className="border rounded" />}
                   </div>
                 )}
               </Form.Group>
 
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={saveContent}
-                disabled={loading}
-              >
+              <Button variant="primary" size="lg" onClick={saveContent} disabled={loading}>
                 {loading ? 'Guardando...' : 'Guardar Palabra'}
               </Button>
             </Card.Body>
@@ -353,7 +310,7 @@ try {
         </Col>
       </Row>
     </>
-  );
-};
+  )
+}
 
-export default AddWord;
+export default AddWord
