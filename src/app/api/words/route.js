@@ -136,62 +136,30 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
               }),
             });
     
-            // if (openAiResponse.ok) {
-            //   const openAiResult = await openAiResponse.json();
-            //   if (openAiResult?.data?.[0]?.url) {
-            //     const generatedImageUrl = openAiResult.data[0].url;
+            if (openAiResponse.ok) {
+              const openAiResult = await openAiResponse.json();
+              if (openAiResult?.data?.[0]?.url) {
+                const generatedImageUrl = openAiResult.data[0].url;
     
-            //     try {
-            //       const imageResponse = await fetch(generatedImageUrl);
-            //       const arrayBuffer = await imageResponse.arrayBuffer();
-            //       const buffer = Buffer.from(arrayBuffer);
+                try {
+                  const imageResponse = await fetch(generatedImageUrl);
+                  const arrayBuffer = await imageResponse.arrayBuffer();
+                  const buffer = Buffer.from(arrayBuffer);
     
-            //       const cloudinaryResult = await new Promise((resolve, reject) => {
-            //         const uploadStream = cloudinary.uploader.upload_stream(
-            //           { folder: 'word-images' },
-            //           (error, result) => (error ? reject(error) : resolve(result))
-            //         );
-            //         uploadStream.end(buffer);
-            //       });
+                  const cloudinaryResult = await new Promise((resolve, reject) => {
+                    const uploadStream = cloudinary.uploader.upload_stream(
+                      { folder: 'word-images' },
+                      (error, result) => (error ? reject(error) : resolve(result))
+                    );
+                    uploadStream.end(buffer);
+                  });
     
-            //       updatedImage = cloudinaryResult.secure_url;
-            //     } catch {
-            //       updatedImage = generatedImageUrl;
-            //     }
-            //   }
-            // }
-            const openAiResponseText = await openAiResponse.text();
-
-if (openAiResponse.ok) {
-  try {
-    const openAiResult = JSON.parse(openAiResponseText);
-    if (openAiResult?.data?.[0]?.url) {
-      const generatedImageUrl = openAiResult.data[0].url;
-
-      try {
-        const imageResponse = await fetch(generatedImageUrl);
-        const arrayBuffer = await imageResponse.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        const cloudinaryResult = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'word-images' },
-            (error, result) => (error ? reject(error) : resolve(result))
-          );
-          uploadStream.end(buffer);
-        });
-
-        updatedImage = cloudinaryResult.secure_url;
-      } catch {
-        updatedImage = generatedImageUrl;
-      }
-    }
-  } catch (err) {
-    console.error('[PARSE ERROR] Failed to parse OpenAI response:', openAiResponseText);
-  }
-} else {
-  console.error('[OPENAI ERROR]', openAiResponseText);
-}
+                  updatedImage = cloudinaryResult.secure_url;
+                } catch {
+                  updatedImage = generatedImageUrl;
+                }
+              }
+            }
 
           } catch (err) {
             console.error('[ERROR] OpenAI request failed:', err);

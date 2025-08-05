@@ -30,14 +30,16 @@ export default function AddWordsPage() {
         },
       })
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        const text = await res.text();
-        console.error('❌ Failed to parse JSON. Response was:', text);
-        throw new Error('Invalid response from server (not JSON)');
-      }
+    const responseText = await res.text();
+let data;
+
+try {
+  data = JSON.parse(responseText);
+} catch (e) {
+  console.error('❌ Failed to parse JSON. Response was:', responseText);
+  throw new Error('Invalid response from server (not JSON)');
+}
+
 
 
       if (data.success) {

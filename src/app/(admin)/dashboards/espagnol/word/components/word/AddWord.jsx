@@ -40,12 +40,13 @@ const AddWord = () => {
           },
         }
       ); // Replace with your API endpoint
-      let data;
+const responseText = await res.text();
+let data;
+
 try {
-  data = await res.json();
+  data = JSON.parse(responseText);
 } catch (e) {
-  const text = await res.text();
-  console.error('❌ Failed to parse JSON. Response was:', text);
+  console.error('❌ Failed to parse JSON. Response was:', responseText);
   throw new Error('Invalid response from server (not JSON)');
 }
 
