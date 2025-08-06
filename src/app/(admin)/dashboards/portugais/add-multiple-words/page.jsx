@@ -69,7 +69,7 @@ export default function AddWordsPage() {
             Authorization: `Bearer ${token}`,
           }
         })
-        const data = await res.json();
+        const data = await response.json();
 
         if (!response.ok) {
           throw new Error(data.error || 'Failed to fetch tags.')
@@ -149,9 +149,9 @@ export default function AddWordsPage() {
 
         let data;
         try {
-          data = await res.json();
+          data = await response.json();
         } catch (e) {
-          const text = await res.text();
+          const text = await response.text();
           console.error('❌ Failed to parse JSON. Response was:', text);
           throw new Error('Invalid response from server (not JSON)');
         }

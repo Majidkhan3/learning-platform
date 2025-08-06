@@ -209,7 +209,8 @@ const FlashCard = () => {
         word: currentCard.word,
         tags: currentCard.tags,
         note: star,
-        summary: currentCard.synthesis // Ensure synthesis is sent to backend
+        summary: currentCard.synthesis, // Ensure synthesis is sent to backend
+        userId,
       }),
     });
 
@@ -450,7 +451,7 @@ const FlashCard = () => {
                   {/* <div className="mb-3 text-center">
                   <p>{currentCard?.synthesis}</p>
                 </div> */}
-                  <div className="synthesis-content mb-3" style={{
+                  <div className="synthesis-content mb-3 bg-body text-body p-3 rounded" style={{
                     fontSize: '0.9rem',
                     whiteSpace: 'pre-wrap',
                     maxHeight: '600px',  // Set a fixed height
