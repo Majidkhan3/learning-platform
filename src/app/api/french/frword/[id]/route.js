@@ -19,7 +19,7 @@ export async function PUT(req, { params }) {
   }
   await connectToDatabase()
   const body = await req.json()
-  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'spanish' } = body
+  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'french' } = body
   const { id } = params
 
   if (!word || !userId) {
