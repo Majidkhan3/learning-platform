@@ -96,82 +96,100 @@ export default function AddWordsPage() {
     }))
   }
 
-  const handleSubmit = async () => {
-    setLoading(true)
-    setError('')
-    setSuccessMessage('')
+const handleSubmit = async () => {
+  setLoading(true);
+  setError('');
+  setSuccessMessage('');
 
-    const wordList = words
-      .split('\n')
-      .map((word) => word.trim())
-      .filter((word) => word !== '')
+  const wordList = words
+    .split('\n')
+    .map((word) => word.trim())
+    .filter((word) => word !== '');
 
-    if (wordList.length === 0) {
-      setError('Please enter at least one word.')
-      setLoading(false)
-      return
-    }
-
-    try {
-      let addedWords = 0
-
-      // Filter out existing words if ignoreExisting is true
-      const filteredWords = ignoreExisting
-        ? wordList.filter((word) => !existingWords.includes(word.toLowerCase()))
-        : wordList
-
-      if (filteredWords.length === 0) {
-        setError('All the entered words already exist in the database.')
-        setLoading(false)
-        return
-      }
-
-      // Loop through each word and make an API call
-      for (const word of filteredWords) {
-        const response = await fetch(`/api/french/frword?userId=${user._id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token} `,
-          },
-          body: JSON.stringify({
-            word,
-            tags: selectedTags,
-            summary: autoGenerateSummary ? undefined : "no synthesis",
-            note: wordRatings[word] || 0,
-            autoGenerateImage,
-            autoGenerateSummary,
-            userId: user._id,
-          }),
-        })
-
-        let data;
-        try {
-          data = await response.json();
-        } catch (e) {
-          const text = await response.text();
-          console.error('❌ Failed to parse JSON. Response was:', text);
-          throw new Error('Invalid response from server (not JSON)');
-        }
-
-        if (!response.ok) {
-          throw new Error(data.error || `Failed to add word: ${word}`)
-        }
-
-        addedWords++
-      }
-
-      setSuccessMessage(`Successfully added ${addedWords} words!`)
-      setWords('')
-      setSelectedTags([])
-      setWordRatings({})
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+  if (wordList.length === 0) {
+    setError('Please enter at least one word.');
+    setLoading(false);
+    return;
   }
 
+  try {
+    let addedWords = 0;
+    let filteredWords = [];
+
+    if (ignoreExisting) {
+      // ✅ Ignore duplicates (only add new ones)
+      filteredWords = wordList.filter(
+        (word) => !existingWords.includes(word.toLowerCase())
+      );
+
+      if (filteredWords.length === 0) {
+        setError('Tous les mots saisis existent déjà dans la base de données.');
+        setLoading(false);
+        return;
+      }
+    } else {
+      // ❌ Block if duplicates exist
+      const duplicateWords = wordList.filter((word) =>
+        existingWords.includes(word.toLowerCase())
+      );
+
+      if (duplicateWords.length > 0) {
+        setError(
+          `Les mots suivants existent déjà et ne peuvent pas être ajoutés : ${duplicateWords.join(', ')}`
+        );
+        setLoading(false);
+        return;
+      }
+
+      filteredWords = wordList;
+    }
+
+    // Loop through each word and make an API call
+    for (const word of filteredWords) {
+      const response = await fetch(`/api/french/frword`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          word,
+          tags: selectedTags,
+          summary: autoGenerateSummary ? undefined : 'no synthesis',
+          note: wordRatings[word] || 0,
+          autoGenerateImage,
+          autoGenerateSummary,
+          userId: user._id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to add word: ${word}`);
+      }
+
+      addedWords++;
+    }
+
+    // UPDATE EXISTING WORDS LIST HERE - RIGHT AFTER SUCCESSFULLY ADDING WORDS
+    // Update the existing words list with the newly added words
+    const newExistingWords = [
+      ...existingWords,
+      ...filteredWords.map(word => word.toLowerCase())
+    ];
+    setExistingWords(newExistingWords);
+    
+    setSuccessMessage(`Successfully added ${addedWords} words!`);
+    setWords('');
+    setSelectedTags([]);
+    setWordRatings({});
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
   const handleCheckDuplicates = () => {
     setError('')
     setSuccessMessage('')
