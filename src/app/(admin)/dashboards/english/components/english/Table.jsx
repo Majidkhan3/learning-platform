@@ -66,16 +66,16 @@ const Table = ({ loading, words, selectedVoice }) => {
     setCurrentPage(1)
   }
 
-const handleSort = (order) => {
-  const sortedData = [...filteredData].sort((a, b) => {
-    if (order === 'date-desc') {
-      return new Date(b.createdAt || b.dateAdded || 0) - new Date(a.createdAt || a.dateAdded || 0) // Newest first
-    } else if (order === 'date-asc') {
-      return new Date(a.createdAt || a.dateAdded || 0) - new Date(b.createdAt || b.dateAdded || 0) // Oldest first
-    }
-  })
-  setFilteredData(sortedData)
-}
+  const handleSort = (order) => {
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (order === 'date-desc') {
+        return new Date(b.createdAt || b.dateAdded || 0) - new Date(a.createdAt || a.dateAdded || 0) // Newest first
+      } else if (order === 'date-asc') {
+        return new Date(a.createdAt || a.dateAdded || 0) - new Date(b.createdAt || b.dateAdded || 0) // Oldest first
+      }
+    })
+    setFilteredData(sortedData)
+  }
 
 
   const handleDelete = async (id) => {
@@ -106,74 +106,184 @@ const handleSort = (order) => {
     <Row>
       <Col xl={12}>
         <Card>
-          <CardHeader className="d-flex justify-content-between align-items-center border-bottom">
-            <div>
-              <CardTitle as={'h4'}>Vocabulary List</CardTitle>
-            </div>
-            <div className="d-flex align-items-center">
-              <InputGroup size="sm" className="me-2" style={{ width: '200px' }}>
+          <CardHeader className="border-bottom">
+            <div
+              className="d-flex flex-row align-items-center gap-2 w-100 overflow-auto"
+              style={{ whiteSpace: "nowrap" }}
+            >
+              {/* Title */}
+              <CardTitle as="h4" className="mb-0 flex-shrink-0">
+                Vocabulary list
+              </CardTitle>
+
+              {/* Search box */}
+              <InputGroup size="sm" className="flex-grow-1" style={{ minWidth: "200px" }}>
                 <Form.Control
                   placeholder="Search words..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 {searchTerm && (
-                  <Button
-                    variant="outline-secondary"
-                    onClick={() => setSearchTerm('')}
-                  >
+                  <Button variant="outline-secondary" onClick={() => setSearchTerm("")}>
                     <IconifyIcon icon="mdi:close" />
                   </Button>
                 )}
               </InputGroup>
-              <Form.Select size="sm" className="me-2" value={resultsPerPage} onChange={handleResultsPerPageChange}>
+
+              {/* Results per page */}
+              <Form.Select
+                size="sm"
+                value={resultsPerPage}
+                onChange={handleResultsPerPageChange}
+                className="flex-shrink-0"
+                style={{ width: "90px" }}
+              >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
               </Form.Select>
-              <Dropdown>
-                <DropdownToggle
-                  as={'a'}
-                  className="btn btn-sm btn-outline-light rounded content-none icons-center"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false">
-                  Sort <IconifyIcon className="ms-1" width={16} height={16} icon="ri:arrow-down-s-line" />
-                </DropdownToggle>
-                <DropdownMenu className="dropdown-menu-end">
-                  <DropdownItem onClick={() => handleSort('date-desc')}>Newest First</DropdownItem>
-                  <DropdownItem onClick={() => handleSort('date-asc')}>Oldest First</DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
+
+              {/* Sort dropdown */}
+              <Form.Select
+                size="sm"
+                className="flex-shrink-0"
+                style={{ width: "170px" }}
+                onChange={(e) => handleSort(e.target.value)}
+                defaultValue="date-desc"
+              >
+                <option value="date-desc">Newest first</option>
+                <option value="date-asc">Oldest first</option>
+              </Form.Select>
             </div>
           </CardHeader>
+
           <CardBody className="p-0">
             <div className="table-responsive">
               <SynthesisModal reviewData={paginatedData} loading={loading} onDelete={handleDelete} selectedVoice={selectedVoice} />
             </div>
           </CardBody>
-          <CardFooter>
-            <nav aria-label="Page navigation example">
-              <ul className="pagination justify-content-end mb-0">
-                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                  <Button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                    Previous
-                  </Button>
+          <CardFooter className="py-2">
+            <nav aria-label="Page navigation">
+              <ul className="pagination pagination-sm justify-content-end mb-1">
+                {/* Prev */}
+                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                  >
+                    ‹
+                  </button>
                 </li>
-                {Array.from({ length: totalPages }, (_, idx) => (
-                  <li key={idx} className={`page-item ${currentPage === idx + 1 ? 'active' : ''}`}>
-                    <Button className="page-link" onClick={() => handlePageChange(idx + 1)}>
-                      {idx + 1}
-                    </Button>
-                  </li>
-                ))}
-                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                  <Button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                    Next
-                  </Button>
+
+                {/* Numbers with window + ellipses */}
+                {(() => {
+                  // 🔹 Responsive max visible pages
+                  const isSmallScreen = window.innerWidth < 576; // Bootstrap "sm"
+                  const MAX_VISIBLE = isSmallScreen ? 3 : 4;
+
+                  const pages = Math.ceil(filteredData.length / resultsPerPage) || 1;
+                  const half = Math.floor(MAX_VISIBLE / 2);
+
+                  let start = Math.max(1, currentPage - half);
+                  let end = Math.min(pages, start + MAX_VISIBLE - 1);
+                  if (end - start + 1 < MAX_VISIBLE)
+                    start = Math.max(1, end - MAX_VISIBLE + 1);
+
+                  const items = [];
+
+                  // First page + ellipsis
+                  if (start > 1) {
+                    items.push(
+                      <li
+                        key={1}
+                        className={`page-item ${currentPage === 1 ? "active" : ""}`}
+                      >
+                        <button className="page-link" onClick={() => handlePageChange(1)}>
+                          1
+                        </button>
+                      </li>
+                    );
+                    if (start > 2) {
+                      items.push(
+                        <li key="start-ellipsis" className="page-item disabled">
+                          <span className="page-link px-1">…</span>
+                        </li>
+                      );
+                    }
+                  }
+
+                  // Window of pages
+                  for (let p = start; p <= end; p++) {
+                    items.push(
+                      <li
+                        key={p}
+                        className={`page-item ${currentPage === p ? "active" : ""}`}
+                      >
+                        <button className="page-link" onClick={() => handlePageChange(p)}>
+                          {p}
+                        </button>
+                      </li>
+                    );
+                  }
+
+                  // Last page + ellipsis
+                  if (end < pages) {
+                    if (end < pages - 1) {
+                      items.push(
+                        <li key="end-ellipsis" className="page-item disabled">
+                          <span className="page-link px-1">…</span>
+                        </li>
+                      );
+                    }
+                    items.push(
+                      <li
+                        key={pages}
+                        className={`page-item ${currentPage === pages ? "active" : ""}`}
+                      >
+                        <button
+                          className="page-link"
+                          onClick={() => handlePageChange(pages)}
+                        >
+                          {pages}
+                        </button>
+                      </li>
+                    );
+                  }
+
+                  return items;
+                })()}
+
+                {/* Next */}
+                <li
+                  className={`page-item ${currentPage === Math.ceil(filteredData.length / resultsPerPage) ||
+                      filteredData.length === 0
+                      ? "disabled"
+                      : ""
+                    }`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                  >
+                    ›
+                  </button>
                 </li>
               </ul>
             </nav>
+
+            {/* Compact counter */}
+            <div
+              className="text-end mt-1"
+              style={{ fontSize: "0.75rem", color: "#6c757d" }}
+            >
+              {filteredData.length === 0
+                ? "0 resultados"
+                : `${(currentPage - 1) * resultsPerPage + 1}–${Math.min(
+                  currentPage * resultsPerPage,
+                  filteredData.length
+                )} de ${filteredData.length}`}
+            </div>
           </CardFooter>
         </Card>
       </Col>
