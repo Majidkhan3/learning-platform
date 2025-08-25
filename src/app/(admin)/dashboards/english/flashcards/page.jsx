@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback ,useRef} from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, Button, ListGroup, Accordion, Stack, Modal, Col } from 'react-bootstrap'
 import { useSwipeable } from 'react-swipeable' // Import react-swipeable
@@ -23,8 +23,13 @@ const FlashCard = () => {
   const tag = searchParams.get('tag')
   const rating = searchParams.get('rating')
   const currentIndex = parseInt(searchParams.get('index') || '1', 10)
-
   const currentCard = cards[currentIndex - 1] // Adjust index for zero-based array
+  const synthesisRef =useRef(null);
+   useEffect(() => {
+    if (synthesisRef.current) {
+      synthesisRef.current.scrollTop = 0;
+    }
+  }, [currentIndex, isFlipped]);
 
   const fetchWords = async () => {
     try {
@@ -188,7 +193,7 @@ const FlashCard = () => {
     const updatedCard = { 
       ...currentCard,
       rating: star,
-      synthesis: currentCard.synthesis // Explicitly preserve synthesis
+      // synthesis: currentCard.synthesis // Explicitly preserve synthesis
     };
 
     // Optimistically update local state
@@ -210,6 +215,7 @@ const FlashCard = () => {
         tags: currentCard.tags,
         note: star,
         summary: currentCard.synthesis, // Ensure synthesis is sent to backend
+          image: currentCard.image, 
         userId,
       }),
     });
@@ -451,7 +457,7 @@ const FlashCard = () => {
                   {/* <div className="mb-3 text-center">
                   <p>{currentCard?.synthesis}</p>
                 </div> */}
-                  <div className="synthesis-content mb-3 bg-body text-body p-3 rounded" style={{
+                  <div ref={synthesisRef} className="synthesis-content mb-3 bg-body text-body p-3 rounded" style={{
                     fontSize: '0.9rem',
                     whiteSpace: 'pre-wrap',
                     maxHeight: '600px',  // Set a fixed height
