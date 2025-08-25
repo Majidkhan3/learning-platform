@@ -3,14 +3,13 @@ import Frword from '../../../../../model/Frword'
 import connectToDatabase from '../../../../../lib/db'
 import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../../../lib/verifyToken'
-import User from '../../../../../model/User';
-
+import User from '../../../../../model/User'
 
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: 'dzzcfpydw',
-  api_key: '871199521185426',
-  api_secret: 't6lX7K4UCNYa3pV3nv-BbPmGLjc',
+  cloud_name: 'dekdaj81k',
+  api_key: '359192434457515',
+  api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
 })
 export async function PUT(req, { params }) {
   const auth = await verifyToken(req)
@@ -160,7 +159,7 @@ Fournissez uniquement du contenu en français, y compris les phrases d'exemple, 
         userId,
         image: finalImage,
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     )
 
     if (!updatedWord) {

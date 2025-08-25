@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server';
-import Word from '../../../../model/Word';
-import User from '../../../../model/User'; // ✅ Import User for custom prompt
-import connectToDatabase from '../../../../lib/db';
-import { v2 as cloudinary } from 'cloudinary';
-import { verifyToken } from '../../../../lib/verifyToken';
+import { NextResponse } from 'next/server'
+import Word from '../../../../model/Word'
+import User from '../../../../model/User' // ✅ Import User for custom prompt
+import connectToDatabase from '../../../../lib/db'
+import { v2 as cloudinary } from 'cloudinary'
+import { verifyToken } from '../../../../lib/verifyToken'
 
 // ✅ Configure Cloudinary
 cloudinary.config({
-  cloud_name: 'dzzcfpydw',
-  api_key: '871199521185426',
-  api_secret: 't6lX7K4UCNYa3pV3nv-BbPmGLjc',
-});
+  cloud_name: 'dekdaj81k',
+  api_key: '359192434457515',
+  api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
+})
 
 export async function PUT(req, { params }) {
   const auth = await verifyToken(req)
@@ -161,7 +161,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
         userId,
         image: finalImage,
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     )
 
     if (!updatedWord) {
@@ -177,46 +177,46 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
 
 // ✅ GET Word by ID
 export async function GET(req, { params }) {
-  const auth = await verifyToken(req);
+  const auth = await verifyToken(req)
   if (!auth.valid) {
-    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    await connectToDatabase();
-    const { id } = params;
-    const word = await Word.findById(id);
+    await connectToDatabase()
+    const { id } = params
+    const word = await Word.findById(id)
 
     if (!word) {
-      return NextResponse.json({ error: 'Word not found.' }, { status: 404 });
+      return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, word }, { status: 200 });
+    return NextResponse.json({ success: true, word }, { status: 200 })
   } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // ✅ DELETE Word by ID
 export async function DELETE(req, { params }) {
-  const auth = await verifyToken(req);
+  const auth = await verifyToken(req)
   if (!auth.valid) {
-    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    await connectToDatabase();
-    const { id } = params;
-    const deletedWord = await Word.findByIdAndDelete(id);
+    await connectToDatabase()
+    const { id } = params
+    const deletedWord = await Word.findByIdAndDelete(id)
 
     if (!deletedWord) {
-      return NextResponse.json({ error: 'Word not found.' }, { status: 404 });
+      return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, message: 'Word deleted successfully!' }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'Word deleted successfully!' }, { status: 200 })
   } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

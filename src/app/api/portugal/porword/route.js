@@ -3,14 +3,13 @@ import connectToDatabase from '../../../../lib/db'
 import Porword from '../../../../model/Porword'
 import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../../lib/verifyToken'
-import User from '../../../../model/User';
-
+import User from '../../../../model/User'
 
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: 'dzzcfpydw',
-  api_key: '871199521185426',
-  api_secret: 't6lX7K4UCNYa3pV3nv-BbPmGLjc',
+  cloud_name: 'dekdaj81k',
+  api_key: '359192434457515',
+  api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
 })
 export async function POST(req) {
   const auth = await verifyToken(req)
@@ -168,10 +167,10 @@ Certifique-se de que a resposta está bem estruturada, clara e formatada de form
 
 export async function GET(req) {
   const auth = await verifyToken(req)
-  
-    if (!auth.valid) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
 

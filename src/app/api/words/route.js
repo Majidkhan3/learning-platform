@@ -7,9 +7,9 @@ import User from '../../../model/User'
 
 // Configure Cloudinary from environment variables
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: 'dekdaj81k',
+  api_key: '359192434457515',
+  api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
 })
 
 export async function POST(req) {
