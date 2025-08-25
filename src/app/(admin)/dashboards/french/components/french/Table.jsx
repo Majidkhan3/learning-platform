@@ -28,6 +28,7 @@ const Table = ({ loading, words, selectedVoice }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [resultsPerPage, setResultsPerPage] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
+  const [isSmallScreen, setIsSmallScreen] = useState(false)
 
  // Handle window resize for responsive pagination
   useEffect(() => {
