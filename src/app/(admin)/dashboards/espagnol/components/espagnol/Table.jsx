@@ -44,24 +44,38 @@ const Table = ({ loading, words, selectedVoice }) => {
   }, [])
 
   useEffect(() => {
-    const tag = searchParams.get('tag')
-    const rating = searchParams.get('rating')
+  const tag = searchParams.get('tag')
+  const ratingParam = searchParams.get('rating')
+  const selectedRatings = ratingParam ? ratingParam.split(',') : []
 
-    // Filter words based on selected tag, rating, and search term
-    const filtered = words.filter((word) => {
-      const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag)
-      const matchesRating = !rating || rating === 'All' || (word.note && word.note === parseInt(rating))
-      const matchesSearch = !searchTerm || 
-        word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        word.translation?.toLowerCase().includes(searchTerm.toLowerCase())
-      return matchesTag && matchesRating && matchesSearch
-    })
-    
-    const sorted = [...filtered].sort((a, b) => {
-      return new Date(b.createdAt || b.dateAdded || 0) - new Date(a.createdAt || a.dateAdded || 0)
-    })
-    setFilteredData(sorted)
-  }, [searchParams, words, searchTerm])
+  // Filter words based on selected tag, ratings (multi), and search term
+  const filtered = words.filter((word) => {
+    const matchesTag =
+      !tag || tag === 'All' || word.tags?.includes(tag)
+
+    const matchesRating =
+      !ratingParam ||
+      selectedRatings.includes('All') ||
+      (word.note && selectedRatings.includes(String(word.note)))
+
+    const matchesSearch =
+      !searchTerm ||
+      word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      word.translation?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    return matchesTag && matchesRating && matchesSearch
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    return (
+      new Date(b.createdAt || b.dateAdded || 0) -
+      new Date(a.createdAt || a.dateAdded || 0)
+    )
+  })
+
+  setFilteredData(sorted)
+  setCurrentPage(1) // reset to first page when filters change
+}, [searchParams, words, searchTerm])
 
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / resultsPerPage)

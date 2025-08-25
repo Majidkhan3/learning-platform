@@ -29,28 +29,52 @@ const Table = ({ loading, words, selectedVoice }) => {
   const [resultsPerPage, setResultsPerPage] = useState(10) // Default results per page
   const [searchTerm, setSearchTerm] = useState('')
 
+ // Handle window resize for responsive pagination
   useEffect(() => {
-    const tag = searchParams.get('tag')
-    const rating = searchParams.get('rating')
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 576)
+    }
+    
+    // Set initial value
+    handleResize()
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
-    // Filter words based on selected tag, rating, and search term
-    const filtered = words.filter((word) => {
-      const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag)
-      const matchesRating = !rating || rating === 'All' || (word.note && word.note === parseInt(rating))
-      const matchesSearch = !searchTerm ||
-        word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        word.translation?.toLowerCase().includes(searchTerm.toLowerCase())
-      return matchesTag && matchesRating && matchesSearch
-    })
+  useEffect(() => {
+  const tag = searchParams.get('tag')
+  const ratingParam = searchParams.get('rating')
+  const selectedRatings = ratingParam ? ratingParam.split(',') : []
 
-    // Always sort by newest first by default
-    const sorted = [...filtered].sort((a, b) => {
-      return new Date(b.createdAt || b.dateAdded || 0) - new Date(a.createdAt || a.dateAdded || 0)
-    })
+  // Filter words based on selected tag, ratings (multi), and search term
+  const filtered = words.filter((word) => {
+    const matchesTag =
+      !tag || tag === 'All' || word.tags?.includes(tag)
 
-    setFilteredData(sorted)
-  }, [searchParams, words, searchTerm])
+    const matchesRating =
+      !ratingParam ||
+      selectedRatings.includes('All') ||
+      (word.note && selectedRatings.includes(String(word.note)))
 
+    const matchesSearch =
+      !searchTerm ||
+      word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      word.translation?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    return matchesTag && matchesRating && matchesSearch
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    return (
+      new Date(b.createdAt || b.dateAdded || 0) -
+      new Date(a.createdAt || a.dateAdded || 0)
+    )
+  })
+
+  setFilteredData(sorted)
+  setCurrentPage(1) // reset to first page when filters change
+}, [searchParams, words, searchTerm])
   // Pagination logic
   const totalPages = Math.ceil(filteredData.length / resultsPerPage)
   const paginatedData = filteredData.slice((currentPage - 1) * resultsPerPage, currentPage * resultsPerPage)
