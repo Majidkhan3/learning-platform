@@ -22,24 +22,7 @@ const AnalyticsPage = () => {
           <Card>
             <CardHeader className="border-0">
               <Row className="justify-content-between">
-                <Col lg={6}>
-                  <Row className="align-items-center">
-                    <Col lg={6}>
-                      <form className="app-search d-none d-md-block me-auto">
-                        <div className="position-relative">
-                          <input type="search" className="form-control" placeholder="Search for a word..." autoComplete="off" />
-                          <IconifyIcon icon="solar:magnifer-broken" className="search-widget-icon" />
-                        </div>
-                      </form>
-                    </Col>
-                    {/* <Col lg={4}>
-                      <h5 className="text-dark fw-medium mb-0">
-                        311 <span className="text-muted"> Agent</span>
-                      </h5>
-                    </Col> */}
-                  </Row>
-                </Col>
-                <Col lg={6}>
+                <Col lg={12}>
                   <div className="text-md-end mt-3 mt-md-0">
                     <a href="/dashboards/english/tags">
 
