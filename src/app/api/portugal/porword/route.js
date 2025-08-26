@@ -156,6 +156,8 @@ Certifique-se de que a resposta está bem estruturada, clara e formatada de form
       summary: finalSummary,
       userId,
       image: finalImage,
+      autoGenerateSummary, // <-- Add this
+      autoGenerateImage,
     })
     await newWord.save()
     return NextResponse.json({ success: true, message: 'Word saved successfully!', word: newWord }, { status: 201 })

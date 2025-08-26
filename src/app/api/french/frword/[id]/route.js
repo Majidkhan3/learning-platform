@@ -158,6 +158,8 @@ Fournissez uniquement du contenu en français, y compris les phrases d'exemple, 
         summary: finalSummary,
         userId,
         image: finalImage,
+        autoGenerateSummary, // <-- Add this
+        autoGenerateImage,
       },
       { new: true, runValidators: true },
     )

@@ -157,6 +157,8 @@ Fournissez uniquement du contenu en français, y compris les phrases d'exemple, 
       summary: finalSummary,
       userId,
       image: finalImage,
+      autoGenerateSummary, // <-- Add this
+      autoGenerateImage,
     })
     await newWord.save()
     return NextResponse.json({ success: true, message: 'Word saved successfully!', word: newWord }, { status: 201 })

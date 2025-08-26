@@ -157,6 +157,8 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
       summary: finalSummary,
       userId,
       image: finalImage,
+      autoGenerateSummary, // <-- Add this
+      autoGenerateImage,
     })
     await newWord.save()
     return NextResponse.json({ success: true, message: 'Word saved successfully!', word: newWord }, { status: 201 })
