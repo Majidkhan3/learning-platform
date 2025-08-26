@@ -6,10 +6,12 @@ import { Button, Modal } from 'react-bootstrap'
 import { useRouter } from 'next/navigation'
 import { convertFromRaw } from 'draft-js';
 import parse from 'html-react-parser';
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 
 
 const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
+    const { user, token } = useAuth()
   const [showModal, setShowModal] = useState(false)
   const [selectedDescription, setSelectedDescription] = useState('')
   const [selectedImage, setSelectedImage] = useState('')
@@ -45,37 +47,39 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
     setSelectedImage('')
   }
 
-  // const speakWord = async (word) => {
-  //   try {
-  //       if (currentAudio) {
-  //     currentAudio.pause();
-  //     currentAudio.currentTime = 0;
-  //   }
-  //     const response = await fetch('/api/polly', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         text: word,
-  //         voice: selectedVoice,
-  //         language: 'es-ES', // Adjust language as needed
-  //       }),
-  //     })
+  const handleRating = async (itemId, star, item) => {
+  try {
+    const res = await fetch(`/api/words/${itemId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        word: item.word,
+        tags: item.tags,
+        note: star,
+        summary: item.summary,
+        image: item.image,
+        userId: user._id,
+      }),
+    });
 
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch Polly API')
-  //     }
+    if (!res.ok) throw new Error("Failed to update rating");
 
-  //     const audioBlob = await response.blob()
-  //     const audioUrl = URL.createObjectURL(audioBlob)
+    // ✅ Quick local update so stars reflect immediately
+    item.note = star;
 
-  //     const audio = new Audio(audioUrl)
-  //     audio.play()
-  //   } catch (error) {
-  //     console.error('Error fetching Polly API:', error)
-  //   }
-  // }
+
+    // Still refresh backend to stay consistent
+    router.refresh();
+  } catch (err) {
+    console.error("Error updating rating:", err);
+    alert("Failed to update rating. Please try again.");
+  }
+};
+
+
   const speakWord = async (word) => {
     try {
       // Stop previous audio if playing
@@ -123,6 +127,8 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
   const renderFormattedSynthesis = (text) => {
     const sections = text.split(/(?=[A-Z][a-z]+:)/); // Split at "Synonyms:", "Antonyms:", etc.
 
+
+
     return sections.map((section, index) => {
       if (!section.trim() || !section.includes(':')) return (
         <p key={index} className="mb-1">{section.trim()}</p>
@@ -165,7 +171,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="8" className="text-center">
+              <td colSpan="9" className="text-center">
                 Loading...
               </td>
             </tr>
@@ -179,15 +185,20 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                   </Button>
                 </td>
                 <td>{item.tags.join(', ')}</td>
-                <td>
+                  <td>
                   <ul className="d-flex text-warning m-0 fs-5 list-unstyled">
-                    {Array(item.note)
-                      .fill(0)
-                      .map((_star, idx) => (
-                        <li className="icons-center" key={idx}>
-                          <IconifyIcon icon="ri:star-fill" />
-                        </li>
-                      ))}
+                    {[1, 2, 3, 4].map((star) => (
+                      <li
+                        key={star}
+                        className="icons-center"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleRating(item._id, star, item)}
+                      >
+                        <IconifyIcon
+                          icon={star <= item.note ? "ri:star-fill" : "ri:star-line"}
+                        />
+                      </li>
+                    ))}
                   </ul>
                 </td>
                 <td>

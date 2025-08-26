@@ -6,10 +6,12 @@ import { Button, Modal } from 'react-bootstrap'
 import { useRouter } from 'next/navigation'
 import { convertFromRaw } from 'draft-js';
 import parse from 'html-react-parser';
+import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 
 
 const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
+  const { user, token } = useAuth()
   const [showModal, setShowModal] = useState(false)
   const [selectedDescription, setSelectedDescription] = useState('')
   const [selectedImage, setSelectedImage] = useState('')
@@ -43,6 +45,38 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
     setSelectedDescription('')
     setSelectedImage('')
   }
+    const handleRating = async (itemId, star, item) => {
+  try {
+    const res = await fetch(`/api/french/frword/${itemId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        word: item.word,
+        tags: item.tags,
+        note: star,
+        summary: item.summary,
+        image: item.image,
+        userId: user._id,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Failed to update rating");
+
+    // ✅ Quick local update so stars reflect immediately
+    item.note = star;
+
+
+    // Still refresh backend to stay consistent
+    router.refresh();
+  } catch (err) {
+    console.error("Error updating rating:", err);
+    alert("Failed to update rating. Please try again.");
+  }
+};
+
 
   // const speakWord = async (word) => {
   //   try {
@@ -173,15 +207,20 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
                   </Button>
                 </td>
                 <td>{item.tags.join(', ')}</td>
-                <td>
+               <td>
                   <ul className="d-flex text-warning m-0 fs-5 list-unstyled">
-                    {Array(item.note)
-                      .fill(0)
-                      .map((_star, idx) => (
-                        <li className="icons-center" key={idx}>
-                          <IconifyIcon icon="ri:star-fill" />
-                        </li>
-                      ))}
+                    {[1, 2, 3, 4].map((star) => (
+                      <li
+                        key={star}
+                        className="icons-center"
+                        style={{ cursor: "pointer" }}
+                        onClick={() => handleRating(item._id, star, item)}
+                      >
+                        <IconifyIcon
+                          icon={star <= item.note ? "ri:star-fill" : "ri:star-line"}
+                        />
+                      </li>
+                    ))}
                   </ul>
                 </td>
                 <td>
