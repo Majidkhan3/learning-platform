@@ -99,6 +99,11 @@ const Table = ({ loading, words, selectedVoice }) => {
       } else if (order === 'date-asc') {
         return new Date(a.createdAt || a.dateAdded || 0) - new Date(b.createdAt || b.dateAdded || 0)
       }
+      else if (order === 'A-Z') {
+      return (a.word || "").localeCompare(b.word || "")
+    } else if (order === 'Z-A') {
+      return (b.word || "").localeCompare(a.word || "")
+    }
     })
     setFilteredData(sortedData)
   }
@@ -175,6 +180,10 @@ const Table = ({ loading, words, selectedVoice }) => {
 >
   <option value="date-desc">Más reciente primero</option>
   <option value="date-asc">Más antiguo primero</option>
+  <option value="A-Z">A - Z</option>
+  <option value="Z-A">Z - A</option>
+
+  
 </Form.Select>
 
             </div>

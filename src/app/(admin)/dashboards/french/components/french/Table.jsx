@@ -30,52 +30,52 @@ const Table = ({ loading, words, selectedVoice }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [isSmallScreen, setIsSmallScreen] = useState(false)
 
- // Handle window resize for responsive pagination
+  // Handle window resize for responsive pagination
   useEffect(() => {
     const handleResize = () => {
       setIsSmallScreen(window.innerWidth < 576)
     }
-    
+
     // Set initial value
     handleResize()
-    
+
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
-  const tag = searchParams.get('tag')
-  const ratingParam = searchParams.get('rating')
-  const selectedRatings = ratingParam ? ratingParam.split(',') : []
+    const tag = searchParams.get('tag')
+    const ratingParam = searchParams.get('rating')
+    const selectedRatings = ratingParam ? ratingParam.split(',') : []
 
-  // Filter words based on selected tag, ratings (multi), and search term
-  const filtered = words.filter((word) => {
-    const matchesTag =
-      !tag || tag === 'All' || word.tags?.includes(tag)
+    // Filter words based on selected tag, ratings (multi), and search term
+    const filtered = words.filter((word) => {
+      const matchesTag =
+        !tag || tag === 'All' || word.tags?.includes(tag)
 
-    const matchesRating =
-      !ratingParam ||
-      selectedRatings.includes('All') ||
-      (word.note && selectedRatings.includes(String(word.note)))
+      const matchesRating =
+        !ratingParam ||
+        selectedRatings.includes('All') ||
+        (word.note && selectedRatings.includes(String(word.note)))
 
-    const matchesSearch =
-      !searchTerm ||
-      word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      word.translation?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesSearch =
+        !searchTerm ||
+        word.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        word.translation?.toLowerCase().includes(searchTerm.toLowerCase())
 
-    return matchesTag && matchesRating && matchesSearch
-  })
+      return matchesTag && matchesRating && matchesSearch
+    })
 
-  const sorted = [...filtered].sort((a, b) => {
-    return (
-      new Date(b.createdAt || b.dateAdded || 0) -
-      new Date(a.createdAt || a.dateAdded || 0)
-    )
-  })
+    const sorted = [...filtered].sort((a, b) => {
+      return (
+        new Date(b.createdAt || b.dateAdded || 0) -
+        new Date(a.createdAt || a.dateAdded || 0)
+      )
+    })
 
-  setFilteredData(sorted)
-  setCurrentPage(1) // reset to first page when filters change
-}, [searchParams, words, searchTerm])
+    setFilteredData(sorted)
+    setCurrentPage(1) // reset to first page when filters change
+  }, [searchParams, words, searchTerm])
   // Pagination
   const totalPages = Math.ceil(filteredData.length / resultsPerPage)
   const paginatedData = filteredData.slice(
@@ -100,6 +100,11 @@ const Table = ({ loading, words, selectedVoice }) => {
         return new Date(b.createdAt || b.dateAdded || 0) - new Date(a.createdAt || a.dateAdded || 0) // Newest first
       } else if (order === 'date-asc') {
         return new Date(a.createdAt || a.dateAdded || 0) - new Date(b.createdAt || b.dateAdded || 0) // Oldest first
+      }
+      else if (order === 'A-Z') {
+        return (a.word || "").localeCompare(b.word || "")
+      } else if (order === 'Z-A') {
+        return (b.word || "").localeCompare(a.word || "")
       }
     })
     setFilteredData(sortedData)
@@ -173,16 +178,18 @@ const Table = ({ loading, words, selectedVoice }) => {
               </Form.Select>
 
               {/* Sort dropdown */}
-                <Form.Select
-                  size="sm"
-                  className="flex-shrink-0"
-                  style={{ width: "170px" }}
-                  onChange={(e) => handleSort(e.target.value)}
-                  defaultValue="date-desc"
-                >
-                  <option value="date-desc">Le plus récent en premier</option>
-                  <option value="date-asc">Le plus ancien en premier</option>
-                </Form.Select>
+              <Form.Select
+                size="sm"
+                className="flex-shrink-0"
+                style={{ width: "170px" }}
+                onChange={(e) => handleSort(e.target.value)}
+                defaultValue="date-desc"
+              >
+                <option value="date-desc">Le plus récent en premier</option>
+                <option value="date-asc">Le plus ancien en premier</option>
+                <option value="A-Z">A - Z</option>
+                <option value="Z-A">Z - A</option>
+              </Form.Select>
             </div>
           </CardHeader>
 
@@ -291,9 +298,9 @@ const Table = ({ loading, words, selectedVoice }) => {
                 {/* Next */}
                 <li
                   className={`page-item ${currentPage === Math.ceil(filteredData.length / resultsPerPage) ||
-                      filteredData.length === 0
-                      ? "disabled"
-                      : ""
+                    filteredData.length === 0
+                    ? "disabled"
+                    : ""
                     }`}
                 >
                   <button
