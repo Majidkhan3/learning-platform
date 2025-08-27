@@ -115,14 +115,39 @@ const EditEspagnol = ({ params }) => {
   };
 
   const handleImageChange = (e) => {
-    if (e.target.files?.[0]) {
-      setFormData((prev) => ({
-        ...prev,
-        image: URL.createObjectURL(e.target.files[0]),
-      }));
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      // Check file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData((prev) => ({
+          ...prev,
+          image: event.target.result, // This will be a base64 string like "data:image/jpeg;base64,..."
+        }));
+        // Clear any previous errors
+        setError('');
+      };
+
+      reader.onerror = () => {
+        setError('Error reading file. Please try again.');
+      };
+
+      reader.readAsDataURL(file);
     }
   };
-
   const handleAutoGenerateImageChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -152,35 +177,21 @@ const EditEspagnol = ({ params }) => {
     }
 
     try {
-      setLoading(true);
       setError('');
+      setLoading(true);
 
-// const payload = {
-//   word: formData.word,
-//   tags: formData.selectedTags,
-//   image: formData.image,
-//   note: formData.note,
-//   autoGenerateImage: formData.autoGenerateImage,
-//   autoGenerateSummary: formData.autoGenerateSummary,
-//   summary: formData.autoGenerateSummary
-//     ? '' // ✅ same as AddWord
-//     : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
-//   userId,
-// };
-const payload = {
-  word: formData.word,
-  tags: formData.selectedTags,
-  image: formData.image,
-  note: formData.note,
-  autoGenerateImage: formData.autoGenerateImage,
-  autoGenerateSummary: formData.autoGenerateSummary,
-  summary: formData.autoGenerateSummary
-    ? '' // ✅ Important: tells backend to regenerate using user's prompt
-    : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
-  userId, // ✅ Make sure this is included!
-};
-
-
+      const payload = {
+        word: formData.word,
+        tags: formData.selectedTags,
+        image: formData.image, // This will be base64 string or Cloudinary URL
+        note: formData.note,
+        autoGenerateImage: formData.autoGenerateImage,
+        autoGenerateSummary: formData.autoGenerateSummary,
+        summary: formData.autoGenerateSummary
+          ? undefined
+          : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+        userId,
+      };
 
       const res = await fetch(`/api/words/${id}`, {
         method: 'PUT',
@@ -191,16 +202,45 @@ const payload = {
         body: JSON.stringify(payload),
       });
 
+      // Check if response is ok before parsing
+      if (!res.ok) {
+        // Try to get error message from response
+        let errorMessage = 'Failed to update word';
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, use status text
+          errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Parse successful response
       const data = await res.json();
-      if (res.ok) {
-        alert('Palabra actualizada con éxito!');
+
+      if (data.success) {
+        alert('Word updated successfully!');
+        // Don't reset form data on edit - just navigate back
         router.push('/dashboards/espagnol');
       } else {
-        setError(data.error || 'Failed to update word');
+        throw new Error(data.error || data.message || 'Failed to update word');
       }
     } catch (err) {
-      console.error('Error:', err);
-      setError('Failed to update word');
+      console.error('Error updating word:', err);
+
+      // Provide user-friendly error messages
+      if (err.message.includes('image') || err.message.includes('generate')) {
+        setError('Word was updated, but there was an issue with the image. Please try uploading a different image.');
+      } else if (err.message.includes('summary')) {
+        setError('Word was updated, but there was an issue generating the summary.');
+      } else if (err.message.includes('network') || err.message.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.');
+      } else if (err.message.includes('Unauthorized')) {
+        setError('You are not authorized to edit this word.');
+      } else {
+        setError(err.message || 'Failed to update word. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -304,9 +344,8 @@ const payload = {
                 {[1, 2, 3, 4].map((star) => (
                   <span
                     key={star}
-                    className={`me-2 ${
-                      formData.note >= star ? 'text-warning' : 'text-muted'
-                    }`}
+                    className={`me-2 ${formData.note >= star ? 'text-warning' : 'text-muted'
+                      }`}
                     style={{ cursor: 'pointer', fontSize: '1.5rem' }}
                     onClick={() => handleRatingChange(star)}
                   >
@@ -318,7 +357,10 @@ const payload = {
 
             {/* Image */}
             <Form.Group className="mb-4">
-              <Form.Label><h5>Imagen:</h5></Form.Label>
+              <Form.Label>
+                <h5>Imagen:</h5>
+              </Form.Label>
+
               <div className="d-flex align-items-center gap-3">
                 <Form.Check
                   type="checkbox"
@@ -328,23 +370,38 @@ const payload = {
                 />
               </div>
               {!formData.autoGenerateImage && (
-                <div className="d-flex align-items-center gap-3 mt-3">
+                <div className="mt-3">
                   <Form.Control
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="w-auto"
+                    className="mb-3"
                   />
                   {formData.image && (
-                    <Image
-                      src={formData.image}
-                      alt="Preview"
-                      width={100}
-                      height={100}
-                      className="border rounded"
-                    />
+                    <div className="d-flex align-items-center gap-3">
+                      <Image
+                        src={formData.image}
+                        alt="Preview"
+                        width={100}
+                        height={100}
+                        className="border rounded"
+                        style={{ objectFit: 'cover' }}
+                      />
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                      >
+                        Remove Image
+                      </Button>
+                    </div>
                   )}
                 </div>
+              )}
+              {formData.autoGenerateImage && (
+                <small className="text-muted d-block mt-2">
+                  An image will be automatically generated based on the word.
+                </small>
               )}
             </Form.Group>
 

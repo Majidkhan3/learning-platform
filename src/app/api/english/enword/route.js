@@ -5,17 +5,30 @@ import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../../lib/verifyToken'
 import User from '../../../../model/User'
 
-// Configure Cloudinary
-// cloudinary.config({
-//   cloud_name: 'dzzcfpydw',
-//   api_key: '871199521185426',
-//   api_secret: 't6lX7K4UCNYa3pV3nv-BbPmGLjc',
-// })
 cloudinary.config({
   cloud_name: 'dekdaj81k',
   api_key: '359192434457515',
   api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
 })
+
+// Helper function to upload base64 image to Cloudinary
+async function uploadBase64ToCloudinary(base64String) {
+  try {
+    const result = await cloudinary.uploader.upload(base64String, {
+      folder: 'word-images',
+      resource_type: 'image'
+    })
+    return result.secure_url
+  } catch (error) {
+    console.error('Error uploading to Cloudinary:', error)
+    throw error
+  }
+}
+
+// Helper function to check if string is base64 image
+function isBase64Image(str) {
+  return typeof str === 'string' && str.startsWith('data:image/')
+}
 
 export async function POST(req) {
   const auth = await verifyToken(req)
@@ -34,7 +47,26 @@ export async function POST(req) {
   let generatedSummary = summaryString || ''
   let updatedImage = image || ''
 
-  // Prepare summary and image generation promises
+  // Handle user-uploaded base64 image
+  const userImagePromise = (async () => {
+    if (!image || autoGenerateImage) return ''
+    
+    // If it's a base64 image, upload it to Cloudinary
+    if (isBase64Image(image)) {
+      try {
+        return await uploadBase64ToCloudinary(image)
+      } catch (error) {
+        console.error('Failed to upload user image to Cloudinary:', error)
+        // Return the original base64 as fallback
+        return image
+      }
+    }
+    
+    // If it's already a URL (shouldn't happen in your case), return as is
+    return image
+  })()
+
+  // Prepare summary generation promise
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
     let promptTemplate = ''
@@ -103,10 +135,11 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
     }
   })()
 
-  const imagePromise = (async () => {
-    if (!autoGenerateImage) return updatedImage
+  // Prepare auto-generated image promise
+  const aiImagePromise = (async () => {
+    if (!autoGenerateImage) return ''
     const openAiApiKey = process.env.OPENAI_API_KEY
-    if (!openAiApiKey) return updatedImage
+    if (!openAiApiKey) return ''
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 20000)
     try {
@@ -145,16 +178,24 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
           }
         }
       }
-      return updatedImage
+      return ''
     } catch (err) {
       clearTimeout(timeout)
       console.error('[ERROR] OpenAI request failed:', err)
-      return updatedImage
+      return ''
     }
   })()
 
   try {
-    const [finalSummary, finalImage] = await Promise.all([summaryPromise, imagePromise])
+    const [finalSummary, userImageUrl, aiImageUrl] = await Promise.all([
+      summaryPromise, 
+      userImagePromise, 
+      aiImagePromise
+    ])
+    
+    // Use AI-generated image if available, otherwise use user-uploaded image
+    const finalImage = aiImageUrl || userImageUrl || ''
+    
     const newWord = new Enword({
       word,
       note,
@@ -162,9 +203,10 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
       summary: finalSummary,
       userId,
       image: finalImage,
-      autoGenerateSummary, // <-- Add this
+      autoGenerateSummary,
       autoGenerateImage,
     })
+    
     await newWord.save()
     return NextResponse.json({ success: true, message: 'Word saved successfully!', word: newWord }, { status: 201 })
   } catch (error) {
