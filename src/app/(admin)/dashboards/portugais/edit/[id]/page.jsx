@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Col, Row, Card, Form, Button, Badge, Image } from 'react-bootstrap';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 import dynamic from 'next/dynamic';
-import { EditorState, convertFromRaw, convertToRaw,ContentState } from 'draft-js';
+import { EditorState, convertFromRaw, convertToRaw, ContentState } from 'draft-js';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 const Editor = dynamic(
@@ -33,7 +33,7 @@ const EditPortugais = ({ params }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-    // ✅ Fetch word data by ID
+  // ✅ Fetch word data by ID
   useEffect(() => {
     if (id) {
       fetch(`/api/portugal/porword/${id}`, {
@@ -129,10 +129,35 @@ const EditPortugais = ({ params }) => {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData((prev) => ({
-        ...prev,
-        image: URL.createObjectURL(file),
-      }));
+
+      // Check file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData((prev) => ({
+          ...prev,
+          image: event.target.result, // This will be a base64 string like "data:image/jpeg;base64,..."
+        }));
+        // Clear any previous errors
+        setError('');
+      };
+
+      reader.onerror = () => {
+        setError('Error reading file. Please try again.');
+      };
+
+      reader.readAsDataURL(file);
     }
   };
 
@@ -161,28 +186,29 @@ const EditPortugais = ({ params }) => {
   // ✅ Save Content
   const saveContent = async () => {
     if (!formData.word.trim()) {
-      setError('A palavra é obrigatória');
+      setError('Word is required');
       return;
     }
 
     try {
-      setLoading(true);
       setError('');
+      setLoading(true);
 
- const payload = {
-   word: formData.word,
-   tags: formData.selectedTags,
-   image: formData.image,
-   note: formData.note,
-   autoGenerateImage: formData.autoGenerateImage,
-   autoGenerateSummary: formData.autoGenerateSummary,
-   summary: formData.autoGenerateSummary
-     ? '' // ✅ Important: tells backend to regenerate using user's prompt
-     : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
-   userId, // ✅ Make sure this is included!
- };
-      const response = await fetch(`/api/portugal/porword/${id}`, {
-        method: 'PUT',
+      const payload = {
+        word: formData.word,
+        tags: formData.selectedTags,
+        image: formData.image, // This will be base64 string or empty
+        note: formData.note,
+        autoGenerateImage: formData.autoGenerateImage,
+        autoGenerateSummary: formData.autoGenerateSummary,
+        summary: formData.autoGenerateSummary
+          ? undefined
+          : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
+        userId,
+      };
+
+      const res = await fetch('/api/words', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -190,16 +216,56 @@ const EditPortugais = ({ params }) => {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        alert('Palavra atualizada com sucesso!');
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        const text = await res.text();
+        console.error('❌ Failed to parse JSON. Response was:', text);
+        throw new Error('Invalid response from server (not JSON)');
+      }
+
+      // Check response
+      if (!data) {
+        throw new Error('No response from server');
+      }
+
+      if (res.ok && (data.success || data._id)) {
+        alert('Word saved successfully!');
+
+        // Reset form
+        setFormData({
+          word: '',
+          selectedTags: [],
+          summary: EditorState.createEmpty(),
+          image: '',
+          note: 0,
+          autoGenerateImage: false,
+          autoGenerateSummary: false,
+        });
+
+        // Navigate back to dashboard
         router.push('/dashboards/portugais');
       } else {
-        setError(data.error || 'Falha ao atualizar a palavra');
+        // Handle different error cases
+        const errorMsg = data.message ||
+          data.error ||
+          (data.errors ? data.errors.join(', ') : 'Failed to save word');
+        throw new Error(errorMsg);
       }
     } catch (err) {
-      console.error('Error updating word:', err);
-      setError('Falha ao atualizar a palavra');
+      console.error('Error saving word:', err);
+
+      // Provide user-friendly error messages
+      if (err.message.includes('image') || err.message.includes('generate')) {
+        setError('Word was saved, but there was an issue with the image. Please try uploading a different image.');
+      } else if (err.message.includes('summary')) {
+        setError('Word was saved, but there was an issue generating the summary.');
+      } else if (err.message.includes('network') || err.message.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        setError(err.message || 'Failed to save word. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -316,9 +382,8 @@ const EditPortugais = ({ params }) => {
                   {[1, 2, 3, 4].map((star) => (
                     <span
                       key={star}
-                      className={`me-2 ${
-                        formData.note >= star ? 'text-warning' : 'text-muted'
-                      }`}
+                      className={`me-2 ${formData.note >= star ? 'text-warning' : 'text-muted'
+                        }`}
                       style={{ cursor: 'pointer', fontSize: '1.5rem' }}
                       onClick={() => handleRatingChange(star)}
                     >
@@ -329,10 +394,12 @@ const EditPortugais = ({ params }) => {
               </Form.Group>
 
               {/* ✅ Image Upload */}
+              
               <Form.Group className="mb-4">
                 <Form.Label>
                   <h5>Imagem:</h5>
                 </Form.Label>
+
                 <div className="d-flex align-items-center gap-3">
                   <Form.Check
                     type="checkbox"
@@ -342,23 +409,38 @@ const EditPortugais = ({ params }) => {
                   />
                 </div>
                 {!formData.autoGenerateImage && (
-                  <div className="d-flex align-items-center gap-3 mt-3">
+                  <div className="mt-3">
                     <Form.Control
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="w-auto"
+                      className="mb-3"
                     />
                     {formData.image && (
-                      <Image
-                        src={formData.image}
-                        alt="Preview"
-                        width={100}
-                        height={100}
-                        className="border rounded"
-                      />
+                      <div className="d-flex align-items-center gap-3">
+                        <Image
+                          src={formData.image}
+                          alt="Preview"
+                          width={100}
+                          height={100}
+                          className="border rounded"
+                          style={{ objectFit: 'cover' }}
+                        />
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                        >
+                          Remove Image
+                        </Button>
+                      </div>
                     )}
                   </div>
+                )}
+                {formData.autoGenerateImage && (
+                  <small className="text-muted d-block mt-2">
+                    An image will be automatically generated based on the word.
+                  </small>
                 )}
               </Form.Group>
 

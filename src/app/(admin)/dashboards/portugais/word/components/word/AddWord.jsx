@@ -84,10 +84,35 @@ const AddWord = () => {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setFormData((prev) => ({
-        ...prev,
-        image: URL.createObjectURL(file), // For preview
-      }));
+
+      // Check file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+
+      // Convert file to base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData((prev) => ({
+          ...prev,
+          image: event.target.result, // This will be a base64 string like "data:image/jpeg;base64,..."
+        }));
+        // Clear any previous errors
+        setError('');
+      };
+
+      reader.onerror = () => {
+        setError('Error reading file. Please try again.');
+      };
+
+      reader.readAsDataURL(file);
     }
   };
 
@@ -127,10 +152,11 @@ const AddWord = () => {
     try {
       setError('');
       setLoading(true);
+
       const payload = {
         word: formData.word,
         tags: formData.selectedTags,
-        image: formData.image,
+        image: formData.image, // This will be base64 string or empty
         note: formData.note,
         autoGenerateImage: formData.autoGenerateImage,
         autoGenerateSummary: formData.autoGenerateSummary,
@@ -138,9 +164,9 @@ const AddWord = () => {
           ? undefined
           : JSON.stringify(convertToRaw(formData.summary.getCurrentContent())),
         userId,
-      }
+      };
 
-      const res = await fetch('/api/portugal/porword', {
+      const res = await fetch('/api/words', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,14 +184,15 @@ const AddWord = () => {
         throw new Error('Invalid response from server (not JSON)');
       }
 
-      // First check if we got any response at all
+      // Check response
       if (!data) {
         throw new Error('No response from server');
       }
 
-      // Then check for success flag or other indicators
       if (res.ok && (data.success || data._id)) {
         alert('Word saved successfully!');
+
+        // Reset form
         setFormData({
           word: '',
           selectedTags: [],
@@ -175,6 +202,8 @@ const AddWord = () => {
           autoGenerateImage: false,
           autoGenerateSummary: false,
         });
+
+        // Navigate back to dashboard
         router.push('/dashboards/portugais');
       } else {
         // Handle different error cases
@@ -185,11 +214,16 @@ const AddWord = () => {
       }
     } catch (err) {
       console.error('Error saving word:', err);
-      // Check if the error is about image generation
+
+      // Provide user-friendly error messages
       if (err.message.includes('image') || err.message.includes('generate')) {
-        setError('Word was saved, but there was an issue generating the image');
+        setError('Word was saved, but there was an issue with the image. Please try uploading a different image.');
+      } else if (err.message.includes('summary')) {
+        setError('Word was saved, but there was an issue generating the summary.');
+      } else if (err.message.includes('network') || err.message.includes('fetch')) {
+        setError('Network error. Please check your connection and try again.');
       } else {
-        setError(err.message || 'Failed to save word');
+        setError(err.message || 'Failed to save word. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -307,32 +341,48 @@ const AddWord = () => {
                 <Form.Label>
                   <h5>Imagem:</h5>
                 </Form.Label>
+
                 <div className="d-flex align-items-center gap-3">
                   <Form.Check
                     type="checkbox"
-                    label=" Gerar imagem automaticamente"
+                    label="Gerar imagem automaticamente"
                     checked={formData.autoGenerateImage}
                     onChange={handleAutoGenerateImageChange}
                   />
                 </div>
                 {!formData.autoGenerateImage && (
-                  <div className="d-flex align-items-center gap-3 mt-3">
+                  <div className="mt-3">
                     <Form.Control
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="w-auto"
+                      className="mb-3"
                     />
                     {formData.image && (
-                      <Image
-                        src={formData.image}
-                        alt="Preview"
-                        width={100}
-                        height={100}
-                        className="border rounded"
-                      />
+                      <div className="d-flex align-items-center gap-3">
+                        <Image
+                          src={formData.image}
+                          alt="Preview"
+                          width={100}
+                          height={100}
+                          className="border rounded"
+                          style={{ objectFit: 'cover' }}
+                        />
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                        >
+                          Remove Image
+                        </Button>
+                      </div>
                     )}
                   </div>
+                )}
+                {formData.autoGenerateImage && (
+                  <small className="text-muted d-block mt-2">
+                    An image will be automatically generated based on the word.
+                  </small>
                 )}
               </Form.Group>
 
