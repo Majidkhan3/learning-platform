@@ -91,7 +91,7 @@ Make sure both dialogues are complete, coherent, sound like a real conversation,
     const response = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-opus-4-1-20250805',
         max_tokens: 2000,
         temperature: 0.7,
         messages: [{ role: 'user', content: prompt }],
@@ -152,7 +152,7 @@ try {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20240620',
+      model: 'claude-opus-4-1-20250805',
       max_tokens: 50,
       temperature: 0.7,
       messages: [

@@ -94,7 +94,7 @@ async function generateStoryWithClaude(words, theme) {
     const response = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-opus-4-1-20250805',
         max_tokens: 2000,
         temperature: 0.7,
         messages: [{ role: 'user', content: prompt }],

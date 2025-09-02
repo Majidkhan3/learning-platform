@@ -12,7 +12,7 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
   const [voice, setVoice] = useState(voices[0]?.id || 'Lucia')
   const [flashCardMode, setFlashCardMode] = useState(false)
 
-  const ratings = ['All', '1', '2', '3', '4']
+  const ratings = ['All','Sin calificación', '1', '2', '3', '4']
 
   useEffect(() => {
     // Initialize from URL params
@@ -163,7 +163,7 @@ const FilterCard = ({ tags, voices, onVoiceChange }) => {
               className="cursor-pointer"
               onClick={() => handleRatingChange(rating)}
               style={{ cursor: 'pointer' }}>
-              {rating === 'All' ? rating : `${rating} ★`}
+              {(rating === 'All' || rating === 'Sin calificación') ? rating : `${rating} ★`} 
             </Badge>
           ))}
         </div>
