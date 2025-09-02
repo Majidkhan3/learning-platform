@@ -16,7 +16,7 @@ async function uploadBase64ToCloudinary(base64String) {
   try {
     const result = await cloudinary.uploader.upload(base64String, {
       folder: 'word-images',
-      resource_type: 'image'
+      resource_type: 'image',
     })
     return result.secure_url
   } catch (error) {
@@ -46,9 +46,9 @@ export async function POST(req) {
   let generatedSummary = summaryString || ''
   let updatedImage = image || ''
 
-   const userImagePromise = (async () => {
+  const userImagePromise = (async () => {
     if (!image || autoGenerateImage) return ''
-    
+
     // If it's a base64 image, upload it to Cloudinary
     if (isBase64Image(image)) {
       try {
@@ -59,11 +59,10 @@ export async function POST(req) {
         return image
       }
     }
-    
+
     // If it's already a URL (shouldn't happen in your case), return as is
     return image
   })()
-
 
   // Prepare summary and image generation promises
   const summaryPromise = (async () => {
@@ -115,7 +114,7 @@ Fournissez uniquement du contenu en français, y compris les phrases d'exemple, 
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-opus-4-1-20250805',
+          model: 'claude-sonnet-4-20250514',
           max_tokens: 2000,
           messages: [{ role: 'user', content: prompt }],
         }),
@@ -134,65 +133,61 @@ Fournissez uniquement du contenu en français, y compris les phrases d'exemple, 
     }
   })()
 
-   const aiImagePromise = (async () => {
-     if (!autoGenerateImage) return ''
-     const openAiApiKey = process.env.OPENAI_API_KEY
-     if (!openAiApiKey) return ''
-     const controller = new AbortController()
-     const timeout = setTimeout(() => controller.abort(), 20000)
-     try {
-       const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
-         method: 'POST',
-         headers: {
-           'Content-Type': 'application/json',
-           Authorization: `Bearer ${openAiApiKey}`,
-         },
-         body: JSON.stringify({
-           model: 'dall-e-3',
-           prompt: `Create an image that best illustrates the word '${word}' based on its common usage.`,
-           n: 1,
-           size: '1024x1024',
-         }),
-         signal: controller.signal,
-       })
-       clearTimeout(timeout)
-       if (openAiResponse.ok) {
-         const openAiResult = await openAiResponse.json()
-         if (openAiResult?.data?.[0]?.url) {
-           const generatedImageUrl = openAiResult.data[0].url
-           try {
-             const imageResponse = await fetch(generatedImageUrl)
-             const arrayBuffer = await imageResponse.arrayBuffer()
-             const buffer = Buffer.from(arrayBuffer)
-             const cloudinaryResult = await new Promise((resolve, reject) => {
-               const uploadStream = cloudinary.uploader.upload_stream({ folder: 'word-images' }, (error, result) =>
-                 error ? reject(error) : resolve(result),
-               )
-               uploadStream.end(buffer)
-             })
-             return cloudinaryResult.secure_url
-           } catch {
-             return generatedImageUrl
-           }
-         }
-       }
-       return ''
-     } catch (err) {
-       clearTimeout(timeout)
-       console.error('[ERROR] OpenAI request failed:', err)
-       return ''
-     }
-   })()
- 
-   try {
-     const [finalSummary, userImageUrl, aiImageUrl] = await Promise.all([
-       summaryPromise, 
-       userImagePromise, 
-       aiImagePromise
-     ])
-     
-     // Use AI-generated image if available, otherwise use user-uploaded image
-     const finalImage = aiImageUrl || userImageUrl || ''
+  const aiImagePromise = (async () => {
+    if (!autoGenerateImage) return ''
+    const openAiApiKey = process.env.OPENAI_API_KEY
+    if (!openAiApiKey) return ''
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 20000)
+    try {
+      const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openAiApiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: `Create an image that best illustrates the word '${word}' based on its common usage.`,
+          n: 1,
+          size: '1024x1024',
+        }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeout)
+      if (openAiResponse.ok) {
+        const openAiResult = await openAiResponse.json()
+        if (openAiResult?.data?.[0]?.url) {
+          const generatedImageUrl = openAiResult.data[0].url
+          try {
+            const imageResponse = await fetch(generatedImageUrl)
+            const arrayBuffer = await imageResponse.arrayBuffer()
+            const buffer = Buffer.from(arrayBuffer)
+            const cloudinaryResult = await new Promise((resolve, reject) => {
+              const uploadStream = cloudinary.uploader.upload_stream({ folder: 'word-images' }, (error, result) =>
+                error ? reject(error) : resolve(result),
+              )
+              uploadStream.end(buffer)
+            })
+            return cloudinaryResult.secure_url
+          } catch {
+            return generatedImageUrl
+          }
+        }
+      }
+      return ''
+    } catch (err) {
+      clearTimeout(timeout)
+      console.error('[ERROR] OpenAI request failed:', err)
+      return ''
+    }
+  })()
+
+  try {
+    const [finalSummary, userImageUrl, aiImageUrl] = await Promise.all([summaryPromise, userImagePromise, aiImagePromise])
+
+    // Use AI-generated image if available, otherwise use user-uploaded image
+    const finalImage = aiImageUrl || userImageUrl || ''
     const newWord = new Frword({
       word,
       note,

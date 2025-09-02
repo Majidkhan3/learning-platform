@@ -2,16 +2,15 @@ import { randomUUID } from 'crypto'
 import axios from 'axios' // For making HTTP requests
 import connectToDatabase from '@/lib/db'
 import Frstories from '../../../../../model/Frstories'
-import { verifyToken } from '../../../../../lib/verifyToken';
-import  { NextResponse } from 'next/server'
-
+import { verifyToken } from '../../../../../lib/verifyToken'
+import { NextResponse } from 'next/server'
 
 export async function GET(req) {
-   const auth = await verifyToken(req)
-        
-          if (!auth.valid) {
-            return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-          }
+  const auth = await verifyToken(req)
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   await connectToDatabase() // Ensure the database connection is established
 
   const { searchParams } = new URL(req.url)
@@ -90,11 +89,10 @@ async function generateStoryWithClaude(words, theme) {
       Assurez-vous que les deux dialogues soient complets, cohérents, ressemblent à une vraie conversation et ne soient pas coupés.
     `
 
-
     const response = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {
-        model: 'claude-opus-4-1-20250805',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
         temperature: 0.7,
         messages: [{ role: 'user', content: prompt }],
@@ -128,11 +126,11 @@ async function generateStoryWithClaude(words, theme) {
 }
 
 export async function POST(req, res) {
-   const auth = await verifyToken(req)
-        
-          if (!auth.valid) {
-            return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-          }
+  const auth = await verifyToken(req)
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   await connectToDatabase() // Ensure you have a function to connect to your database
   const { theme, selectedTags, rating, userId, words } = await req.json()
 
@@ -143,45 +141,42 @@ export async function POST(req, res) {
   try {
     // Generate the story using Claude API
     const { storyText, wordsUsed } = await generateStoryWithClaude(words, theme)
-                // Generate title using Claude
- let title = 'Stories'
+    // Generate title using Claude
+    let title = 'Stories'
 
-try {
-  const titleRes = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': process.env.CLAUDE_API_KEY || '',
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20240620',
-      max_tokens: 50,
-      temperature: 0.7,
-      messages: [
-        {
-          role: 'user',
-          content: generateStoryTitlePrompt(storyText),
+    try {
+      const titleRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.CLAUDE_API_KEY || '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
         },
-      ],
-    }),
-  })
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 50,
+          temperature: 0.7,
+          messages: [
+            {
+              role: 'user',
+              content: generateStoryTitlePrompt(storyText),
+            },
+          ],
+        }),
+      })
 
-  const titleData = await titleRes.json()
+      const titleData = await titleRes.json()
 
-  if (titleRes.ok && titleData.content) {
-    const raw = Array.isArray(titleData.content)
-      ? titleData.content[0]?.text
-      : titleData.completion
+      if (titleRes.ok && titleData.content) {
+        const raw = Array.isArray(titleData.content) ? titleData.content[0]?.text : titleData.completion
 
-    title = raw?.trim().replace(/["'.]/g, '').split(' ').slice(0, 4).join(' ')
-  } else {
-    console.error('Claude title generation failed:', titleData)
-  }
-} catch (error) {
-  console.error('Error calling Claude:', error)
-}
-
+        title = raw?.trim().replace(/["'.]/g, '').split(' ').slice(0, 4).join(' ')
+      } else {
+        console.error('Claude title generation failed:', titleData)
+      }
+    } catch (error) {
+      console.error('Error calling Claude:', error)
+    }
 
     // Create a new story document
     const storyId = randomUUID()

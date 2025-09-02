@@ -4,7 +4,6 @@ import Endialogue from '../../../../../model/Endialogue'
 import connectToDatabase from '../../../../../lib/db'
 import { verifyToken } from '../../../../../lib/verifyToken'
 
-
 export async function POST(req) {
   const auth = await verifyToken(req)
 
@@ -34,7 +33,7 @@ export async function POST(req) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-1-20250805', // Corrected model name to a valid one, adjust if needed
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
         system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
         messages: [
@@ -61,49 +60,49 @@ export async function POST(req) {
       // return NextResponse.json({ error: 'Failed to generate dialogues from Claude API' }, { status: 500 });
     }
     // Generate title using Claude API
-  // ✅ Use PDF filename as title instead of AI-generated title
-let title = 'Dialogue'
+    // ✅ Use PDF filename as title instead of AI-generated title
+    let title = 'Dialogue'
 
-if (body.fileName) {
-  // Remove extension and make it clean
-  title = body.fileName.replace(/\.[^/.]+$/, '').substring(0, 50)
-} else {
-  // ✅ Only generate title via Claude if no fileName was provided
-  try {
-    const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': process.env.CLAUDE_API_KEY || '',
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-1-20250805',
-        max_tokens: 50,
-        system: 'You are an expert assistant in creating short and relevant titles.',
-        messages: [
-          {
-            role: 'user',
-            content: generateTitlePrompt(extractedText, dialogues),
+    if (body.fileName) {
+      // Remove extension and make it clean
+      title = body.fileName.replace(/\.[^/.]+$/, '').substring(0, 50)
+    } else {
+      // ✅ Only generate title via Claude if no fileName was provided
+      try {
+        const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': process.env.CLAUDE_API_KEY || '',
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
           },
-        ],
-      }),
-    })
+          body: JSON.stringify({
+            model: 'claude-opus-4-1-20250805',
+            max_tokens: 50,
+            system: 'You are an expert assistant in creating short and relevant titles.',
+            messages: [
+              {
+                role: 'user',
+                content: generateTitlePrompt(extractedText, dialogues),
+              },
+            ],
+          }),
+        })
 
-    if (titleResponse.ok) {
-      const titleData = await titleResponse.json()
-      const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
-      title = generatedTitle
-        .replace(/["""'.]/g, '')
-        .split(' ')
-        .slice(0, 4)
-        .join(' ')
-        .substring(0, 50)
+        if (titleResponse.ok) {
+          const titleData = await titleResponse.json()
+          const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
+          title = generatedTitle
+            .replace(/["""'.]/g, '')
+            .split(' ')
+            .slice(0, 4)
+            .join(' ')
+            .substring(0, 50)
+        }
+      } catch (titleError) {
+        console.warn('Failed to generate title:', titleError.message)
+      }
     }
-  } catch (titleError) {
-    console.warn('Failed to generate title:', titleError.message)
-  }
-}
 
     // Save dialogues to MongoDB
     const dialogue = new Endialogue({
@@ -154,4 +153,3 @@ ${dialogues.substring(0, 300)}...
 Respond only with the title, no punctuation or quotes. The title should be in English and reflect the content’s essence.
 `
 }
-

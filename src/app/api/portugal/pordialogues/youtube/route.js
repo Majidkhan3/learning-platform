@@ -80,10 +80,10 @@ class TranscriptAPI {
 // ...existing code...
 export async function POST(req) {
   const auth = await verifyToken(req)
-    
-      if (!auth.valid) {
-        return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-      }
+
+  if (!auth.valid) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+  }
   try {
     await connectToDatabase()
     const { url: youtubeUrl, userId } = await req.json()
@@ -135,7 +135,7 @@ export async function POST(req) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-1-20250805',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
         system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
         messages: [{ role: 'user', content: generatePrompt(transcript) }],
@@ -152,48 +152,42 @@ export async function POST(req) {
     const dialogueText = content?.[0]?.text || ''
 
     // Generate title using Claude API
-let title = 'Dialogue'
-try {
-  const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': process.env.CLAUDE_API_KEY || '',
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-opus-4-1-20250805',
-      max_tokens: 50,
-      system: 'You are an expert assistant at creating short and relevant titles.',
-      messages: [
-        {
-          role: 'user',
-          content: generateTitlePrompt(transcript, dialogueText),
+    let title = 'Dialogue'
+    try {
+      const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.CLAUDE_API_KEY || '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
         },
-      ],
-    }),
-  })
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 50,
+          system: 'You are an expert assistant at creating short and relevant titles.',
+          messages: [
+            {
+              role: 'user',
+              content: generateTitlePrompt(transcript, dialogueText),
+            },
+          ],
+        }),
+      })
 
-  if (titleResponse.ok) {
-    const titleData = await titleResponse.json()
-    const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
-    title = generatedTitle
-      .replace(/["'.]/g, '')
-      .split(' ')
-      .slice(0, 4)
-      .join(' ')
-      .substring(0, 50)
-  }
-} catch (titleError) {
-  console.warn('Failed to generate title:', titleError.message)
-}
-
+      if (titleResponse.ok) {
+        const titleData = await titleResponse.json()
+        const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
+        title = generatedTitle.replace(/["'.]/g, '').split(' ').slice(0, 4).join(' ').substring(0, 50)
+      }
+    } catch (titleError) {
+      console.warn('Failed to generate title:', titleError.message)
+    }
 
     // Save to MongoDB
-    const dialogue = new Pordialogue({ userId, url: youtubeUrl, dialogue: dialogueText, title: title, })
+    const dialogue = new Pordialogue({ userId, url: youtubeUrl, dialogue: dialogueText, title: title })
     await dialogue.save()
 
-    return NextResponse.json({ status: 'success', dialogueId: dialogue._id.toString(), dialogue: dialogueText,title }, { status: 200 })
+    return NextResponse.json({ status: 'success', dialogueId: dialogue._id.toString(), dialogue: dialogueText, title }, { status: 200 })
   } catch (err) {
     console.error('Unexpected Error:', err.stack || err.message)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
