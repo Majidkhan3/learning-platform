@@ -56,6 +56,7 @@ const Table = ({ loading, words, selectedVoice }) => {
       const matchesRating =
         !ratingParam ||
         selectedRatings.includes('All') ||
+       (selectedRatings.includes('No rating') && (!word.note || word.note === 0)) || // <-- NEW: No rating filter
         (word.note && selectedRatings.includes(String(word.note)))
 
       const matchesSearch =

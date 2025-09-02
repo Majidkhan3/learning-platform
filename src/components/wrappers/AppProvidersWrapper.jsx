@@ -9,11 +9,11 @@ const LayoutProvider = dynamic(() => import('@/context/useLayoutContext').then((
   ssr: false,
 })
 import { NotificationProvider } from '@/context/useNotificationContext'
-import { AuthContext } from '@/context/AuthContext'
+// import { AuthContext } from '@/context/AuthContext'
 const AppProvidersWrapper = ({ children }) => {
-  const handleChangeTitle = () => {
-    if (document.visibilityState == 'hidden') document.title = 'Please come back 🥺'
-  }
+  // const handleChangeTitle = () => {
+  //   if (document.visibilityState == 'hidden') document.title = 'Please come back 🥺'
+  // }
   useEffect(() => {
     if (document) {
       const e = document.querySelector('#__next_splash')
@@ -23,10 +23,6 @@ const AppProvidersWrapper = ({ children }) => {
       e?.addEventListener('DOMNodeInserted', () => {
         document.querySelector('#splash-screen')?.classList.add('remove')
       })
-    }
-    document.addEventListener('visibilitychange', handleChangeTitle)
-    return () => {
-      document.removeEventListener('visibilitychange', handleChangeTitle)
     }
   }, [])
   return (

@@ -135,7 +135,7 @@ export async function POST(req) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-opus-4-1-20250805',
         max_tokens: 2000,
         system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
         messages: [{ role: 'user', content: generatePrompt(transcript) }],
@@ -162,7 +162,7 @@ try {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20240620',
+      model: 'claude-opus-4-1-20250805',
       max_tokens: 50,
       system: 'You are an expert assistant at creating short and relevant titles.',
       messages: [
