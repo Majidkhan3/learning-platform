@@ -207,7 +207,7 @@ const EditPortugais = ({ params }) => {
         userId,
       };
 
-      const res = await fetch('/api/portugal/porword', {
+      const res = await fetch(`/api/portugal/porword/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

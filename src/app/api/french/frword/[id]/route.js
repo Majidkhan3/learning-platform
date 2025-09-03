@@ -46,29 +46,29 @@ export async function PUT(req, { params }) {
   const summaryString = typeof summary === 'object' ? JSON.stringify(summary) : summary
   let generatedSummary = summaryString || ''
   let updatedImage = image || ''
+  const userImagePromise = (async () => {
+    if (!image || autoGenerateImage) return ''
 
+    // If it's a base64 image, upload it to Cloudinary
+    if (isBase64Image(image)) {
+      try {
+        return await uploadBase64ToCloudinary(image)
+      } catch (error) {
+        console.error('Failed to upload user image to Cloudinary:', error)
+        // Return the original base64 as fallback
+        return image
+      }
+    }
+
+    // If it's already a URL (shouldn't happen in your case), return as is
+    return image
+  })()
   // Prepare summary and image generation promises
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
     let promptTemplate = ''
 
-    const userImagePromise = (async () => {
-      if (!image || autoGenerateImage) return ''
 
-      // If it's a base64 image, upload it to Cloudinary
-      if (isBase64Image(image)) {
-        try {
-          return await uploadBase64ToCloudinary(image)
-        } catch (error) {
-          console.error('Failed to upload user image to Cloudinary:', error)
-          // Return the original base64 as fallback
-          return image
-        }
-      }
-
-      // If it's already a URL (shouldn't happen in your case), return as is
-      return image
-    })()
 
     const user = await User.findById(userId).select('customPrompts')
     if (user?.customPrompts?.[language]?.trim()) {
