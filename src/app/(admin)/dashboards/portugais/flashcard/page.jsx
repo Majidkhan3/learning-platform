@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState, useCallback ,useRef} from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, Button, ListGroup, Accordion, Stack, Modal, Col } from 'react-bootstrap'
 import { useSwipeable } from 'react-swipeable' // Import react-swipeable
@@ -23,8 +23,9 @@ const FlashCard = () => {
   const tag = searchParams.get('tag')
   const rating = searchParams.get('rating')
   const currentIndex = parseInt(searchParams.get('index') || '1', 10)
-  const currentCard = cards[currentIndex - 1] // Adjust index for zero-based arrayconst synthesisRef =useRef(null);
-   useEffect(() => {
+  const currentCard = cards[currentIndex - 1] // Adjust index for zero-based array
+  const synthesisRef = useRef(null);
+  useEffect(() => {
     if (synthesisRef.current) {
       synthesisRef.current.scrollTop = 0;
     }
@@ -54,7 +55,15 @@ const FlashCard = () => {
         // Map API response to the card structure
         const filteredCards = data.words.filter((word) => {
           const matchesTag = !tag || tag === 'All' || word.tags?.includes(tag)
-          const matchesRating = !rating || rating === 'All' || (word.note && word.note === parseInt(rating))
+          let matchesRating = true
+          if (rating && rating !== 'All') {
+            const selectedRatings = rating.split(',') // Support multi-select
+            if (selectedRatings.includes('Sem classificação')) {
+              matchesRating = !word.note || word.note === 0
+            } else {
+              matchesRating = selectedRatings.some(r => word.note === parseInt(r))
+            }
+          }
           return matchesTag && matchesRating
         })
         const mappedCards = filteredCards.map((word, index) => ({
@@ -187,59 +196,59 @@ const FlashCard = () => {
   );
 
 
-    const handleRating = async (star) => {
-  if (!currentCard) return;
+  const handleRating = async (star) => {
+    if (!currentCard) return;
 
-  try {
-    // Create a complete copy of the current card with updated rating
-    const updatedCard = { 
-      ...currentCard,
-      rating: star,
-      // synthesis: currentCard.synthesis // Explicitly preserve synthesis
-    };
+    try {
+      // Create a complete copy of the current card with updated rating
+      const updatedCard = {
+        ...currentCard,
+        rating: star,
+        // synthesis: currentCard.synthesis // Explicitly preserve synthesis
+      };
 
-    // Optimistically update local state
-    setCards(prevCards => 
-      prevCards.map(card => 
-        card.id === currentCard.id ? updatedCard : card
-      )
-    );
+      // Optimistically update local state
+      setCards(prevCards =>
+        prevCards.map(card =>
+          card.id === currentCard.id ? updatedCard : card
+        )
+      );
 
-    // Update the rating in the database
-    const response = await fetch(`/api/portugal/porword/${currentCard.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        word: currentCard.word,
-        tags: currentCard.tags,
-        note: star,
-        summary: currentCard.synthesis,// Ensure synthesis is sent to backend
-          image: currentCard.image, 
-        userId,
-      }),
-    });
+      // Update the rating in the database
+      const response = await fetch(`/api/portugal/porword/${currentCard.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          word: currentCard.word,
+          tags: currentCard.tags,
+          note: star,
+          summary: currentCard.synthesis,// Ensure synthesis is sent to backend
+          image: currentCard.image,
+          userId,
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to update rating');
+      if (!response.ok) {
+        throw new Error('Failed to update rating');
+      }
+
+      // Optionally: Refresh the data from server to ensure consistency
+      // fetchWords();
+
+    } catch (err) {
+      console.error('Error updating rating:', err);
+      // Revert UI if API call fails
+      setCards(prevCards =>
+        prevCards.map(card =>
+          card.id === currentCard.id ? currentCard : card
+        )
+      );
+      setError('Failed to update rating');
     }
-
-    // Optionally: Refresh the data from server to ensure consistency
-    // fetchWords();
-    
-  } catch (err) {
-    console.error('Error updating rating:', err);
-    // Revert UI if API call fails
-    setCards(prevCards => 
-      prevCards.map(card => 
-        card.id === currentCard.id ? currentCard : card
-      )
-    );
-    setError('Failed to update rating');
-  }
-};
+  };
 
   const openModal = (image) => {
     setModalImage(image)
