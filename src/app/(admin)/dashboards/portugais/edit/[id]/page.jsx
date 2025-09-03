@@ -207,8 +207,8 @@ const EditPortugais = ({ params }) => {
         userId,
       };
 
-      const res = await fetch('/api/words', {
-        method: 'POST',
+      const res = await fetch('/api/portugal/porword', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,

@@ -166,7 +166,7 @@ const AddWord = () => {
         userId,
       };
 
-      const res = await fetch('/api/words', {
+      const res = await fetch('/api/portugal/porword', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
