@@ -116,7 +116,7 @@ Certifique-se de que a resposta está bem estruturada, clara e formatada de form
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
+          max_tokens: 3000,
           messages: [{ role: 'user', content: prompt }],
         }),
         signal: controller.signal,
@@ -139,7 +139,7 @@ Certifique-se de que a resposta está bem estruturada, clara e formatada de form
     const openAiApiKey = process.env.OPENAI_API_KEY
     if (!openAiApiKey) return ''
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 20000)
+    const timeout = setTimeout(() => controller.abort(), 60000)
     try {
       const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
