@@ -117,7 +117,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
+          max_tokens: 2500,
           messages: [{ role: 'user', content: prompt }],
         }),
         signal: controller.signal,
@@ -141,7 +141,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
     const openAiApiKey = process.env.OPENAI_API_KEY
     if (!openAiApiKey) return ''
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 20000)
+    const timeout = setTimeout(() => controller.abort(), 60000)
     try {
       const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',

@@ -267,8 +267,9 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
   ) : (
     <div className="synthesis-content" style={{ whiteSpace: 'pre-wrap' }}>
       {(() => {
-        const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p)[\s>]/i.test(selectedDescription);
-
+        // First, check if it's likely HTML
+        const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p|br|h[1-6])[\s>]/i.test(selectedDescription);
+        
         if (isLikelyHTML) {
           try {
             const cleanedHtml = selectedDescription.replace(
@@ -278,19 +279,21 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
             return <div className="table-responsive">{parse(cleanedHtml)}</div>;
           } catch (err) {
             console.warn("HTML parse failed, fallback to text:", err);
+            // Continue to other formats if HTML parsing fails
           }
         }
 
-        // 1) AI formatted (1. **Title**)
-        if (selectedDescription.match(/^\d+\. \*\*.+\*\*/m)) {
+        // Check for AI formatted content (1. **Title**)
+        if (selectedDescription.match(/^\d+\.\s+\*\*.+\*\*/m)) {
           const sections = [];
           const lines = selectedDescription.split('\n');
           let current = null;
 
           for (let line of lines) {
             line = line.trim();
-            if (line.match(/^\d+\. \*\*(.+)\*\*/)) {
-              const title = line.match(/^\d+\. \*\*(.+)\*\*/)[1];
+            const titleMatch = line.match(/^\d+\.\s+\*\*(.+)\*\*/);
+            if (titleMatch) {
+              const title = titleMatch[1];
               current = { title, content: [] };
               sections.push(current);
             } else if (current && line) {
@@ -310,65 +313,70 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
           ));
         }
 
-        // 2) Keyword sections like Synonyms:
-        if (selectedDescription.match(/[A-Z][a-z]+:/)) {
+        // Check for keyword sections like Synonyms:
+        if (selectedDescription.match(/^[A-Z][a-z]+:/m)) {
           const parts = selectedDescription.split(/(?=[A-Z][a-z]+:)/);
           return parts.map((part, idx) => {
             if (!part.includes(':')) return <p key={idx}>{part.trim()}</p>;
+            
             const [label, data] = part.split(':');
             const items = data
               .split(/•|\n|,/)
-              .map((x) => x.trim())
-              .filter((x) => x);
+              .map(x => x.trim())
+              .filter(x => x);
 
             return (
               <div key={idx} className="mb-3">
                 <h6 className="fw-bold">{label.trim()}</h6>
-                <ul>
-                  {items.map((i, j) => (
-                    <li key={j}>{i}</li>
-                  ))}
-                </ul>
+                {items.length > 0 ? (
+                  <ul>
+                    {items.map((i, j) => (
+                      <li key={j}>{i}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>{data.trim()}</p>
+                )}
               </div>
             );
           });
         }
 
-        // 3) Plain fallback
-         // Special case for numbered lists with bullet points
-                if (selectedDescription.match(/^\d+\.\s+.+\n(\s*•\s+.+\n)+/m)) {
-                  return (
-                    <div style={{ whiteSpace: 'pre-wrap' }}>
-                      {selectedDescription.split('\n').map((line, i) => {
-                        if (line.match(/^\d+\./)) {
-                          return <h5 key={i} style={{ fontWeight: 'bold', margin: '15px 0 5px 0' }}>{line}</h5>;
-                        } else if (line.startsWith('•')) {
-                          return <div key={i} style={{ marginLeft: '25px' }}>{line}</div>;
-                        } else if (line.trim() === '') {
-                          return <br key={i} />;
-                        }
-                        return <div key={i}>{line}</div>;
-                      })}
-                    </div>
-                  );
+        // Check for numbered lists with bullet points
+        if (selectedDescription.match(/^\d+\.\s+.+(\n\s*•\s+.+)+/m)) {
+          return (
+            <div>
+              {selectedDescription.split('\n').map((line, i) => {
+                if (line.match(/^\d+\./)) {
+                  return <h5 key={i} style={{ fontWeight: 'bold', margin: '15px 0 5px 0' }}>{line}</h5>;
+                } else if (line.startsWith('•')) {
+                  return <div key={i} style={{ marginLeft: '25px' }}>{line}</div>;
+                } else if (line.trim() === '') {
+                  return <br key={i} />;
                 }
-                // 3) Plain fallback
-                // 3) Plain fallback with better formatting
-                return (
-                  <div style={{ whiteSpace: 'pre-wrap' }}>
-                    {selectedDescription.split('\n').map((line, i) => (
-                      line.trim() ? (
-                        <div key={i} className="mb-2">
-                          {line.startsWith('•') ? (
-                            <div style={{ marginLeft: '20px' }}>{line}</div>
-                          ) : (
-                            line
-                          )}
-                        </div>
-                      ) : <br key={i} />
-                    ))}
-                  </div>
-     ) })()}
+                return <div key={i}>{line}</div>;
+              })}
+            </div>
+          );
+        }
+
+        // Final fallback - simple preformatted text
+        return (
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            {selectedDescription.split('\n').map((line, i) => (
+              line.trim() ? (
+                <div key={i} className="mb-2">
+                  {line.startsWith('•') ? (
+                    <div style={{ marginLeft: '20px' }}>{line}</div>
+                  ) : (
+                    line
+                  )}
+                </div>
+              ) : <br key={i} />
+            ))}
+          </div>
+        );
+      })()}
     </div>
   )}
 </Modal.Body>
