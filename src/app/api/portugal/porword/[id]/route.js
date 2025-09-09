@@ -116,7 +116,7 @@ Certifique-se de que a resposta está bem estruturada, clara e formatada de form
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 2500,
+          max_tokens: 3000,
           messages: [{ role: 'user', content: prompt }],
         }),
         signal: controller.signal,
