@@ -175,13 +175,15 @@ const AddWord = () => {
       });
 
       let data;
+      let responseText;
       try {
-        data = await res.json();
+        responseText = await res.text();  // read body once
+        data = JSON.parse(responseText);  // try parsing JSON
       } catch (e) {
-        const text = await res.text();
-        console.error('❌ Failed to parse JSON. Response was:', text);
-        throw new Error('Invalid response from server (not JSON)');
+        console.error("❌ Failed to parse JSON. Raw response:", responseText);
+        throw new Error("Invalid response from server (not JSON)");
       }
+
 
       // Check response
       if (!data) {
