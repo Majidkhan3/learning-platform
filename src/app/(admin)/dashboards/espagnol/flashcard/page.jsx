@@ -248,6 +248,12 @@ const FlashCard = () => {
       setError('Failed to update rating');
     }
   };
+  // YouGlish handler function
+  const handleYouGlish = (word) => {
+    if (word) {
+      window.open(`https://youglish.com/pronounce/${word}/spanish`, '_blank')
+    }
+  }
 
   const openModal = (image) => {
     setModalImage(image)
@@ -491,7 +497,24 @@ const FlashCard = () => {
                       return renderFormattedSynthesis(currentCard?.synthesis || '');
                     })()}
                   </div>
+                  {/* YouGlish Button - Added above rating section */}
+                  <div className="text-center mb-3">
+                    <Button
+                      variant="soft-primary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation() // Prevent triggering the tap handler
+                        handleYouGlish(currentCard?.word)
+                      }}
+                      className="d-flex align-items-center justify-content-center mx-auto"
+                      style={{ maxWidth: '150px' }}
+                    >
+                      <IconifyIcon icon="ri:youtube-line" className="me-2 fs-18" />
+                      YouGlish
+                    </Button>
+                  </div>
 
+                  {/* Rating Section */}
 
                   {/* Rating Section */}
                   <div className="mb-3">
