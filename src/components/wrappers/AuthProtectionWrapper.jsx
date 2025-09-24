@@ -106,17 +106,17 @@ const AuthProtectionWrapper = ({ children }) => {
     })
   }
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setState({
-      isAuthenticated: false,
-      user: null,
-      isInitialized: true,
-      token: null,
-    })
-    router.push('/login')
-  }
+  // const logout = () => {
+  //   localStorage.removeItem('token')
+  //   localStorage.removeItem('user')
+  //   setState({
+  //     isAuthenticated: false,
+  //     user: null,
+  //     isInitialized: true,
+  //     token: null,
+  //   })
+  //   router.push('/login')
+  // }
 
   const updateUser = (user) => {
     localStorage.setItem('user', JSON.stringify(user))
@@ -177,7 +177,7 @@ const AuthProtectionWrapper = ({ children }) => {
     return <FallbackLoading />
   }
 
-  return <AuthContext.Provider value={{ ...state, login, logout, updateUser }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ ...state, login, updateUser }}>{children}</AuthContext.Provider>
 }
 
 export default AuthProtectionWrapper
