@@ -106,7 +106,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
     }
     const claudeApiKey = process.env.CLAUDE_API_KEY
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 70000)
+    const timeout = setTimeout(() => controller.abort(), 120000)
     try {
       const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -117,7 +117,7 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 10000,
+          max_tokens: 6000,
           messages: [{ role: 'user', content: prompt }],
         }),
         signal: controller.signal,
