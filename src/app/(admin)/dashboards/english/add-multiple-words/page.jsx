@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { Container, Row, Col, Form, Button, Card, Alert, Spinner } from 'react-bootstrap'
+import { Container, Row, Col, Form, Button, Card, Alert, Spinner, ProgressBar } from 'react-bootstrap'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 export default function AddWordsPage() {
@@ -9,17 +9,19 @@ export default function AddWordsPage() {
   const [tags, setTags] = useState([])
   const [ignoreExisting, setIgnoreExisting] = useState(true)
   const [autoGenerateImage, setAutoGenerateImage] = useState(false)
-  const [autoGenerateSummary, setAutoGenerateSummary] = useState(false) // New state for auto-generate summary
+  const [autoGenerateSummary, setAutoGenerateSummary] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [fetchingTags, setFetchingTags] = useState(true)
-  const [existingWords, setExistingWords] = useState([]) // Store existing words from the database
+  const [existingWords, setExistingWords] = useState([])
   const [wordRatings, setWordRatings] = useState({})
+  const [progress, setProgress] = useState(0) // ✅ progress state
+
   const { user, token } = useAuth()
   const userId = user._id
 
-  // Fetch existing words from the database
+  // Fetch existing words
   const fetchWords = async () => {
     try {
       setLoading(true)
@@ -29,15 +31,16 @@ export default function AddWordsPage() {
           'Content-Type': 'application/json',
         }
       })
-      let data;
+      let data
       try {
-        data = await res.json();
+        data = await res.json()
       } catch (e) {
-        const text = await res.text();
-        console.error('❌ Failed to parse JSON. Response was:', text);
-        throw new Error('Invalid response from server (not JSON)');
-      } if (data.success) {
-        setExistingWords(data.words.map((wordObj) => wordObj.word.toLowerCase())) // Store existing words in lowercase
+        const text = await res.text()
+        console.error('❌ Failed to parse JSON. Response was:', text)
+        throw new Error('Invalid response from server (not JSON)')
+      }
+      if (data.success) {
+        setExistingWords(data.words.map((wordObj) => wordObj.word.toLowerCase()))
       } else {
         setError(data.error || 'Failed to fetch words')
       }
@@ -55,7 +58,7 @@ export default function AddWordsPage() {
     }
   }, [userId])
 
-  // Fetch tags from the backend
+  // Fetch tags
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -96,106 +99,99 @@ export default function AddWordsPage() {
     }))
   }
 
- const handleSubmit = async () => {
-  setLoading(true);
-  setError('');
-  setSuccessMessage('');
+  const handleSubmit = async () => {
+    setLoading(true)
+    setError('')
+    setSuccessMessage('')
+    setProgress(0)
 
-  const wordList = words
-    .split('\n')
-    .map((word) => word.trim())
-    .filter((word) => word !== '');
+    const wordList = words
+      .split('\n')
+      .map((word) => word.trim())
+      .filter((word) => word !== '')
 
-  if (wordList.length === 0) {
-    setError('Please enter at least one word.');
-    setLoading(false);
-    return;
-  }
-
-  try {
-    let addedWords = 0;
-    let filteredWords = [];
-
-    if (ignoreExisting) {
-      // ✅ Ignore duplicates (only add new ones)
-      filteredWords = wordList.filter(
-        (word) => !existingWords.includes(word.toLowerCase())
-      );
-
-      if (filteredWords.length === 0) {
-        setError('All words entered already exist in the database.');
-        setLoading(false);
-        return;
-      }
-    } else {
-      // ❌ Block if duplicates exist
-      const duplicateWords = wordList.filter((word) =>
-        existingWords.includes(word.toLowerCase())
-      );
-
-      if (duplicateWords.length > 0) {
-        setError(
-          `The following words already exist and cannot be added: ${duplicateWords.join(', ')}`
-        );
-        setLoading(false);
-        return;
-      }
-
-      filteredWords = wordList;
+    if (wordList.length === 0) {
+      setError('Please enter at least one word.')
+      setLoading(false)
+      return
     }
 
-    // Loop through each word and make an API call
-    for (const word of filteredWords) {
-      const response = await fetch(`/api/english/enword`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          word,
-          tags: selectedTags,
-          summary: autoGenerateSummary ? undefined : 'no synthesis',
-          note: wordRatings[word] || 0,
-          autoGenerateImage,
-          autoGenerateSummary,
-          userId: user._id,
-        }),
-      });
+    try {
+      let addedWords = 0
+      let filteredWords = []
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || `Failed to add word: ${word}`);
+      if (ignoreExisting) {
+        filteredWords = wordList.filter(
+          (word) => !existingWords.includes(word.toLowerCase())
+        )
+        if (filteredWords.length === 0) {
+          setError('All words entered already exist in the database.')
+          setLoading(false)
+          return
+        }
+      } else {
+        const duplicateWords = wordList.filter((word) =>
+          existingWords.includes(word.toLowerCase())
+        )
+        if (duplicateWords.length > 0) {
+          setError(
+            `The following words already exist and cannot be added: ${duplicateWords.join(', ')}`
+          )
+          setLoading(false)
+          return
+        }
+        filteredWords = wordList
       }
 
-      addedWords++;
-    }
+      // ✅ Loop with progress update
+      for (let i = 0; i < filteredWords.length; i++) {
+        const word = filteredWords[i]
+        const response = await fetch(`/api/english/enword`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            word,
+            tags: selectedTags,
+            summary: autoGenerateSummary ? undefined : 'no synthesis',
+            note: wordRatings[word] || 0,
+            autoGenerateImage,
+            autoGenerateSummary,
+            userId: user._id,
+          }),
+        })
 
-    // UPDATE EXISTING WORDS LIST HERE - RIGHT AFTER SUCCESSFULLY ADDING WORDS
-    // Update the existing words list with the newly added words
-    const newExistingWords = [
-      ...existingWords,
-      ...filteredWords.map(word => word.toLowerCase())
-    ];
-    setExistingWords(newExistingWords);
-    
-    setSuccessMessage(`Successfully added ${addedWords} words!`);
-    setWords('');
-    setSelectedTags([]);
-    setWordRatings({});
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || `Failed to add word: ${word}`)
+        }
+
+        addedWords++
+        setProgress(Math.round(((i + 1) / filteredWords.length) * 100)) // ✅ update progress
+      }
+
+      setExistingWords([
+        ...existingWords,
+        ...filteredWords.map((word) => word.toLowerCase())
+      ])
+      setSuccessMessage(`Successfully added ${addedWords} words!`)
+      setWords('')
+      setSelectedTags([])
+      setWordRatings({})
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+      setProgress(0)
+    }
   }
-};
 
   const handleCheckDuplicates = () => {
     setError('')
     setSuccessMessage('')
 
-    // Split the input into individual words
     const wordList = words
       .split('\n')
       .map((word) => word.trim())
@@ -206,8 +202,9 @@ export default function AddWordsPage() {
       return
     }
 
-    // Find duplicates
-    const duplicateWords = wordList.filter((word) => existingWords.includes(word.toLowerCase()))
+    const duplicateWords = wordList.filter((word) =>
+      existingWords.includes(word.toLowerCase())
+    )
 
     if (duplicateWords.length > 0) {
       setError(`The following words already exist: ${duplicateWords.join(', ')}`)
@@ -228,6 +225,10 @@ export default function AddWordsPage() {
 
               {error && <Alert variant="danger">{error}</Alert>}
               {successMessage && <Alert variant="success">{successMessage}</Alert>}
+
+              {progress > 0 && (
+                <ProgressBar now={progress} label={`${progress}%`} className="mb-3" />
+              )}
 
               <Row>
                 <Col md={8}>
