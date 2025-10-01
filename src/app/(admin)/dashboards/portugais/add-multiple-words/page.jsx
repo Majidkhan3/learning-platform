@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { Container, Row, Col, Form, Button, Card, Alert, Spinner } from 'react-bootstrap'
+import { Container, Row, Col, Form, Button, Card, Alert, Spinner, ProgressBar } from 'react-bootstrap'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 export default function AddWordsPage() {
@@ -16,6 +16,7 @@ export default function AddWordsPage() {
   const [fetchingTags, setFetchingTags] = useState(true)
   const [existingWords, setExistingWords] = useState([]) // Store existing words from the database
   const [wordRatings, setWordRatings] = useState({})
+  const [progress, setProgress] = useState(0) // Progress state
   const { user, token } = useAuth()
   const userId = user._id
 
@@ -102,6 +103,7 @@ export default function AddWordsPage() {
   setLoading(true);
   setError('');
   setSuccessMessage('');
+  setProgress(0);
 
   const wordList = words
     .split('\n')
@@ -146,8 +148,9 @@ export default function AddWordsPage() {
       filteredWords = wordList;
     }
 
-    // Loop through each word and make an API call
-    for (const word of filteredWords) {
+    // Loop through each word and make an API call with progress tracking
+    for (let i = 0; i < filteredWords.length; i++) {
+      const word = filteredWords[i];
       const response = await fetch(`/api/portugal/porword`, {
         method: 'POST',
         headers: {
@@ -172,6 +175,7 @@ export default function AddWordsPage() {
       }
 
       addedWords++;
+      setProgress(Math.round(((i + 1) / filteredWords.length) * 100)); // Update progress
     }
 
     // UPDATE EXISTING WORDS LIST HERE - RIGHT AFTER SUCCESSFULLY ADDING WORDS
@@ -190,6 +194,7 @@ export default function AddWordsPage() {
     setError(err.message);
   } finally {
     setLoading(false);
+    setProgress(0);
   }
 };
 
@@ -230,6 +235,10 @@ export default function AddWordsPage() {
 
               {error && <Alert variant="danger">{error}</Alert>}
               {successMessage && <Alert variant="success">{successMessage}</Alert>}
+
+              {progress > 0 && (
+                <ProgressBar now={progress} label={`${progress}%`} className="mb-3" />
+              )}
 
               <Row>
                 <Col md={8}>

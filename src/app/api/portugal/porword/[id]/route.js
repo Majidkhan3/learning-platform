@@ -105,7 +105,7 @@ Certifique-se de que a resposta está bem estruturada, clara e formatada de form
     }
     const claudeApiKey = process.env.CLAUDE_API_KEY
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 40000)
+    const timeout = setTimeout(() => controller.abort(), 120000)
     try {
       const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -116,7 +116,7 @@ Certifique-se de que a resposta está bem estruturada, clara e formatada de form
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 3000,
+          max_tokens: 15000,
           messages: [{ role: 'user', content: prompt }],
         }),
         signal: controller.signal,
