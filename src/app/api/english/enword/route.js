@@ -221,12 +221,28 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get('userId')
+    const rating = searchParams.get('rating')
+    const tags = searchParams.get('tags')
 
     if (!userId) {
       return NextResponse.json({ error: "The 'userId' parameter is required." }, { status: 400 })
     }
 
-    const words = await Enword.find({ userId })
+    // Build query object
+    let query = { userId }
+
+    // Add rating filter if provided (using note field as rating, now including 0)
+    if (rating !== null && rating !== undefined) {
+      query.note = parseInt(rating)
+    }
+
+    // Add tags filter if provided
+    if (tags) {
+      const tagArray = tags.split(',').map((tag) => tag.trim())
+      query.tags = { $in: tagArray }
+    }
+
+    const words = await Enword.find(query)
 
     return NextResponse.json({ success: true, words }, { status: 200 })
   } catch (error) {

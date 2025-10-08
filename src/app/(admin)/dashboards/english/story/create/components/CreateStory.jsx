@@ -7,28 +7,29 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper'
 
 const CreateStory = () => {
-  const { user ,token } = useAuth()
+  const { user, token } = useAuth()
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [tags, setTags] = useState([])
-  const [difficulty, setDifficulty] = useState(0)
+  const [difficulty, setDifficulty] = useState(-1) // Changed to -1 to indicate no selection
   const [theme, setTheme] = useState('')
   const [selectedTags, setSelectedTags] = useState([])
   const [words, setWords] = useState('') // New state for words input
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState(null)
+  const [fetchingWords, setFetchingWords] = useState(false) // New state for fetching words
 
   useEffect(() => {
     const fetchTags = async () => {
       try {
         if (!user?._id) return
 
-        const response = await fetch(`/api/english/entags?userId=${user._id}`,{
+        const response = await fetch(`/api/english/entags?userId=${user._id}`, {
           headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
         })
         const data = await response.json()
 
@@ -45,9 +46,76 @@ const CreateStory = () => {
     fetchTags()
   }, [user])
 
+  // Function to fetch words by rating and/or tags
+  const fetchWords = async (rating = null, tags = null) => {
+    if (!user?._id) return
+
+    setFetchingWords(true)
+    try {
+      let url = `/api/english/enword?userId=${user._id}`
+      
+      if (rating !== null && rating >= 0) {
+        url += `&rating=${rating}`
+      }
+      
+      if (tags && tags.length > 0) {
+        url += `&tags=${tags.join(',')}`
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      })
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch words.')
+      }
+
+      // Extract words and join them with commas
+      const wordList = data.words?.map(wordObj => wordObj.word).join(', ') || ''
+      setWords(wordList)
+    } catch (err) {
+      console.error('Error fetching words:', err.message)
+      setError('Failed to fetch words.')
+    } finally {
+      setFetchingWords(false)
+    }
+  }
+
+  // Function to fetch words by rating (0-4)
+  const fetchWordsByRating = async (rating) => {
+    await fetchWords(rating, selectedTags.length > 0 ? selectedTags : null)
+  }
+
+  // Modified handleStarClick function to handle 0-4 rating and deselection
+  const handleStarClick = (star) => {
+    // If clicking the same star, deselect it
+    if (difficulty === star) {
+      setDifficulty(-1)
+      setWords('') // Clear words when deselecting
+    } else {
+      setDifficulty(star)
+      fetchWordsByRating(star)
+    }
+  }
+
   const handleTagChange = (e) => {
     const selected = Array.from(e.target.selectedOptions, (option) => option.value)
     setSelectedTags(selected)
+    
+    // Fetch words based on selected tags and current difficulty
+    if (selected.length > 0) {
+      fetchWords(difficulty >= 0 ? difficulty : null, selected)
+    } else if (difficulty >= 0) {
+      // If no tags selected but difficulty is set, fetch by difficulty only
+      fetchWordsByRating(difficulty)
+    } else {
+      // Clear words if no tags and no difficulty
+      setWords('')
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -56,7 +124,7 @@ const CreateStory = () => {
     setSuccessMessage(null)
     setLoading(true)
 
-    const wordArray = words.split(',').map((word) => word.trim()) // Convert input to an array of words
+    const wordArray = words.split(',').map((word) => word.trim()).filter(word => word) // Filter out empty words
 
     try {
       const response = await fetch('/api/english/enstories/create', {
@@ -69,7 +137,7 @@ const CreateStory = () => {
           // title,
           theme,
           selectedTags,
-          rating: difficulty,
+          rating: difficulty >= 0 ? difficulty : null, // Send null if no difficulty selected
           userId: user?._id,
           words: wordArray.map((word) => ({ word })), // Format words as objects
         }),
@@ -111,19 +179,6 @@ const CreateStory = () => {
           <p className="text-muted mb-4">Define the criteria to generate a story with 2 dialogues in English</p>
 
           <Form onSubmit={handleSubmit}>
-            {/* <Form.Group className="mb-3">
-              <Form.Label>
-                Story Title <span className="text-danger">*</span>
-              </Form.Label>
-              <Form.Control
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter story title"
-                required
-              />
-            </Form.Group> */}
-
             <Form.Group className="mb-3">
               <Form.Label>Select tags (optional)</Form.Label>
               <Form.Control as="select" multiple onChange={handleTagChange}>
@@ -138,18 +193,37 @@ const CreateStory = () => {
 
             <Form.Group className="mb-3">
               <Form.Label>Difficulty level (optional)</Form.Label>
-              <div>
-                {[1, 2, 3, 4].map((star) => (
+              <div className="d-flex align-items-center">
+                {[0, 1, 2, 3, 4].map((star) => (
                   <Icon
                     key={star}
                     icon={difficulty >= star ? 'mdi:star' : 'mdi:star-outline'}
                     className="me-1 text-warning"
                     style={{ cursor: 'pointer', fontSize: '1.5rem' }}
-                    onClick={() => setDifficulty(star)}
+                    onClick={() => handleStarClick(star)}
                   />
                 ))}
+                {difficulty >= 0 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="ms-2 p-0 text-muted"
+                    onClick={() => {
+                      setDifficulty(-1)
+                      setWords('')
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+                {fetchingWords && (
+                  <Spinner animation="border" size="sm" className="ms-2" />
+                )}
               </div>
-              <Form.Text className="text-muted">Select the difficulty level to filter words</Form.Text>
+              <Form.Text className="text-muted">
+                Select the difficulty level (0-4 stars) to fetch words with that rating. Click the same star to deselect.
+                {difficulty >= 0 && ` Currently selected: ${difficulty} star${difficulty !== 1 ? 's' : ''}`}
+              </Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
@@ -173,7 +247,10 @@ const CreateStory = () => {
                 value={words}
                 onChange={(e) => setWords(e.target.value)}               
               />
-              <Form.Text className="text-muted">Enter words to be used in the story, separated by commas</Form.Text>
+              <Form.Text className="text-muted">
+                Enter words to be used in the story, separated by commas. 
+                {difficulty >= 0 && ` Words with ${difficulty}-star rating have been loaded.`}
+              </Form.Text>
             </Form.Group>
 
             {error && <Alert variant="danger">{error}</Alert>}
