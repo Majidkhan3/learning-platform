@@ -106,17 +106,17 @@ const AuthProtectionWrapper = ({ children }) => {
     })
   }
 
-  // const logout = () => {
-  //   localStorage.removeItem('token')
-  //   localStorage.removeItem('user')
-  //   setState({
-  //     isAuthenticated: false,
-  //     user: null,
-  //     isInitialized: true,
-  //     token: null,
-  //   })
-  //   router.push('/login')
-  // }
+  const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setState({
+      isAuthenticated: false,
+      user: null,
+      isInitialized: true,
+      token: null,
+    })
+    router.push('/login')
+  }
 
   const updateUser = (user) => {
     localStorage.setItem('user', JSON.stringify(user))
