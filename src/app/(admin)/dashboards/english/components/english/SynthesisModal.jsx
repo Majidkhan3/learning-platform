@@ -265,7 +265,7 @@ const SynthesisModal = ({ reviewData, loading, onDelete, selectedVoice }) => {
   {selectedImage ? (
     <img src={selectedImage} alt="Word Illustration" className="img-fluid rounded shadow-sm" />
   ) : (
-    <div className="synthesis-content" style={{ whiteSpace: 'pre-wrap' }}>
+    <div className="synthesis-content" style={{ whiteSpace: 'pre-line' }}>
       {(() => {
         // First, check if it's likely HTML
         const isLikelyHTML = /<(html|body|table|tr|td|th|ul|ol|li|div|span|strong|em|p|br|h[1-6])[\s>]/i.test(selectedDescription);

@@ -113,9 +113,14 @@ Fournissez uniquement du contenu en français, y compris les phrases d'exemple, 
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 15000,
-          messages: [{ role: 'user', content: prompt }],
+          model: 'claude-3-5-haiku-20241022',
+          max_tokens: 1500,
+          messages: [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: prompt }],
+            },
+          ],
         }),
         signal: controller.signal,
       })
