@@ -82,7 +82,7 @@ const EditEspagnol = ({ params }) => {
             image: wordData.word.image || '',
             note: wordData.word.note || 0,
             autoGenerateImage: wordData.word.autoGenerateImage || false,
-            autoGenerateSummary: wordData.word.autoGenerateSummary || false,
+            autoGenerateSummary: false,
           });
 
           setAvailableTags(tagsData.tags);

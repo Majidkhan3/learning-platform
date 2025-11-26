@@ -76,7 +76,7 @@ const EditPortugais = ({ params }) => {
               image: wordData.image || '',
               note: wordData.note || 0,
               autoGenerateImage: wordData.autoGenerateImage || false,
-              autoGenerateSummary: wordData.autoGenerateSummary || false,
+              autoGenerateSummary: false,
             });
           } else {
             console.error('Error fetching data:', result.error);
