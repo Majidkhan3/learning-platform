@@ -4,12 +4,32 @@ import Enword from '../../../../model/Enword'
 import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../../lib/verifyToken'
 import User from '../../../../model/User'
+import { Agent } from 'http'
 
 cloudinary.config({
   cloud_name: 'dekdaj81k',
   api_key: '359192434457515',
   api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
 })
+
+// Ollama configuration
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://82.165.170.105:11434'
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'mistral:7b-instruct-q4_K_M'
+const OLLAMA_API_KEY = 'LLAMA_API_8c1e7d27f2a441b6a2e4e3fa9e9bc8cd'
+
+// Create an HTTP agent with connection pooling and keep-alive
+const httpAgent = new Agent({
+  keepAlive: true,
+  keepAliveMsecs: 60000, // Increased to 60 seconds
+  maxSockets: 5, // Reduced for better connection management
+  maxFreeSockets: 2,
+  timeout: 120000, // 2 minutes
+  freeSocketTimeout: 60000, // Keep sockets alive longer
+})
+
+// Keep track of requests to implement basic rate limiting
+let lastRequestTime = 0
+const MIN_REQUEST_INTERVAL = 100 // 100ms minimum between requests
 
 // Helper function to upload base64 image to Cloudinary
 async function uploadBase64ToCloudinary(base64String) {
@@ -69,11 +89,13 @@ export async function POST(req) {
   // Prepare summary generation promise
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
+
     let promptTemplate = ''
     const user = await User.findById(userId).select('customPrompts')
     if (user?.customPrompts?.[language]?.trim()) {
       promptTemplate = user.customPrompts[language].trim()
     }
+
     if (!promptTemplate) {
       promptTemplate = `
 Generate a detailed synthesis for the word {{word}} in the following structured format:
@@ -98,45 +120,67 @@ Generate a detailed synthesis for the word {{word}} in the following structured 
 Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
 `
     }
+
     let prompt = promptTemplate.trim()
     if (!prompt.includes('{{word}}')) {
       prompt += `\n\nThe word to analyze is: ${word}`
     } else {
       prompt = prompt.replace(/{{word}}/g, word)
     }
-    const claudeApiKey = process.env.CLAUDE_API_KEY
+
+    // Basic rate limiting
+    const now = Date.now()
+    const timeSinceLastRequest = now - lastRequestTime
+    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+      await new Promise((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
+    }
+    lastRequestTime = Date.now()
+
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 120000)
+    const timeout = setTimeout(() => controller.abort(), 90000) // 90 seconds timeout
+
     try {
-      const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      console.log('🌐 Making request to Ollama for summary generation...')
+
+      const ollamaResponse = await fetch(`${OLLAMA_URL}/api/generate`, {
         method: 'POST',
         headers: {
-          'x-api-key': claudeApiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'Ollama-Proxy/1.0',
         },
         body: JSON.stringify({
-          model: 'claude-3-5-haiku-20241022',
-          max_tokens: 1500,
-          messages: [
-            {
-              role: 'user',
-              content: [{ type: 'text', text: prompt }],
-            },
-          ],
+          model: OLLAMA_MODEL,
+          prompt,
+          stream: false,
+          options: {
+            num_predict: 2048, // Limit response length for faster processing
+            temperature: 0.7,
+            top_p: 0.9,
+            repeat_penalty: 1.1,
+            num_ctx: 4096, // Context window size
+          },
         }),
+        agent: httpAgent,
         signal: controller.signal,
       })
-      console.log('Claude API response:', claudeResponse)
+
       clearTimeout(timeout)
-      if (claudeResponse.ok) {
-        const claudeResult = await claudeResponse.json()
-        return claudeResult?.content?.[0]?.text?.trim() || claudeResult?.completion?.trim() || generatedSummary
+      console.log('📡 Received response from Ollama')
+
+      if (ollamaResponse.ok) {
+        const ollamaResult = await ollamaResponse.json()
+        return ollamaResult?.response?.trim() || generatedSummary
+      } else {
+        console.error('Ollama API error:', ollamaResponse.status, ollamaResponse.statusText)
+        return generatedSummary
       }
-      return generatedSummary
     } catch (err) {
       clearTimeout(timeout)
-      console.error('Claude API timeout or error:', err)
+      if (err.name === 'AbortError') {
+        console.error('Ollama API timeout')
+      } else {
+        console.error('Ollama API error:', err)
+      }
       return generatedSummary
     }
   })()
