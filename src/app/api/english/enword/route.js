@@ -142,38 +142,96 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
     try {
       console.log('🌐 Making request to Ollama for summary generation...')
 
-      const ollamaResponse = await fetch(`${OLLAMA_URL}/api/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Ollama-Proxy/1.0',
-        },
-        body: JSON.stringify({
-          model: OLLAMA_MODEL,
-          prompt,
-          stream: false,
-          options: {
-            num_predict: 2048, // Limit response length for faster processing
-            temperature: 0.7,
-            top_p: 0.9,
-            repeat_penalty: 1.1,
-            num_ctx: 4096, // Context window size
-          },
-        }),
-        agent: httpAgent,
-        signal: controller.signal,
-      })
+      // Retry wrapper with exponential backoff to handle transient timeouts or busy models
+      const maxAttempts = 3
+      const baseDelay = 500 // ms
 
-      clearTimeout(timeout)
-      console.log('📡 Received response from Ollama')
+      const callOllamaWithRetries = async () => {
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          const controllerAttempt = new AbortController()
+          const attemptTimeout = setTimeout(() => controllerAttempt.abort(), 180000) // 3 minutes per attempt
 
-      if (ollamaResponse.ok) {
-        const ollamaResult = await ollamaResponse.json()
-        return ollamaResult?.response?.trim() || generatedSummary
-      } else {
-        console.error('Ollama API error:', ollamaResponse.status, ollamaResponse.statusText)
+          const headersAttempt = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Ollama-Proxy/1.0',
+            ...(process.env.OLLAMA_API_KEY || OLLAMA_API_KEY ? { Authorization: `Bearer ${process.env.OLLAMA_API_KEY || OLLAMA_API_KEY}` } : {}),
+          }
+
+          try {
+            const start = Date.now()
+            const res = await fetch(`${OLLAMA_URL}/api/generate`, {
+              method: 'POST',
+              headers: headersAttempt,
+              body: JSON.stringify({
+                model: OLLAMA_MODEL,
+                prompt,
+                stream: false,
+                options: { num_predict: 2048, temperature: 0.7, top_p: 0.9, repeat_penalty: 1.1, num_ctx: 4096 },
+              }),
+              agent: httpAgent,
+              signal: controllerAttempt.signal,
+            })
+
+            const elapsed = Date.now() - start
+            clearTimeout(attemptTimeout)
+
+            const text = await res.text().catch((e) => {
+              console.warn(`Failed to read response text (attempt ${attempt}):`, e)
+              return ''
+            })
+
+            console.log(`Ollama attempt ${attempt} status=${res.status} time=${elapsed}ms`)
+
+            if (!res.ok) {
+              console.error('Ollama returned error:', res.status, res.statusText, text)
+              // For 5xx errors, retry; for 4xx, do not retry
+              if (res.status >= 500 && attempt < maxAttempts) {
+                const delay = baseDelay * Math.pow(2, attempt - 1)
+                await new Promise((r) => setTimeout(r, delay))
+                continue
+              }
+              return generatedSummary
+            }
+
+            // Try JSON parse, otherwise return raw text
+            try {
+              const parsed = JSON.parse(text)
+              const extracted =
+                parsed?.response ||
+                parsed?.text ||
+                (Array.isArray(parsed?.choices) && (parsed.choices[0]?.text || parsed.choices[0]?.message?.content)) ||
+                (typeof parsed?.data === 'string' && parsed.data) ||
+                ''
+              return (extracted || text || generatedSummary).trim()
+            } catch (jsonErr) {
+              // Not JSON - likely HTML/text
+              return (text || generatedSummary).trim()
+            }
+          } catch (errAttempt) {
+            clearTimeout(attemptTimeout)
+            if (errAttempt.name === 'AbortError') {
+              console.warn(`Ollama attempt ${attempt} aborted (timeout)`)
+            } else {
+              console.error(`Ollama attempt ${attempt} failed:`, errAttempt)
+            }
+
+            if (attempt < maxAttempts) {
+              const delay = baseDelay * Math.pow(2, attempt - 1)
+              console.log(`Retrying Ollama in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`)
+              await new Promise((r) => setTimeout(r, delay))
+              continue
+            }
+
+            // exhausted attempts
+            return generatedSummary
+          }
+        }
         return generatedSummary
       }
+
+      // Execute the retry wrapper
+      const ollamaFinal = await callOllamaWithRetries()
+      return ollamaFinal
     } catch (err) {
       clearTimeout(timeout)
       if (err.name === 'AbortError') {
