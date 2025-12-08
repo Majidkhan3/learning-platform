@@ -14,7 +14,7 @@ cloudinary.config({
 
 // Ollama configuration
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://82.165.170.105:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'mistral:7b-instruct-q4_K_M'
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b'
 const OLLAMA_API_KEY = 'LLAMA_API_8c1e7d27f2a441b6a2e4e3fa9e9bc8cd'
 
 // Create an HTTP agent with connection pooling and keep-alive
