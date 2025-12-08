@@ -4,32 +4,12 @@ import Enword from '../../../../model/Enword'
 import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../../lib/verifyToken'
 import User from '../../../../model/User'
-import { Agent } from 'http'
 
 cloudinary.config({
   cloud_name: 'dekdaj81k',
   api_key: '359192434457515',
   api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
 })
-
-// Ollama configuration
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://82.165.170.105:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b'
-const OLLAMA_API_KEY = 'LLAMA_API_8c1e7d27f2a441b6a2e4e3fa9e9bc8cd'
-
-// Create an HTTP agent with connection pooling and keep-alive
-const httpAgent = new Agent({
-  keepAlive: true,
-  keepAliveMsecs: 60000, // Increased to 60 seconds
-  maxSockets: 5, // Reduced for better connection management
-  maxFreeSockets: 2,
-  timeout: 120000, // 2 minutes
-  freeSocketTimeout: 60000, // Keep sockets alive longer
-})
-
-// Keep track of requests to implement basic rate limiting
-let lastRequestTime = 0
-const MIN_REQUEST_INTERVAL = 100 // 100ms minimum between requests
 
 // Helper function to upload base64 image to Cloudinary
 async function uploadBase64ToCloudinary(base64String) {
@@ -87,158 +67,61 @@ export async function POST(req) {
   })()
 
   // Prepare summary generation promise
+  // Prepare summary generation promise
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
 
-    let promptTemplate = ''
     const user = await User.findById(userId).select('customPrompts')
-    if (user?.customPrompts?.[language]?.trim()) {
-      promptTemplate = user.customPrompts[language].trim()
-    }
-
-    if (!promptTemplate) {
-      promptTemplate = `
+    let promptTemplate =
+      user?.customPrompts?.[language]?.trim() ||
+      `
 Generate a detailed synthesis for the word {{word}} in the following structured format:
 
-1. **Use and Frequency**:
-   - Explain how frequently the word is used in the language and in which contexts it is commonly used. Provide a brief description.
-
-2. **Mnemonics**:
-   - Provide two creative mnemonics to help remember the word. These can include phonetic associations, visual stories, or other memory aids.
-
-3. **Main Uses**:
-   - List the main contexts or scenarios where the word is used. For each context:
-     - Provide a title for the context.
-     - Include 2-3 example sentences in the language (without translation).
-
-4. **Synonyms**:
-   - Provide a list of synonyms for the word.
-
-5. **Antonyms**:
-   - Provide a list of antonyms for the word.
-
-Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
+1. Use and Frequency
+2. Mnemonics (2)
+3. Main Uses with 2-3 example sentences
+4. Synonyms
+5. Antonyms
 `
-    }
 
-    let prompt = promptTemplate.trim()
-    if (!prompt.includes('{{word}}')) {
-      prompt += `\n\nThe word to analyze is: ${word}`
-    } else {
-      prompt = prompt.replace(/{{word}}/g, word)
-    }
+    let prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
 
-    // Basic rate limiting
-    const now = Date.now()
-    const timeSinceLastRequest = now - lastRequestTime
-    if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-      await new Promise((resolve) => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest))
-    }
-    lastRequestTime = Date.now()
-
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 90000) // 90 seconds timeout
+    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyCeEH5slFmkNliIjvTINZ2Gcz9Ud-pTmv0'
 
     try {
-      console.log('🌐 Making request to Ollama for summary generation...')
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
 
-      // Retry wrapper with exponential backoff to handle transient timeouts or busy models
-      const maxAttempts = 3
-      const baseDelay = 500 // ms
+      const body = {
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 1500,
+          temperature: 0.2,
+        },
+      }
 
-      const callOllamaWithRetries = async () => {
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          const controllerAttempt = new AbortController()
-          const attemptTimeout = setTimeout(() => controllerAttempt.abort(), 180000) // 3 minutes per attempt
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
 
-          const headersAttempt = {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Ollama-Proxy/1.0',
-            ...(process.env.OLLAMA_API_KEY || OLLAMA_API_KEY ? { Authorization: `Bearer ${process.env.OLLAMA_API_KEY || OLLAMA_API_KEY}` } : {}),
-          }
-
-          try {
-            const start = Date.now()
-            const res = await fetch(`${OLLAMA_URL}/api/generate`, {
-              method: 'POST',
-              headers: headersAttempt,
-              body: JSON.stringify({
-                model: OLLAMA_MODEL,
-                prompt,
-                stream: false,
-                options: { num_predict: 2048, temperature: 0.7, top_p: 0.9, repeat_penalty: 1.1, num_ctx: 4096 },
-              }),
-              agent: httpAgent,
-              signal: controllerAttempt.signal,
-            })
-
-            const elapsed = Date.now() - start
-            clearTimeout(attemptTimeout)
-
-            const text = await res.text().catch((e) => {
-              console.warn(`Failed to read response text (attempt ${attempt}):`, e)
-              return ''
-            })
-
-            console.log(`Ollama attempt ${attempt} status=${res.status} time=${elapsed}ms`)
-
-            if (!res.ok) {
-              console.error('Ollama returned error:', res.status, res.statusText, text)
-              // For 5xx errors, retry; for 4xx, do not retry
-              if (res.status >= 500 && attempt < maxAttempts) {
-                const delay = baseDelay * Math.pow(2, attempt - 1)
-                await new Promise((r) => setTimeout(r, delay))
-                continue
-              }
-              return generatedSummary
-            }
-
-            // Try JSON parse, otherwise return raw text
-            try {
-              const parsed = JSON.parse(text)
-              const extracted =
-                parsed?.response ||
-                parsed?.text ||
-                (Array.isArray(parsed?.choices) && (parsed.choices[0]?.text || parsed.choices[0]?.message?.content)) ||
-                (typeof parsed?.data === 'string' && parsed.data) ||
-                ''
-              return (extracted || text || generatedSummary).trim()
-            } catch (jsonErr) {
-              // Not JSON - likely HTML/text
-              return (text || generatedSummary).trim()
-            }
-          } catch (errAttempt) {
-            clearTimeout(attemptTimeout)
-            if (errAttempt.name === 'AbortError') {
-              console.warn(`Ollama attempt ${attempt} aborted (timeout)`)
-            } else {
-              console.error(`Ollama attempt ${attempt} failed:`, errAttempt)
-            }
-
-            if (attempt < maxAttempts) {
-              const delay = baseDelay * Math.pow(2, attempt - 1)
-              console.log(`Retrying Ollama in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`)
-              await new Promise((r) => setTimeout(r, delay))
-              continue
-            }
-
-            // exhausted attempts
-            return generatedSummary
-          }
-        }
+      if (!response.ok) {
+        console.error('Gemini API error:', await response.text())
         return generatedSummary
       }
 
-      // Execute the retry wrapper
-      const ollamaFinal = await callOllamaWithRetries()
-      return ollamaFinal
+      const result = await response.json()
+
+      // Correct extraction for Gemini 2.5 Flash-Lite (2025)
+      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || generatedSummary
+
+      return text
     } catch (err) {
-      clearTimeout(timeout)
-      if (err.name === 'AbortError') {
-        console.error('Ollama API timeout')
-      } else {
-        console.error('Ollama API error:', err)
-      }
+      console.error('Gemini Error:', err)
       return generatedSummary
     }
   })()
