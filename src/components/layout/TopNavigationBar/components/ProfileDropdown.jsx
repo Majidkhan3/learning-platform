@@ -75,6 +75,7 @@ const ProfileDropdown = () => {
     { title: 'Portuguese', route: '/dashboards/portugais', access: 'Portuguese' },
     { title: 'French', route: '/dashboards/french', access: 'French' },
     { title: 'English', route: '/dashboards/english', access: 'English' },
+    { title: 'German', route: '/dashboards/german', access: 'German' },
   ]
 
   const languageIcons = {
@@ -82,6 +83,7 @@ const ProfileDropdown = () => {
     Portuguese: 'mdi:alphabet-latin',
     French: 'mdi:book-open-page-variant',
     English: 'mdi:book-education-outline',
+    German: 'mdi:dictionary',
   }
 
   return (

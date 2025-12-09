@@ -67,7 +67,6 @@ export async function POST(req) {
   })()
 
   // Prepare summary generation promise
-  // Prepare summary generation promise
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
 
@@ -86,7 +85,7 @@ Generate a detailed synthesis for the word {{word}} in the following structured 
 
     let prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
 
-    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyCeEH5slFmkNliIjvTINZ2Gcz9Ud-pTmv0'
+    const apiKey = process.env.GEMINI_API_KEY;
 
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`

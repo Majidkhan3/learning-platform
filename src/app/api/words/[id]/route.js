@@ -69,74 +69,73 @@ export async function PUT(req, { params }) {
   // Prepare summary and image generation promises
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
-    let promptTemplate = ''
+
     const user = await User.findById(userId).select('customPrompts')
-    if (user?.customPrompts?.[language]?.trim()) {
-      promptTemplate = user.customPrompts[language].trim()
-    }
-    if (!promptTemplate) {
-      promptTemplate = `
-Generate a detailed synthesis for the word {{word}} in the following structured format:
+    let promptTemplate =
+      user?.customPrompts?.[language]?.trim() ||
+      `
+Responde exclusivamente en español. No incluyas texto en inglés, ni en los ejemplos ni en los sinónimos o antónimos.
+Genera una síntesis detallada para la palabra {{word}} en el siguiente formato estructurado:
 
-1. **Use and Frequency**:
-   - Explain how frequently the word is used in the language and in which contexts it is commonly used. Provide a brief description.
+1. **Uso y Frecuencia**:
+   - Explica con qué frecuencia se utiliza la palabra en el idioma y en qué contextos es comúnmente usada.
 
-2. **Mnemonics**:
-   - Provide two creative mnemonics to help remember the word. These can include phonetic associations, visual stories, or other memory aids.
+2. **Mnemotecnias**:
+   - Proporciona dos mnemotecnias creativas para ayudar a recordar la palabra.
 
-3. **Main Uses**:
-   - List the main contexts or scenarios where the word is used. For each context:
-     - Provide a title for the context.
-     - Include 2-3 example sentences in the language (without translation).
+3. **Usos Principales**:
+   - Enumera los principales contextos o escenarios en los que se utiliza la palabra. Para cada contexto:
+     - Proporciona un título para el contexto.
+     - Incluye de 2 a 3 frases de ejemplo en el idioma.
 
-4. **Synonyms**:
-   - Provide a list of synonyms for the word.
+4. **Sinónimos**:
+   - Proporciona una lista de sinónimos de la palabra.
 
-5. **Antonyms**:
-   - Provide a list of antonyms for the word.
+5. **Antónimos**:
+   - Proporciona una lista de antónimos de la palabra.
 
-Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
+Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
 `
-    }
-    let prompt = promptTemplate.trim()
-    if (!prompt.includes('{{word}}')) {
-      prompt += `\n\nThe word to analyze is: ${word}`
-    } else {
-      prompt = prompt.replace(/{{word}}/g, word)
-    }
-    const claudeApiKey = process.env.CLAUDE_API_KEY
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 120000)
+
+    let prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
+
+    const apiKey = process.env.GEMINI_API_KEY;
+
     try {
-      const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': claudeApiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
+
+      const body = {
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 1500,
+          temperature: 0.2,
         },
-        body: JSON.stringify({
-          model: 'claude-3-5-haiku-20241022',
-          max_tokens: 1500,
-          messages: [
-            {
-              role: 'user',
-              content: [{ type: 'text', text: prompt }],
-            },
-          ],
-        }),
-        signal: controller.signal,
-      })
-      clearTimeout(timeout)
-      if (claudeResponse.ok) {
-        const claudeResult = await claudeResponse.json()
-        return claudeResult?.content?.[0]?.text?.trim() || claudeResult?.completion?.trim() || generatedSummary
       }
-      return generatedSummary
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        console.error('Gemini API error:', await response.text())
+        return generatedSummary
+      }
+
+      const result = await response.json()
+
+      // Correct extraction for Gemini 2.5 Flash-Lite (2025)
+      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || generatedSummary
+
+      return text
     } catch (err) {
-      clearTimeout(timeout)
-      console.error('Claude API timeout or error:', err)
-      return generatedSummary || 'No summary available.'
+      console.error('Gemini Error:', err)
+      return generatedSummary
     }
   })()
 
