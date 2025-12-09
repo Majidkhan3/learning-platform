@@ -68,13 +68,11 @@ export async function PUT(req, { params }) {
   // Prepare summary and image generation promises
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
-    let promptTemplate = ''
+
     const user = await User.findById(userId).select('customPrompts')
-    if (user?.customPrompts?.[language]?.trim()) {
-      promptTemplate = user.customPrompts[language].trim()
-    }
-    if (!promptTemplate) {
-      promptTemplate = `
+    let promptTemplate =
+      user?.customPrompts?.[language]?.trim() ||
+      `
 Crie uma síntese detalhada para a palavra {{word}} no seguinte formato estruturado:
 
 1. **Uso e Frequência**:
@@ -96,49 +94,48 @@ Crie uma síntese detalhada para a palavra {{word}} no seguinte formato estrutur
 
 Certifique-se de que a resposta está bem estruturada, clara e formatada de forma a ser de fácil leitura.
 `
-    }
-    let prompt = promptTemplate.trim()
-    if (!prompt.includes('{{word}}')) {
-      prompt += `\n\nThe word to analyze is: ${word}`
-    } else {
-      prompt = prompt.replace(/{{word}}/g, word)
-    }
-    const claudeApiKey = process.env.CLAUDE_API_KEY
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 120000)
+
+    let prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
+
+    const apiKey = process.env.GEMINI_API_KEY;
+
     try {
-      const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': claudeApiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
+
+      const body = {
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 1500,
+          temperature: 0.2,
         },
-        body: JSON.stringify({
-          model: 'claude-3-5-haiku-20241022',
-          max_tokens: 1500,
-          messages: [
-            {
-              role: 'user',
-              content: [{ type: 'text', text: prompt }],
-            },
-          ],
-        }),
-        signal: controller.signal,
-      })
-      clearTimeout(timeout)
-      if (claudeResponse.ok) {
-        const claudeResult = await claudeResponse.json()
-        return claudeResult?.content?.[0]?.text?.trim() || claudeResult?.completion?.trim() || generatedSummary
       }
-      return generatedSummary
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        console.error('Gemini API error:', await response.text())
+        return generatedSummary
+      }
+
+      const result = await response.json()
+
+      // Correct extraction for Gemini 2.5 Flash-Lite (2025)
+      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || generatedSummary
+
+      return text
     } catch (err) {
-      clearTimeout(timeout)
-      console.error('Claude API timeout or error:', err)
-      return generatedSummary || 'No summary available.'
+      console.error('Gemini Error:', err)
+      return generatedSummary
     }
   })()
-
   const aiImagePromise = (async () => {
     if (!autoGenerateImage) return ''
     const openAiApiKey = process.env.OPENAI_API_KEY

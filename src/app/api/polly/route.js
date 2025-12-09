@@ -18,6 +18,8 @@ const AVAILABLE_VOICES = {
   'fr-FR': ['Lea', 'Mathieu', 'Celine'],
   'en-US': ['Joanna', 'Matthew', 'Salli', 'Joey'],
   'pt-BR': ['Camila', 'Ricardo', 'Vitoria'],
+  'de-DE': ['Marlene', 'Vicki', 'Hans'],
+
 }
 
 const VOICE_ENGINE_MAP = {
@@ -35,6 +37,10 @@ const VOICE_ENGINE_MAP = {
   Camila: 'neural',
   Ricardo: 'standard',
   Vitória: 'standard',
+  Marlene: 'neural',
+  Vicki: 'neural',
+  Hans: 'standard',
+
 }
 
 // Handle POST requests
@@ -99,7 +105,7 @@ export async function GET(req) {
     const voices = AVAILABLE_VOICES[language].map((voiceId) => ({
       id: voiceId,
       name: voiceId,
-      gender: ['Lucia', 'Conchita', 'Lea', 'Celine', 'Joanna', 'Salli', 'Camila', 'Vitoria'].includes(voiceId) ? 'Female' : 'Male',
+      gender: ['Lucia', 'Conchita', 'Lea', 'Celine', 'Joanna', 'Salli', 'Camila', 'Vitoria','Hans','Vicki','Marlene'].includes(voiceId) ? 'Female' : 'Male',
 
     }))
     return NextResponse.json(voices)

@@ -224,4 +224,59 @@ export const MENU_ITEMS = [
       },
     ],
   },
+   {
+    key: 'German-dashboard',
+    label: 'Deutsch lernen',
+    icon: 'ri:dashboard-2-line',
+    children: [
+      {
+        key: 'german',
+        label: 'German',
+        url: '/dashboards/german',
+        parentKey: 'german-dashboard',
+      },
+      {
+        key: 'german-tags',
+        label: 'Tags verwalten',
+        url: '/dashboards/german/tags',
+        parentKey: 'german-dashboard',
+      },
+      {
+        key: 'german-word',
+        label: 'Wort hinzufügen',
+        url: '/dashboards/german/word',
+        parentKey: 'german-dashboard',
+      },
+      {
+        key: 'german-multiple-words',
+        label: 'Mehrere Wörter hinzufügen',
+        url: '/dashboards/german/add-multiple-words',
+        parentKey: 'german-dashboard',
+      },
+      {
+        key: 'german-dialogues',
+        label: 'Dialoge',
+        url: '/dashboards/german/dialogues',
+        parentKey: 'german-dashboard',
+      },
+      {
+        key: 'germn-stories',
+        label: 'Geschichten',
+        url: '/dashboards/german/story ',
+        parentKey: 'german-dashboard',
+      },
+       {
+        key: 'german-stories',
+        label: 'Eingabeaufforderungen',
+        url: '/dashboards/german/prompts ',
+        parentKey: 'german-dashboard',
+      },
+      {
+        key: 'german-flashcards',
+        label: 'Karteikarten',
+        url: '/dashboards/german/flashcards',
+        parentKey: 'german-dashboard',
+      },
+    ],
+  },
 ]

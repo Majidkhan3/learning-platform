@@ -67,13 +67,11 @@ export async function POST(req) {
   // Prepare summary and image generation promises
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
-    let promptTemplate = ''
+
     const user = await User.findById(userId).select('customPrompts')
-    if (user?.customPrompts?.[language]?.trim()) {
-      promptTemplate = user.customPrompts[language].trim()
-    }
-    if (!promptTemplate) {
-      promptTemplate = `
+    let promptTemplate =
+      user?.customPrompts?.[language]?.trim() ||
+      `
 Générez une synthèse détaillée pour le mot {{word}} dans le format structuré suivant :
 1. **Utilisation et Fréquence**:
    - Expliquez à quelle fréquence le mot est utilisé dans la langue et dans quels contextes il est couramment employé. Fournissez une brève description.
@@ -93,47 +91,47 @@ Générez une synthèse détaillée pour le mot {{word}} dans le format structur
    - Fournissez une liste d'antonymes du mot.
 
 Assurez-vous que la réponse est bien structurée, claire et formatée de manière à être facile à lire.Toute la réponse doit être rédigée en français, y compris les mnémoniques, les exemples, les synonymes et les antonymes.
-Fournissez uniquement du contenu en français, y compris les phrases d'exemple, les synonymes et les antonymes. 
+Fournissez uniquement du contenu en français, y compris les phrases d'exemple, les synonymes et les antonymes.
 `
-    }
-    let prompt = promptTemplate.trim()
-    if (!prompt.includes('{{word}}')) {
-      prompt += `\n\nThe word to analyze is: ${word}`
-    } else {
-      prompt = prompt.replace(/{{word}}/g, word)
-    }
-    const claudeApiKey = process.env.CLAUDE_API_KEY
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 120000)
+
+    let prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
+
+    const apiKey = process.env.GEMINI_API_KEY;
+
     try {
-      const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': claudeApiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
+
+      const body = {
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 1500,
+          temperature: 0.2,
         },
-        body: JSON.stringify({
-          model: 'claude-3-5-haiku-20241022',
-          max_tokens: 1500,
-          messages: [
-            {
-              role: 'user',
-              content: [{ type: 'text', text: prompt }],
-            },
-          ],
-        }),
-        signal: controller.signal,
-      })
-      clearTimeout(timeout)
-      if (claudeResponse.ok) {
-        const claudeResult = await claudeResponse.json()
-        return claudeResult?.content?.[0]?.text?.trim() || claudeResult?.completion?.trim() || generatedSummary
       }
-      return generatedSummary
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!response.ok) {
+        console.error('Gemini API error:', await response.text())
+        return generatedSummary
+      }
+
+      const result = await response.json()
+
+      // Correct extraction for Gemini 2.5 Flash-Lite (2025)
+      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || generatedSummary
+
+      return text
     } catch (err) {
-      clearTimeout(timeout)
-      console.error('Claude API timeout or error:', err)
+      console.error('Gemini Error:', err)
       return generatedSummary
     }
   })()

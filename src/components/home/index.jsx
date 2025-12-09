@@ -34,6 +34,13 @@ const languages = [
     icon: <FaFlag size={32} />,
     access: 'French'
   },
+   {
+    title: 'German',
+    route: '/dashboards/german',
+    bg: '#0044ffff',
+    icon: <FaFlag size={32} />,
+    access: 'German'
+  },
 ]
 
 const LanguageSelectionPage = () => {
