@@ -1,13 +1,10 @@
 import PageTitle from '@/components/PageTitle';
 import { Card, CardHeader, Col, Row } from 'react-bootstrap';
-
-import PageWithFilters from '@/app/(admin)/dashboards/german/components/german/PageWithFilters';
-
+import PageWithFilters from './components/german/PageWithFilters';
 import IconifyIcon from '@/components/wrappers/IconifyIcon';
 import { useAuth } from '@/components/wrappers/AuthProtectionWrapper';
 export const metadata = {
   title: 'German'
-  // description: 'Espagnol',
 };
 const AnalyticsPage = () => {
   return <>

@@ -225,7 +225,7 @@ export const MENU_ITEMS = [
     ],
   },
    {
-    key: 'German-dashboard',
+    key: 'german-dashboard',
     label: 'Deutsch lernen',
     icon: 'ri:dashboard-2-line',
     children: [
@@ -260,7 +260,7 @@ export const MENU_ITEMS = [
         parentKey: 'german-dashboard',
       },
       {
-        key: 'germn-stories',
+        key: 'german-stories',
         label: 'Geschichten',
         url: '/dashboards/german/story ',
         parentKey: 'german-dashboard',
