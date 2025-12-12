@@ -4,6 +4,7 @@ import Enword from '../../../../model/Enword'
 import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../../lib/verifyToken'
 import User from '../../../../model/User'
+import { Mistral } from '@mistralai/mistralai'
 
 cloudinary.config({
   cloud_name: 'dekdaj81k',
@@ -28,6 +29,21 @@ async function uploadBase64ToCloudinary(base64String) {
 // Helper function to check if string is base64 image
 function isBase64Image(str) {
   return typeof str === 'string' && str.startsWith('data:image/')
+}
+
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY
+const MISTRAL_MODEL = process.env.MISTRAL_MODEL || 'mistral-medium-latest'
+let mistralClient = null
+if (MISTRAL_API_KEY) {
+  try {
+    mistralClient = new Mistral({ apiKey: MISTRAL_API_KEY })
+    console.log(`Mistral client initialized (model: ${MISTRAL_MODEL})`)
+  } catch (e) {
+    console.warn('Failed to initialize Mistral client:', e?.message || e)
+    mistralClient = null
+  }
+} else {
+  console.warn('MISTRAL_API_KEY not set — Mistral disabled')
 }
 
 export async function POST(req) {
@@ -85,42 +101,55 @@ Generate a detailed synthesis for the word {{word}} in the following structured 
 
     let prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    if (!mistralClient) {
+      console.warn('Mistral client not configured — skipping auto-generated summary')
+      return generatedSummary
+    }
+
+    // Retry helper for transient errors (503/unreachable backend)
+    async function callMistralWithRetries(promptText, maxAttempts = 3) {
+      let attempt = 0
+      while (attempt < maxAttempts) {
+        try {
+          return await mistralClient.chat.complete({
+            model: MISTRAL_MODEL,
+            messages: [{ role: 'user', content: promptText }],
+          })
+        } catch (err) {
+          attempt++
+          const status = err?.statusCode || err?.status || null
+          // If non-retriable (4xx) or out of attempts, rethrow
+          if (attempt >= maxAttempts || (status && status < 500)) {
+            throw err
+          }
+          // Exponential backoff with jitter
+          const backoff = Math.min(2000, 500 * Math.pow(2, attempt)) + Math.floor(Math.random() * 100)
+          console.warn(`Mistral request failed (attempt ${attempt}) status=${status} — retrying in ${backoff}ms`, err?.message || err)
+          await new Promise((res) => setTimeout(res, backoff))
+        }
+      }
+      return null
+    }
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
+      const chatResponse = await callMistralWithRetries(prompt)
+      if (!chatResponse) return generatedSummary
 
-      const body = {
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 1500,
-          temperature: 0.2,
-        },
+      // Extract text from Mistral response (robust to different shapes)
+      let text = ''
+      if (chatResponse?.output?.[0]?.content?.[0]?.text) {
+        text = chatResponse.output[0].content[0].text
+      } else if (chatResponse?.choices?.[0]?.message?.content) {
+        text = chatResponse.choices[0].message.content
+      } else if (typeof chatResponse === 'string') {
+        text = chatResponse
+      } else {
+        text = JSON.stringify(chatResponse)
       }
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-
-      if (!response.ok) {
-        console.error('Gemini API error:', await response.text())
-        return generatedSummary
-      }
-
-      const result = await response.json()
-
-      // Correct extraction for Gemini 2.5 Flash-Lite (2025)
-      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || generatedSummary
-
-      return text
+      return text?.trim() || generatedSummary
     } catch (err) {
-      console.error('Gemini Error:', err)
+      console.error('Mistral Error:', err)
       return generatedSummary
     }
   })()

@@ -22,6 +22,7 @@
     "@fullcalendar/react": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
     "@hookform/resolvers": "^3.3.4",
+    "@mistralai/mistralai": "^1.10.0",
     "@smastrom/react-rating": "^1.5.0",
     "apexcharts": "^3.52.0",
     "axios": "^1.8.4",
