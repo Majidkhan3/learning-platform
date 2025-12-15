@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server'
-import Enword from '../../../../../model/Enword'
-import User from '../../../../../model/User' // ✅ Import User for custom prompt
 import connectToDatabase from '../../../../../lib/db'
+import Enword from '../../../../../model/Enword'
 import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../../../lib/verifyToken'
+import User from '../../../../../model/User'
+import { Mistral } from '@mistralai/mistralai'
 
-// ✅ Configure Cloudinary
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: 'dekdaj81k',
   api_key: '359192434457515',
   api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
 })
-// NEW: Helper function to upload base64 image to Cloudinary
+
+// Helper: upload base64 image to Cloudinary
 async function uploadBase64ToCloudinary(base64String) {
   try {
     const result = await cloudinary.uploader.upload(base64String, {
@@ -20,57 +22,78 @@ async function uploadBase64ToCloudinary(base64String) {
     })
     return result.secure_url
   } catch (error) {
-    console.error('Error uploading to Cloudinary:', error)
+    console.error('Cloudinary upload error:', error)
     throw error
   }
 }
 
-// NEW: Helper function to check if string is base64 image
+// Helper: check if base64
 function isBase64Image(str) {
   return typeof str === 'string' && str.startsWith('data:image/')
 }
 
+// Mistral Setup
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY
+const MISTRAL_MODEL = process.env.MISTRAL_MODEL || 'mistral-medium-latest'
+
+let mistralClient = null
+if (MISTRAL_API_KEY) {
+  try {
+    mistralClient = new Mistral({ apiKey: MISTRAL_API_KEY })
+    console.log(`Mistral client initialized (model: ${MISTRAL_MODEL})`)
+  } catch (e) {
+    console.warn('Failed to initialize Mistral client:', e?.message || e)
+    mistralClient = null
+  }
+} else {
+  console.warn('MISTRAL_API_KEY missing — summary generation disabled')
+}
 export async function PUT(req, { params }) {
   const auth = await verifyToken(req)
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
+
   await connectToDatabase()
+
   const body = await req.json()
-  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'english' } = body
+  const {
+    word,
+    tags,
+    summary,
+    userId,
+    image,
+    note,
+    autoGenerateImage,
+    autoGenerateSummary,
+    language = 'portuguese',
+  } = body
+
   const { id } = params
 
   if (!word || !userId) {
-    return NextResponse.json({ error: "The 'word' and 'userId' parameters are required." }, { status: 400 })
+    return NextResponse.json({ error: "'word' and 'userId' are required." }, { status: 400 })
   }
 
   const summaryString = typeof summary === 'object' ? JSON.stringify(summary) : summary
   let generatedSummary = summaryString || ''
-  let updatedImage = image || ''
-
   const userImagePromise = (async () => {
     if (!image || autoGenerateImage) return ''
 
-    // If it's a base64 image, upload it to Cloudinary
     if (isBase64Image(image)) {
       try {
         return await uploadBase64ToCloudinary(image)
-      } catch (error) {
-        console.error('Failed to upload user image to Cloudinary:', error)
-        // Return the original base64 as fallback
+      } catch {
         return image
       }
     }
-
-    // If it's already a URL (shouldn't happen in your case), return as is
     return image
   })()
-
-  // Prepare summary and image generation promises
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
 
     const user = await User.findById(userId).select('customPrompts')
+
     let promptTemplate =
       user?.customPrompts?.[language]?.trim() ||
       `
@@ -96,56 +119,58 @@ Generate a detailed synthesis for the word {{word}} in the following structured 
 Ensure the response is well-structured, clear, and formatted in a way that is easy to read.
 `
 
-    let prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
+    const prompt = promptTemplate.includes('{{word}}')
+      ? promptTemplate.replace(/{{word}}/g, word)
+      : `${promptTemplate}\n\nWord: ${word}`
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    if (!mistralClient) return generatedSummary
+
+    // Mistral retry logic (same as POST)
+    async function callMistralWithRetries(promptText, max = 3) {
+      let attempt = 0
+      while (attempt < max) {
+        try {
+          return await mistralClient.chat.complete({
+            model: MISTRAL_MODEL,
+            messages: [{ role: 'user', content: promptText }],
+          })
+        } catch (err) {
+          attempt++
+          const status = err?.statusCode || null
+          if (attempt >= max || (status && status < 500)) throw err
+
+          const delay =
+            Math.min(2000, 500 * 2 ** attempt) + Math.floor(Math.random() * 100)
+          console.warn(`Retry ${attempt}: Mistral error`, err?.message)
+          await new Promise((res) => setTimeout(res, delay))
+        }
+      }
+    }
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
+      const res = await callMistralWithRetries(prompt)
+      let text =
+        res?.output?.[0]?.content?.[0]?.text ||
+        res?.choices?.[0]?.message?.content ||
+        ''
 
-      const body = {
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 1500,
-          temperature: 0.2,
-        },
-      }
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-
-      if (!response.ok) {
-        console.error('Gemini API error:', await response.text())
-        return generatedSummary
-      }
-
-      const result = await response.json()
-
-      // Correct extraction for Gemini 2.5 Flash-Lite (2025)
-      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || generatedSummary
-
-      return text
+      return text.trim() || generatedSummary
     } catch (err) {
-      console.error('Gemini Error:', err)
+      console.error('Mistral summary error:', err)
       return generatedSummary
     }
   })()
-
   const aiImagePromise = (async () => {
     if (!autoGenerateImage) return ''
+
     const openAiApiKey = process.env.OPENAI_API_KEY
     if (!openAiApiKey) return ''
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 60000)
+
     try {
-      const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 60000)
+
+      const res = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,47 +178,46 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
         },
         body: JSON.stringify({
           model: 'dall-e-3',
-          prompt: `Create an image that best illustrates the word '${word}' based on its common usage.`,
+          prompt: `Create an image illustrating the word '${word}'.`,
           n: 1,
           size: '1024x1024',
         }),
         signal: controller.signal,
       })
+
       clearTimeout(timeout)
-      if (openAiResponse.ok) {
-        const openAiResult = await openAiResponse.json()
-        if (openAiResult?.data?.[0]?.url) {
-          const generatedImageUrl = openAiResult.data[0].url
-          try {
-            const imageResponse = await fetch(generatedImageUrl)
-            const arrayBuffer = await imageResponse.arrayBuffer()
-            const buffer = Buffer.from(arrayBuffer)
-            const cloudinaryResult = await new Promise((resolve, reject) => {
-              const uploadStream = cloudinary.uploader.upload_stream({ folder: 'word-images' }, (error, result) =>
-                error ? reject(error) : resolve(result),
-              )
-              uploadStream.end(buffer)
-            })
-            return cloudinaryResult.secure_url
-          } catch {
-            return generatedImageUrl
-          }
-        }
+
+      const data = await res.json()
+      const imageUrl = data?.data?.[0]?.url
+      if (!imageUrl) return ''
+
+      try {
+        const buffer = Buffer.from(await (await fetch(imageUrl)).arrayBuffer())
+        const uploaded = await new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream({ folder: 'word-images' }, (err, result) =>
+            err ? reject(err) : resolve(result)
+          ).end(buffer)
+        })
+
+        return uploaded.secure_url
+      } catch {
+        return imageUrl
       }
-      return ''
-    } catch (err) {
-      clearTimeout(timeout)
-      console.error('[ERROR] OpenAI request failed:', err)
+    } catch (error) {
+      console.error('AI image error:', error)
       return ''
     }
   })()
 
   try {
-    const [finalSummary, userImageUrl, aiImageUrl] = await Promise.all([summaryPromise, userImagePromise, aiImagePromise])
-
-    // Use AI-generated image if available, otherwise use user-uploaded image
+    const [finalSummary, userImageUrl, aiImageUrl] = await Promise.all([
+      summaryPromise,
+      userImagePromise,
+      aiImagePromise,
+    ])
 
     const finalImage = aiImageUrl || userImageUrl || ''
+
     const updatedWord = await Enword.findByIdAndUpdate(
       id,
       {
@@ -203,65 +227,56 @@ Ensure the response is well-structured, clear, and formatted in a way that is ea
         summary: finalSummary,
         userId,
         image: finalImage,
-        autoGenerateSummary, // <-- Add this
+        autoGenerateSummary,
         autoGenerateImage,
       },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true }
     )
 
     if (!updatedWord) {
       return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, message: 'Word updated successfully!', word: updatedWord }, { status: 200 })
+    return NextResponse.json({
+      success: true,
+      message: 'Word updated successfully!',
+      word: updatedWord,
+    })
   } catch (error) {
-    console.error('Error:', error)
+    console.error('PUT Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
-// ✅ GET Word by ID
 export async function GET(req, { params }) {
   const auth = await verifyToken(req)
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
 
-  try {
-    await connectToDatabase()
-    const { id } = params
-    const word = await Enword.findById(id)
+  await connectToDatabase()
 
-    if (!word) {
-      return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
-    }
+  const { id } = params
+  const word = await Enword.findById(id)
 
-    return NextResponse.json({ success: true, word }, { status: 200 })
-  } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  if (!word) {
+    return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
   }
-}
 
-// ✅ DELETE Word by ID
+  return NextResponse.json({ success: true, word })
+}
 export async function DELETE(req, { params }) {
   const auth = await verifyToken(req)
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
 
-  try {
-    await connectToDatabase()
-    const { id } = params
-    const deletedWord = await Enword.findByIdAndDelete(id)
+  await connectToDatabase()
 
-    if (!deletedWord) {
-      return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
-    }
+  const deleted = await Enword.findByIdAndDelete(params.id)
 
-    return NextResponse.json({ success: true, message: 'Word deleted successfully!' }, { status: 200 })
-  } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  if (!deleted) {
+    return NextResponse.json({ error: 'Word not found.' }, { status: 404 })
   }
+
+  return NextResponse.json({ success: true, message: 'Word deleted successfully!' })
 }

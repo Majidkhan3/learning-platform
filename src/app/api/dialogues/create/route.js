@@ -1,156 +1,200 @@
 import { NextResponse } from 'next/server'
-// import pdfParse from 'pdf-parse'
-import Dialogue from '@/model/Dialogue'
-import connectToDatabase from '@/lib/db'
+import connectToDatabase from '../../../../lib/db'
+import Dialogue from '../../../../model/Dialogue'
 import { verifyToken } from '../../../../lib/verifyToken'
+import { Mistral } from '@mistralai/mistralai'
 
+// --------------------
+// MISTRAL SETUP
+// --------------------
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY
+const MISTRAL_MODEL = process.env.MISTRAL_MODEL || 'mistral-medium-latest'
+
+let mistralClient = null
+if (MISTRAL_API_KEY) {
+  try {
+    mistralClient = new Mistral({ apiKey: MISTRAL_API_KEY })
+    console.log(`Mistral client initialized (model: ${MISTRAL_MODEL})`)
+  } catch (e) {
+    console.warn('Failed to initialize Mistral client:', e?.message || e)
+    mistralClient = null
+  }
+} else {
+  console.warn('MISTRAL_API_KEY missing — AI generation disabled')
+}
+
+// Mistral retry helper
+async function callMistralWithRetries(prompt, max = 3) {
+  let attempt = 0
+
+  while (attempt < max) {
+    try {
+      return await mistralClient.chat.complete({
+        model: MISTRAL_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+      })
+    } catch (err) {
+      attempt++
+      const status = err?.statusCode || null
+
+      if (attempt >= max || (status && status < 500)) throw err
+
+      const delay =
+        Math.min(2000, 500 * 2 ** attempt) + Math.floor(Math.random() * 100)
+      console.warn(`Retry ${attempt}: Mistral error`, err?.message)
+      await new Promise((res) => setTimeout(res, delay))
+    }
+  }
+}
+
+// --------------------
+// MAIN POST HANDLER
+// --------------------
 export async function POST(req) {
   const auth = await verifyToken(req)
-
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
+
   try {
     await connectToDatabase()
 
     const body = await req.json()
-    const { text: extractedText, userId } = body
+    const { text: extractedText, userId, fileName } = body
 
-    if (!extractedText || typeof extractedText !== 'string' || !extractedText.trim()) {
-      return NextResponse.json({ error: 'Text is required and must be a non-empty string' }, { status: 400 })
+    if (!extractedText || !extractedText.trim()) {
+      return NextResponse.json({ error: 'Text is required.' }, { status: 400 })
     }
-
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    // Send extracted text to Claude API to generate dialogues
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': process.env.CLAUDE_API_KEY || '',
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: 'Tu es un assistant expert en rédaction de dialogues immersifs.',
-        messages: [
-          {
-            role: 'user',
-            content: generatePrompt(extractedText),
-          },
-        ],
-      }),
-    })
-
-    if (!claudeResponse.ok) {
-      const errorData = await claudeResponse.json().catch(() => ({ message: 'Failed to parse Claude error response' }))
-      console.error('Claude API Error:', errorData)
-      throw new Error(errorData.error?.message || errorData.message || `Claude API error! status: ${claudeResponse.status}`)
-    }
-    const data = await claudeResponse.json()
-    const dialogues = data?.content?.[0]?.text || ''
-    console.log('dialogues', dialogues)
-    if (!dialogues) {
-      console.warn('Claude API did not return any dialogues.')
-      // Decide if this is an error or if empty dialogues are acceptable
-      // return NextResponse.json({ error: 'Failed to generate dialogues from Claude API' }, { status: 500 });
+    if (!mistralClient) {
+      return NextResponse.json({ error: 'Mistral is not configured' }, { status: 500 })
     }
 
-    // Generate title using Claude API
-    // ✅ Prefer fileName as title if provided
+    // -------------------------
+    // GENERATE DIALOGUES
+    // -------------------------
+    let dialogueText = ''
+
+    try {
+      const result = await callMistralWithRetries(generatePrompt(extractedText))
+      dialogueText =
+        result?.output?.[0]?.content?.[0]?.text ||
+        result?.choices?.[0]?.message?.content ||
+        ''
+
+      dialogueText = dialogueText.trim()
+    } catch (err) {
+      console.error('Mistral dialogue error:', err)
+      return NextResponse.json(
+        { error: 'Failed to generate dialogues.' },
+        { status: 500 }
+      )
+    }
+
+    // -------------------------
+    // GENERATE TITLE
+    // -------------------------
     let title = 'Dialogue'
 
-    if (body.fileName) {
-      // Remove extension and make it clean
-      title = body.fileName.replace(/\.[^/.]+$/, '').substring(0, 50)
+    // If PDF file name is provided → use it (like your logic)
+    if (fileName) {
+      title = fileName.replace(/\.[^/.]+$/, '').substring(0, 50)
     } else {
-      // ✅ Only generate title via Claude if no fileName was provided
       try {
-        const titleResponse = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': process.env.CLAUDE_API_KEY || '',
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 50,
-            system: 'Tu es un assistant expert en création de titres courts et pertinents.',
-            messages: [
-              {
-                role: 'user',
-                content: generateTitlePrompt(extractedText, dialogues),
-              },
-            ],
-          }),
-        })
+        const titleResult = await callMistralWithRetries(
+          generateTitlePrompt(extractedText, dialogueText)
+        )
 
-        if (titleResponse.ok) {
-          const titleData = await titleResponse.json()
-          const generatedTitle = titleData?.content?.[0]?.text?.trim() || 'Dialogue'
-          title = generatedTitle
-            .replace(/["""'.]/g, '')
-            .split(' ')
-            .slice(0, 4)
-            .join(' ')
-            .substring(0, 50)
-        }
-      } catch (titleError) {
-        console.warn('Failed to generate title:', titleError.message)
+        const t =
+          titleResult?.output?.[0]?.content?.[0]?.text ||
+          titleResult?.choices?.[0]?.message?.content ||
+          ''
+
+        title = t
+          .trim()
+          .replace(/["“”'.]/g, '')
+          .split(' ')
+          .slice(0, 4)
+          .join(' ')
+          .substring(0, 50)
+      } catch (err) {
+        console.warn('Failed to generate title:', err.message)
       }
     }
 
-    // Save dialogues to MongoDB
-    const dialogue = new Dialogue({
-      userId: userId,
-      title: title,
-      source: 'PDF', // Indicates the original source type
-      dialogue: dialogues,
-      originalText: extractedText, // Optionally store the original text
-      fileName: body.fileName || 'N/A', // Optionally store the file name if sent from client
+    // -------------------------
+    // SAVE TO DB
+    // -------------------------
+    const entry = new Dialogue({
+      userId,
+      title,
+      source: 'PDF',
+      dialogue: dialogueText,
+      originalText: extractedText,
+      fileName: fileName || 'N/A',
     })
 
-    await dialogue.save()
-    const dialogueId = dialogue?._id.toString()
-    return NextResponse.json({ status: 'success', dialogues, title, dialogueId }, { status: 200 })
+    await entry.save()
+
+    return NextResponse.json(
+      {
+        status: 'success',
+        dialogues: dialogueText,
+        title,
+        dialogueId: entry._id.toString(),
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error('Error in /api/dialogues/create:', error)
-    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
 
+// --------------------
+// PROMPTS
+// --------------------
+
 function generatePrompt(text) {
   return `
-En te basant uniquement sur le texte suivant (extrait d'un fichier PDF),
-génère 8 dialogues immersifs en espagnol. Chaque dialogue doit être structuré en deux lignes :
-la première correspond à une question posée par la personne A, et la seconde est une réponse
-détaillée de la personne B sous forme d'un paragraphe de 5 lignes.
+Utilizando el siguiente texto (extracto de un PDF), crea 8 diálogos inmersivos en inglés.
 
-Texte extrait :
+Cada diálogo debe contener:
+
+- Una pregunta de la persona A.
+
+- Una respuesta detallada de 5 líneas de la persona B.
+
+Text:
 ${text}
 
-Merci de fournir uniquement les dialogues au format :
-Dialogue 1:
-Personne A: ...
-Personne B: ...
-... jusqu'à Dialogue 8.
+Formato de salida:
+
+Diálogo 1:
+
+Personaje A: …
+
+Personaje B: …
+
+(Continúa hasta el diálogo 8)
 `
 }
 
 function generateTitlePrompt(originalText, dialogues) {
   return `
-En te basant sur le texte original et les dialogues générés, créé un titre court de 3 à 4 mots maximum qui résume le thème principal du contenu.
+Crea un título corto en spanish, de 3 a 4 palabras, que resuma la temática del texto original y los diálogos generados.
 
-Texte original :
-${originalText.substring(0, 500)}...
+Original:
+${originalText.slice(0, 500)}
 
-Dialogues générés :
-${dialogues.substring(0, 300)}...
-
-Réponds uniquement avec le titre, sans guillemets ni points. Le titre doit être en espagnol et capturer l'essence du contenu.
+Dialogues:
+${dialogues.slice(0, 300)}
+Por favor responda SÓLO con el título, sin comillas ni puntuación.
 `
 }
