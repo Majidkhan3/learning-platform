@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectToDatabase from '../../../../../lib/db'
+import connectToDatabase from '../../../../lib/db'
 import axios from 'axios'
-import Pordialogue from '../../../../../model/Pordialogue'
-import { verifyToken } from '../../../../../lib/verifyToken'
+import Dialogue from '@/model/Dialogue'
+import { verifyToken } from '../../../../lib/verifyToken'
 import { Mistral } from '@mistralai/mistralai'
 
 // --------------------
@@ -199,7 +199,7 @@ export async function POST(req) {
     // ---------------------------------------
     // Save to DB
     // ---------------------------------------
-    const entry = new Pordialogue({
+    const entry = new Dialogue({
       userId,
       url: youtubeUrl,
       dialogue: dialogueText,
