@@ -28,6 +28,8 @@ const hasLanguageAccess = (user, path) => {
     return false
   } else if (path.includes('/french') && !user.languages?.includes('French')) {
     return false
+  } else if (path.includes('/german') && !user.languages?.includes('German')) {
+    return false
   }
   // Add more language checks here if needed
   return true

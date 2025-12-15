@@ -201,7 +201,7 @@ const speakSingle = async (text, voice) => {
           <Card className="mb-4">
             <Card.Body>
               <h4 className="mb-2">
-                <strong>ES</strong> {story?.title}
+                <strong>EN</strong> {story?.title}
               </h4>
               <p className="mb-1 text-muted">Rating: {story?.rating || 'No rating'}</p>
               <p className="mb-1 text-muted">

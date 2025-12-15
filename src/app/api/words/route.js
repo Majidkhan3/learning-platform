@@ -4,13 +4,14 @@ import Word from '../../../model/Word'
 import { v2 as cloudinary } from 'cloudinary'
 import { verifyToken } from '../../../lib/verifyToken'
 import User from '../../../model/User'
+import { Mistral } from '@mistralai/mistralai'
 
-// Configure Cloudinary from environment variables
 cloudinary.config({
   cloud_name: 'dekdaj81k',
   api_key: '359192434457515',
   api_secret: 'gXyA-twPBooq8PYw8OneARMe3EI',
 })
+
 // Helper function to upload base64 image to Cloudinary
 async function uploadBase64ToCloudinary(base64String) {
   try {
@@ -30,6 +31,21 @@ function isBase64Image(str) {
   return typeof str === 'string' && str.startsWith('data:image/')
 }
 
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY
+const MISTRAL_MODEL = process.env.MISTRAL_MODEL || 'mistral-medium-latest'
+let mistralClient = null
+if (MISTRAL_API_KEY) {
+  try {
+    mistralClient = new Mistral({ apiKey: MISTRAL_API_KEY })
+    console.log(`Mistral client initialized (model: ${MISTRAL_MODEL})`)
+  } catch (e) {
+    console.warn('Failed to initialize Mistral client:', e?.message || e)
+    mistralClient = null
+  }
+} else {
+  console.warn('MISTRAL_API_KEY not set — Mistral disabled')
+}
+
 export async function POST(req) {
   const auth = await verifyToken(req)
   if (!auth.valid) {
@@ -37,7 +53,7 @@ export async function POST(req) {
   }
   await connectToDatabase()
   const body = await req.json()
-  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'spanish' } = body
+  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'english' } = body
 
   if (!word || !userId) {
     return NextResponse.json({ error: "The 'word' and 'userId' parameters are required." }, { status: 400 })
@@ -46,6 +62,7 @@ export async function POST(req) {
   const summaryString = typeof summary === 'object' ? JSON.stringify(summary) : summary
   let generatedSummary = summaryString || ''
   let updatedImage = image || ''
+
   // Handle user-uploaded base64 image
   const userImagePromise = (async () => {
     if (!image || autoGenerateImage) return ''
@@ -65,7 +82,7 @@ export async function POST(req) {
     return image
   })()
 
-  // Prepare summary and image generation promises
+  // Prepare summary generation promise
   const summaryPromise = (async () => {
     if (!autoGenerateSummary) return generatedSummary
 
@@ -73,77 +90,90 @@ export async function POST(req) {
     let promptTemplate =
       user?.customPrompts?.[language]?.trim() ||
       `
-Responde exclusivamente en español. No incluyas texto en inglés, ni en los ejemplos ni en los sinónimos o antónimos.
-Genera una síntesis detallada para la palabra {{word}} en el siguiente formato estructurado:
+Crie uma síntese detalhada para a palavra {{word}} no seguinte formato estruturado:
 
-1. **Uso y Frecuencia**:
-   - Explica con qué frecuencia se utiliza la palabra en el idioma y en qué contextos es comúnmente usada.
+1. **Uso e Frequência**:
+- Explique com que frequência a palavra é utilizada na língua e em que contextos é comummente utilizada. Apresente uma breve descrição.
 
-2. **Mnemotecnias**:
-   - Proporciona dos mnemotecnias creativas para ayudar a recordar la palabra.
+2. **Mnemónicas**:
+- Forneça dois mnemónicos criativos para ajudar a recordar a palavra. Podem incluir associações fonéticas, histórias visuais ou outros recursos de memória.
 
-3. **Usos Principales**:
-   - Enumera los principales contextos o escenarios en los que se utiliza la palabra. Para cada contexto:
-     - Proporciona un título para el contexto.
-     - Incluye de 2 a 3 frases de ejemplo en el idioma.
+3. **Principais Utilizações**:
+- Enumere os principais contextos ou cenários em que a palavra é utilizada. Para cada contexto:
+- Forneça um título para o contexto.
+- Inclua 2 a 3 frases de exemplo na língua (sem tradução).
 
 4. **Sinónimos**:
-   - Proporciona una lista de sinónimos de la palabra.
+- Forneça uma lista de sinónimos para a palavra.
 
 5. **Antónimos**:
-   - Proporciona una lista de antónimos de la palabra.
+- Forneça uma lista de antónimos para a palavra.
 
-Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
+Certifique-se de que a resposta está bem estruturada, clara e formatada de forma a ser de fácil leitura.
 `
 
     let prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    if (!mistralClient) {
+      console.warn('Mistral client not configured — skipping auto-generated summary')
+      return generatedSummary
+    }
+
+    // Retry helper for transient errors (503/unreachable backend)
+    async function callMistralWithRetries(promptText, maxAttempts = 3) {
+      let attempt = 0
+      while (attempt < maxAttempts) {
+        try {
+          return await mistralClient.chat.complete({
+            model: MISTRAL_MODEL,
+            messages: [{ role: 'user', content: promptText }],
+          })
+        } catch (err) {
+          attempt++
+          const status = err?.statusCode || err?.status || null
+          // If non-retriable (4xx) or out of attempts, rethrow
+          if (attempt >= maxAttempts || (status && status < 500)) {
+            throw err
+          }
+          // Exponential backoff with jitter
+          const backoff = Math.min(2000, 500 * Math.pow(2, attempt)) + Math.floor(Math.random() * 100)
+          console.warn(`Mistral request failed (attempt ${attempt}) status=${status} — retrying in ${backoff}ms`, err?.message || err)
+          await new Promise((res) => setTimeout(res, backoff))
+        }
+      }
+      return null
+    }
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`
+      const chatResponse = await callMistralWithRetries(prompt)
+      if (!chatResponse) return generatedSummary
 
-      const body = {
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 1500,
-          temperature: 0.2,
-        },
+      // Extract text from Mistral response (robust to different shapes)
+      let text = ''
+      if (chatResponse?.output?.[0]?.content?.[0]?.text) {
+        text = chatResponse.output[0].content[0].text
+      } else if (chatResponse?.choices?.[0]?.message?.content) {
+        text = chatResponse.choices[0].message.content
+      } else if (typeof chatResponse === 'string') {
+        text = chatResponse
+      } else {
+        text = JSON.stringify(chatResponse)
       }
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-
-      if (!response.ok) {
-        console.error('Gemini API error:', await response.text())
-        return generatedSummary
-      }
-
-      const result = await response.json()
-
-      // Correct extraction for Gemini 2.5 Flash-Lite (2025)
-      const text = result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || generatedSummary
-
-      return text
+      return text?.trim() || generatedSummary
     } catch (err) {
-      console.error('Gemini Error:', err)
+      console.error('Mistral Error:', err)
       return generatedSummary
     }
   })()
 
+  // Prepare auto-generated image promise
   const aiImagePromise = (async () => {
     if (!autoGenerateImage) return ''
     const openAiApiKey = process.env.OPENAI_API_KEY
     if (!openAiApiKey) return ''
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 20000)
+    const timeout = setTimeout(() => controller.abort(), 60000)
     try {
       const openAiResponse = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
@@ -201,9 +231,10 @@ Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
       summary: finalSummary,
       userId,
       image: finalImage,
-      autoGenerateSummary, // <-- Add this
+      autoGenerateSummary,
       autoGenerateImage,
     })
+
     await newWord.save()
     return NextResponse.json({ success: true, message: 'Word saved successfully!', word: newWord }, { status: 201 })
   } catch (error) {
@@ -214,7 +245,6 @@ Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
 
 export async function GET(req) {
   const auth = await verifyToken(req)
-
   if (!auth.valid) {
     return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
   }
@@ -223,12 +253,28 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get('userId')
+    const rating = searchParams.get('rating')
+    const tags = searchParams.get('tags')
 
     if (!userId) {
       return NextResponse.json({ error: "The 'userId' parameter is required." }, { status: 400 })
     }
 
-    const words = await Word.find({ userId })
+    // Build query object
+    let query = { userId }
+
+    // Add rating filter if provided (using note field as rating, now including 0)
+    if (rating !== null && rating !== undefined) {
+      query.note = parseInt(rating)
+    }
+
+    // Add tags filter if provided
+    if (tags) {
+      const tagArray = tags.split(',').map((tag) => tag.trim())
+      query.tags = { $in: tagArray }
+    }
+
+    const words = await Word.find(query)
 
     return NextResponse.json({ success: true, words }, { status: 200 })
   } catch (error) {

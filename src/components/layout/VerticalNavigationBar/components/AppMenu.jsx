@@ -112,7 +112,8 @@ const filterMenusByLanguage = useCallback(() => {
       'espagnol': 'spanish-dashboard',
       'portugais': 'portuguese-dashboard',
       'french': 'french-dashboard',
-      'english': 'english-dashboard'
+      'english': 'english-dashboard',
+      'german': 'german-dashboard'
     }
 
     // Find which language section we're in
