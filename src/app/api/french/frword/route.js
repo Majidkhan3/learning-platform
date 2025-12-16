@@ -53,7 +53,7 @@ export async function POST(req) {
   }
   await connectToDatabase()
   const body = await req.json()
-  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'english' } = body
+  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'french' } = body
 
   if (!word || !userId) {
     return NextResponse.json({ error: "The 'word' and 'userId' parameters are required." }, { status: 400 })
@@ -87,6 +87,8 @@ export async function POST(req) {
     if (!autoGenerateSummary) return generatedSummary
 
     const user = await User.findById(userId).select('customPrompts')
+    console.log('User custom prompts:', user?.customPrompts)
+    console.log('Selected language prompt:', user?.customPrompts?.[language])
     let promptTemplate =
       user?.customPrompts?.[language]?.trim() ||
       `

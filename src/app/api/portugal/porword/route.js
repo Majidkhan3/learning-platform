@@ -53,7 +53,7 @@ export async function POST(req) {
   }
   await connectToDatabase()
   const body = await req.json()
-  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'english' } = body
+  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'portuguese' } = body
 
   if (!word || !userId) {
     return NextResponse.json({ error: "The 'word' and 'userId' parameters are required." }, { status: 400 })

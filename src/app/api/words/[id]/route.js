@@ -57,17 +57,7 @@ export async function PUT(req, { params }) {
   await connectToDatabase()
 
   const body = await req.json()
-  const {
-    word,
-    tags,
-    summary,
-    userId,
-    image,
-    note,
-    autoGenerateImage,
-    autoGenerateSummary,
-    language = 'portuguese',
-  } = body
+  const { word, tags, summary, userId, image, note, autoGenerateImage, autoGenerateSummary, language = 'spanish' } = body
 
   const { id } = params
 
@@ -120,9 +110,7 @@ Genera una síntesis detallada para la palabra {{word}} en el siguiente formato 
 Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
 `
 
-    const prompt = promptTemplate.includes('{{word}}')
-      ? promptTemplate.replace(/{{word}}/g, word)
-      : `${promptTemplate}\n\nWord: ${word}`
+    const prompt = promptTemplate.includes('{{word}}') ? promptTemplate.replace(/{{word}}/g, word) : `${promptTemplate}\n\nWord: ${word}`
 
     if (!mistralClient) return generatedSummary
 
@@ -140,8 +128,7 @@ Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
           const status = err?.statusCode || null
           if (attempt >= max || (status && status < 500)) throw err
 
-          const delay =
-            Math.min(2000, 500 * 2 ** attempt) + Math.floor(Math.random() * 100)
+          const delay = Math.min(2000, 500 * 2 ** attempt) + Math.floor(Math.random() * 100)
           console.warn(`Retry ${attempt}: Mistral error`, err?.message)
           await new Promise((res) => setTimeout(res, delay))
         }
@@ -150,10 +137,7 @@ Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
 
     try {
       const res = await callMistralWithRetries(prompt)
-      let text =
-        res?.output?.[0]?.content?.[0]?.text ||
-        res?.choices?.[0]?.message?.content ||
-        ''
+      let text = res?.output?.[0]?.content?.[0]?.text || res?.choices?.[0]?.message?.content || ''
 
       return text.trim() || generatedSummary
     } catch (err) {
@@ -195,9 +179,7 @@ Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
       try {
         const buffer = Buffer.from(await (await fetch(imageUrl)).arrayBuffer())
         const uploaded = await new Promise((resolve, reject) => {
-          cloudinary.uploader.upload_stream({ folder: 'word-images' }, (err, result) =>
-            err ? reject(err) : resolve(result)
-          ).end(buffer)
+          cloudinary.uploader.upload_stream({ folder: 'word-images' }, (err, result) => (err ? reject(err) : resolve(result))).end(buffer)
         })
 
         return uploaded.secure_url
@@ -211,11 +193,7 @@ Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
   })()
 
   try {
-    const [finalSummary, userImageUrl, aiImageUrl] = await Promise.all([
-      summaryPromise,
-      userImagePromise,
-      aiImagePromise,
-    ])
+    const [finalSummary, userImageUrl, aiImageUrl] = await Promise.all([summaryPromise, userImagePromise, aiImagePromise])
 
     const finalImage = aiImageUrl || userImageUrl || ''
 
@@ -231,7 +209,7 @@ Asegúrate de que la respuesta esté bien estructurada y fácil de leer.
         autoGenerateSummary,
         autoGenerateImage,
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     )
 
     if (!updatedWord) {
