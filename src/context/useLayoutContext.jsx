@@ -1,12 +1,12 @@
 'use client';
 
-import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { toggleDocumentAttribute } from '@/utils/layout';
 import useQueryParams from '@/hooks/useQueryParams';
 import useLocalStorage from '@/hooks/useLocalStorage';
 const ThemeContext = createContext(undefined);
 const useLayoutContext = () => {
-  const context = use(ThemeContext);
+  const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useLayoutContext can only be used within LayoutProvider');
   }
@@ -100,12 +100,15 @@ const LayoutProvider = ({
   // toggle backdrop
   const toggleBackdrop = useCallback(() => {
     const htmlTag = document.getElementsByTagName('html')[0];
-    if (offcanvasStates.showBackdrop) htmlTag.classList.remove('sidebar-enable');else htmlTag.classList.add('sidebar-enable');
-    setOffcanvasStates({
-      ...offcanvasStates,
-      showBackdrop: !offcanvasStates.showBackdrop
+    setOffcanvasStates(prev => {
+      const newShow = !prev.showBackdrop;
+      if (newShow) htmlTag.classList.add('sidebar-enable'); else htmlTag.classList.remove('sidebar-enable');
+      return {
+        ...prev,
+        showBackdrop: newShow
+      };
     });
-  }, [offcanvasStates.showBackdrop]);
+  }, []);
   useEffect(() => {
     toggleDocumentAttribute('data-bs-theme', settings.theme);
     toggleDocumentAttribute('data-topbar-color', settings.topbarTheme);
